@@ -1,0 +1,13 @@
+name: mangrullo
+version: 0.1.0
+
+authors:
+  - Roberto Alsina <roberto.alsina@gmail.com>
+
+targets:
+  mangrullo:
+    main: src/mangrullo.cr
+
+crystal: '>= 1.16.3'
+
+license: MIT
