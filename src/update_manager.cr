@@ -102,10 +102,44 @@ module Mangrullo
                          if update_info[:local_version] && update_info[:remote_version]
                            "Version update available: #{update_info[:local_version]} -> #{update_info[:remote_version]}"
                          else
-                           "Image digest differs"
+                           # Get local image info for better messaging
+                           local_info = {id: container.image_id, digest: @image_checker.get_container_image_digest(container.image_id)}
+                           
+                           # Try to get more specific version information
+                           if update_info[:local_version] && update_info[:remote_version]
+                             "Version update available: #{update_info[:local_version]} -> #{update_info[:remote_version]}"
+                           elsif update_info[:local_version]
+                             "Update available for #{container.image} (current: #{update_info[:local_version]})"
+                           elsif local_info[:digest]
+                             # Try to get at least some version info from the digest-based approach
+                             digest_version = @image_checker.get_current_version_from_digest(container.image)
+                             Log.debug { "Digest version lookup for #{container.image}: #{digest_version}" }
+                             if digest_version
+                               "Update available for #{container.image} (current: #{digest_version})"
+                             else
+                               # Fall back to simple version extraction from image tag
+                               simple_version = @image_checker.extract_version_from_image(container.image)
+                               Log.debug { "Simple version extraction for #{container.image}: #{simple_version}" }
+                               if simple_version
+                                 "Update available for #{container.image} (current: #{simple_version})"
+                               else
+                                 # Extract the tag directly for non-semantic versions like "latest"
+                                 if container.image.includes?(":")
+                                   tag = container.image.split(":").last
+                                   "Update available for #{container.image} (current: #{tag})"
+                                 else
+                                   "Update available for #{container.image} (current: latest)"
+                                 end
+                               end
+                             end
+                           elsif (image_id = local_info[:id])
+                             "Update available for #{container.image} (image ID: #{image_id[0..11]}...)"
+                           else
+                             "Update available for #{container.image}"
+                           end
                          end
                        rescue ex
-                         "Error checking update info: #{ex.message}"
+                         "Update available for #{container.image}"
                        end
                      else
                        nil
