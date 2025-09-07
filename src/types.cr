@@ -30,6 +30,7 @@ module Mangrullo
   end
 
   struct Version
+    include JSON::Serializable
     include Comparable(Version)
 
     property major : Int32

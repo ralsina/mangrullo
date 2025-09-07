@@ -1,5 +1,9 @@
 version: 2.0
 shards:
+  backtracer:
+    git: https://github.com/sija/backtracer.cr.git
+    version: 1.2.4
+
   crystar:
     git: https://github.com/naqvis/crystar.git
     version: 0.4.0
@@ -11,4 +15,20 @@ shards:
   docr:
     git: https://github.com/marghidanu/docr.git
     version: 0.1.2+git.commit.f72c164ab319eb109438c25de31642d1f0908e95
+
+  exception_page:
+    git: https://github.com/crystal-loot/exception_page.git
+    version: 0.5.0
+
+  kemal:
+    git: https://github.com/kemalcr/kemal.git
+    version: 1.7.2
+
+  kilt:
+    git: https://github.com/jeromegn/kilt.git
+    version: 0.6.1
+
+  radix:
+    git: https://github.com/luislavena/radix.git
+    version: 0.4.1
 

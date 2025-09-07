@@ -41,7 +41,10 @@ module Mangrullo
     end
 
     def get_container_info(container_id : String) : ContainerInfo?
-      container = @api.containers.get(container_id)
+      containers = @api.containers.list(all: true, filters: {"id" => [container_id]})
+      return nil if containers.empty?
+      
+      container = containers.first
       
       # Defensive handling of container names
         container_name = if container.names && !container.names.empty?
@@ -103,7 +106,7 @@ module Mangrullo
 
     def get_container_logs(container_id : String, tail : Int32 = 100) : String
       begin
-        @api.containers.logs(container_id, tail: tail)
+        @api.containers.logs(container_id, tail: tail.to_s).gets_to_end
       rescue Docr::Errors::DockerAPIError
         ""
       end

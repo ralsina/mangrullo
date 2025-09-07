@@ -7,6 +7,8 @@ authors:
 targets:
   mangrullo:
     main: src/mangrullo.cr
+  mangrullo-web:
+    main: src/web.cr
 
 crystal: '>= 1.16.3'
 
@@ -17,3 +19,7 @@ dependencies:
     github: marghidanu/docr
   docopt:
     github: ralsina/docopt.cr
+  kemal:
+    github: kemalcr/kemal
+  kilt:
+    github: jeromegn/kilt
