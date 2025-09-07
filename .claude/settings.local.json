@@ -12,7 +12,8 @@
       "Bash(./bin/mangrullo:*)",
       "Bash(timeout:*)",
       "Bash(git push:*)",
-      "Bash(shards build:*)"
+      "Bash(shards build:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
