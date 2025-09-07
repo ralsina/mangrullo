@@ -1,0 +1,14 @@
+version: 2.0
+shards:
+  crystar:
+    git: https://github.com/naqvis/crystar.git
+    version: 0.4.0
+
+  docopt:
+    git: https://github.com/ralsina/docopt.cr.git
+    version: 0.2.1
+
+  docr:
+    git: https://github.com/marghidanu/docr.git
+    version: 0.1.2+git.commit.f72c164ab319eb109438c25de31642d1f0908e95
+

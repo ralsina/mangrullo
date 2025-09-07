@@ -1,6 +1,5 @@
-# TODO: Write documentation for `Mangrullo`
-module Mangrullo
-  VERSION = "0.1.0"
+require "./cli"
 
-  # TODO: Put your code here
-end
+VERSION = "0.1.0"
+
+Mangrullo::CLI.run(ARGV)

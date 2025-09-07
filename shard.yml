@@ -11,3 +11,9 @@ targets:
 crystal: '>= 1.16.3'
 
 license: MIT
+
+dependencies:
+  docr:
+    github: marghidanu/docr
+  docopt:
+    github: ralsina/docopt.cr

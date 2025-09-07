@@ -1,2 +1,7 @@
 require "spec"
-require "../src/mangrullo"
+require "../src/types"
+require "../src/docker_client"
+require "../src/image_checker"
+require "../src/update_manager"
+require "../src/config"
+require "../src/cli"
