@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mangrullo - Docker Container Updates</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
+    <style>
+        .status-up-to-date { color: #28a745; }
+        .status-update-available { color: #ffc107; }
+        .status-error { color: #dc3545; }
+        .status-latest { color: #17a2b8; }
+        .container-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        .status-badge { 
+            padding: 0.25rem 0.5rem; 
+            border-radius: 0.25rem; 
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+        .status-up-to-date .status-badge { background-color: #d4edda; color: #155724; }
+        .status-update-available .status-badge { background-color: #fff3cd; color: #856404; }
+        .status-error .status-badge { background-color: #f8d7da; color: #721c24; }
+        .status-latest .status-badge { background-color: #d1ecf1; color: #0c5460; }
+        .header-stats { display: flex; gap: 2rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
+        .loading { opacity: 0.6; pointer-events: none; }
+        .hidden { display: none; }
+        @media (max-width: 768px) {
+            .container-grid { grid-template-columns: 1fr; }
+            .header-stats { flex-direction: column; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
+        </ul>
+        <ul>
+            <li><a href="/" role="button" class="secondary">Dashboard</a></li>
+            <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check All Updates</a></li>
+            <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <%= yield %>
+    </main>
+
+    <footer class="container">
+        <hr>
+        <p>Mangrullo v<%= Mangrullo::VERSION %> - Docker Container Update Automation</p>
+    </footer>
+
+    <!-- Update Modal -->
+    <dialog id="updateModal">
+        <article>
+            <header>
+                <h3>Update Container</h3>
+                <button aria-label="Close" rel="prev" onclick="closeModal()"></button>
+            </header>
+            <p>Are you sure you want to update this container?</p>
+            <label>
+                <input type="checkbox" id="allowMajor" name="allow_major">
+                Allow major version upgrades
+            </label>
+            <footer>
+                <button onclick="confirmUpdate()" class="primary">Update Container</button>
+                <button onclick="closeModal()" aria-label="Close" class="secondary">Cancel</button>
+            </footer>
+        </article>
+    </dialog>
+
+    <!-- Bulk Update Modal -->
+    <dialog id="bulkUpdateModal">
+        <article>
+            <header>
+                <h3>Update All Containers</h3>
+                <button aria-label="Close" rel="prev" onclick="closeBulkModal()"></button>
+            </header>
+            <p>Are you sure you want to update all containers that have updates available?</p>
+            <label>
+                <input type="checkbox" id="bulkAllowMajor" name="allow_major">
+                Allow major version upgrades
+            </label>
+            <label>
+                <input type="checkbox" id="dryRun" name="dry_run">
+                Dry run (show what would be updated)
+            </label>
+            <footer>
+                <button onclick="confirmBulkUpdate()" class="primary">Update All</button>
+                <button onclick="closeBulkModal()" aria-label="Close" class="secondary">Cancel</button>
+            </footer>
+        </article>
+    </dialog>
+
+    <script>
+        let currentContainerId = null;
+        let currentAction = null;
+
+        function showUpdateModal(containerId) {
+            currentContainerId = containerId;
+            document.getElementById('updateModal').showModal();
+        }
+
+        function closeModal() {
+            document.getElementById('updateModal').close();
+            currentContainerId = null;
+        }
+
+        function showBulkUpdateModal() {
+            document.getElementById('bulkUpdateModal').showModal();
+        }
+
+        function closeBulkModal() {
+            document.getElementById('bulkUpdateModal').close();
+        }
+
+        async function checkUpdate(containerId) {
+            const card = document.querySelector(`[data-container-id="${containerId}"]`);
+            const button = card.querySelector('.check-update-btn');
+            const originalText = button.textContent;
+            
+            button.textContent = 'Checking...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`/containers/${containerId}/check-update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.has_update) {
+                    updateContainerStatus(containerId, 'update-available', data.local_version, data.remote_version);
+                } else {
+                    updateContainerStatus(containerId, 'up-to-date', data.local_version, data.remote_version);
+                }
+            } catch (error) {
+                console.error('Error checking update:', error);
+                updateContainerStatus(containerId, 'error', null, null);
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function updateContainer() {
+            if (!currentContainerId) return;
+            
+            const allowMajor = document.getElementById('allowMajor').checked;
+            const card = document.querySelector(`[data-container-id="${currentContainerId}"]`);
+            const button = card.querySelector('.update-btn');
+            const originalText = button.textContent;
+            
+            button.textContent = 'Updating...';
+            button.disabled = true;
+            closeModal();
+            
+            try {
+                const response = await fetch(`/containers/${currentContainerId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ allow_major: allowMajor })
+                });
+                
+                const data = await response.json();
+                
+                if (data.updated) {
+                    updateContainerStatus(currentContainerId, 'up-to-date', null, null);
+                    showNotification('Container updated successfully!', 'success');
+                } else {
+                    showNotification(`Update failed: ${data.error}`, 'error');
+                    updateContainerStatus(currentContainerId, 'error', null, null);
+                }
+            } catch (error) {
+                console.error('Error updating container:', error);
+                showNotification('Update failed', 'error');
+                updateContainerStatus(currentContainerId, 'error', null, null);
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function checkAllUpdates() {
+            const buttons = document.querySelectorAll('.check-update-btn');
+            buttons.forEach(btn => {
+                btn.textContent = 'Checking...';
+                btn.disabled = true;
+            });
+            
+            try {
+                const response = await fetch('/api/updates');
+                const data = await response.json();
+                
+                data.forEach(container => {
+                    if (container.needs_update) {
+                        updateContainerStatus(container.id, 'update-available', 
+                            container.update_info.local_version, 
+                            container.update_info.remote_version);
+                    } else {
+                        updateContainerStatus(container.id, 'up-to-date', 
+                            container.update_info.local_version, 
+                            container.update_info.remote_version);
+                    }
+                });
+                
+                showNotification('Update check completed!', 'success');
+            } catch (error) {
+                console.error('Error checking all updates:', error);
+                showNotification('Failed to check updates', 'error');
+            } finally {
+                buttons.forEach(btn => {
+                    btn.textContent = 'Check Update';
+                    btn.disabled = false;
+                });
+            }
+        }
+
+        function updateAllContainers() {
+            showBulkUpdateModal();
+        }
+
+        async function confirmBulkUpdate() {
+            const allowMajor = document.getElementById('bulkAllowMajor').checked;
+            const dryRun = document.getElementById('dryRun').checked;
+            
+            closeBulkModal();
+            
+            try {
+                const response = await fetch('/api/updates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ allow_major: allowMajor, dry_run: dryRun })
+                });
+                
+                const data = await response.json();
+                
+                let successCount = 0;
+                let failureCount = 0;
+                
+                data.forEach(result => {
+                    if (result.updated) {
+                        successCount++;
+                        updateContainerStatus(result.container.id, 'up-to-date', null, null);
+                    } else if (result.error) {
+                        failureCount++;
+                        updateContainerStatus(result.container.id, 'error', null, null);
+                    }
+                });
+                
+                const message = dryRun ? 
+                    `Dry run completed: ${successCount} containers would be updated` :
+                    `Update completed: ${successCount} successful, ${failureCount} failed`;
+                
+                showNotification(message, successCount > 0 ? 'success' : 'info');
+            } catch (error) {
+                console.error('Error in bulk update:', error);
+                showNotification('Bulk update failed', 'error');
+            }
+        }
+
+        function updateContainerStatus(containerId, status, localVersion, remoteVersion) {
+            const card = document.querySelector(`[data-container-id="${containerId}"]`);
+            if (!card) return;
+            
+            // Remove all status classes
+            card.classList.remove('status-up-to-date', 'status-update-available', 'status-error', 'status-latest');
+            card.classList.add(`status-${status}`);
+            
+            // Update status badge
+            const badge = card.querySelector('.status-badge');
+            if (badge) {
+                const statusTexts = {
+                    'up-to-date': 'Up to Date',
+                    'update-available': 'Update Available',
+                    'error': 'Error',
+                    'latest': 'Latest Tag'
+                };
+                badge.textContent = statusTexts[status] || 'Unknown';
+            }
+            
+            // Update version info
+            const versionInfo = card.querySelector('.version-info');
+            if (versionInfo && localVersion && remoteVersion) {
+                versionInfo.innerHTML = `<strong>Versions:</strong> ${localVersion} → ${remoteVersion}`;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem;
+                background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+                color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+                border-radius: 0.5rem;
+                border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
+                z-index: 1000;
+                max-width: 300px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

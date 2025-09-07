@@ -1,0 +1,128 @@
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h2><%= container["name"] %></h2>
+        <p style="margin: 0; color: #666;"><%= container["image"] %></p>
+    </div>
+    <div>
+        <a href="/" class="button secondary">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <div class="card">
+        <article>
+            <header>
+                <h3>Container Information</h3>
+            </header>
+            <p><strong>ID:</strong> <code><%= container.id %></code></p>
+            <p><strong>Name:</strong> <%= container.name %></p>
+            <p><strong>Image:</strong> <%= container.image %></p>
+            <p><strong>Image ID:</strong> <code><%= container.image_id[0..12] %></code></p>
+            <p><strong>Status:</strong> <%= container.status %></p>
+            <p><strong>Created:</strong> <%= container.created %></p>
+        </article>
+    </div>
+    
+    <div class="card">
+        <article>
+            <header>
+                <h3>Update Status</h3>
+            </header>
+            <%
+              update_status = "Unknown"
+              status_class = "status-error"
+              
+              if update_info[:has_update]
+                update_status = "Update Available"
+                status_class = "status-update-available"
+              else
+                update_status = "Up to Date"
+                status_class = "status-up-to-date"
+              end
+            %>
+            <p><strong>Status:</strong> <span class="status-badge <%= status_class %>"><%= update_status %></span></p>
+            <% if update_info[:local_version] %>
+                <p><strong>Current Version:</strong> <%= update_info[:local_version] %></p>
+            <% end %>
+            <% if update_info[:remote_version] %>
+                <p><strong>Available Version:</strong> <%= update_info[:remote_version] %></p>
+            <% end %>
+            <footer>
+                <button onclick="showUpdateModal('<%= container.id %>')" class="primary">Update Container</button>
+                <button onclick="checkUpdate('<%= container.id %>')" class="secondary">Check Again</button>
+            </footer>
+        </article>
+    </div>
+</div>
+
+<div class="card">
+    <article>
+        <header>
+            <h3>Actions</h3>
+        </header>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button onclick="showUpdateModal('<%= container.id %>')" class="primary">🔄 Update Container</button>
+            <button onclick="restartContainer('<%= container.id %>')" class="secondary">🔄 Restart Container</button>
+            <button onclick="checkUpdate('<%= container.id %>')" class="secondary">🔍 Check for Updates</button>
+            <a href="/containers/<%= container.id %>/logs" class="button secondary">📋 View Logs</a>
+        </div>
+    </article>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <article>
+        <header>
+            <h3>Container Labels</h3>
+        </header>
+        <% if container.labels.empty? %>
+            <p>No labels found for this container.</p>
+        <% else %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Label</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% container.labels.each do |key, value| %>
+                        <tr>
+                            <td><code><%= key %></code></td>
+                            <td><%= value %></td>
+                        </tr>
+                    <% end %>
+                </tbody>
+            </table>
+        <% end %>
+    </article>
+</div>
+
+<script>
+    async function restartContainer(containerId) {
+        if (!confirm('Are you sure you want to restart this container?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/containers/${containerId}/restart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Container restarted successfully!', 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showNotification('Failed to restart container', 'error');
+            }
+        } catch (error) {
+            console.error('Error restarting container:', error);
+            showNotification('Failed to restart container', 'error');
+        }
+    }
+</script>
