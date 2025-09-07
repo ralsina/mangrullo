@@ -22,11 +22,11 @@ module Mangrullo
     DOC
 
     property interval : Int32
-    property allow_major_upgrade : Bool
+    property? allow_major_upgrade : Bool
     property docker_socket_path : String
     property log_level : String
-    property run_once : Bool
-    property dry_run : Bool
+    property? run_once : Bool
+    property? dry_run : Bool
 
     def initialize(@interval : Int32 = 300, @allow_major_upgrade : Bool = false,
                    @docker_socket_path : String = "/var/run/docker.sock",
@@ -66,11 +66,11 @@ module Mangrullo
 
       # Environment variables override command line arguments
       config.interval = ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || config.interval
-      config.allow_major_upgrade = ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true" || config.allow_major_upgrade
+      config.allow_major_upgrade = ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true" || config.allow_major_upgrade?
       config.docker_socket_path = ENV["MANGRULLO_DOCKER_SOCKET"]? || config.docker_socket_path
       config.log_level = ENV["MANGRULLO_LOG_LEVEL"]? || config.log_level
-      config.run_once = ENV["MANGRULLO_RUN_ONCE"]? == "true" || config.run_once
-      config.dry_run = ENV["MANGRULLO_DRY_RUN"]? == "true" || config.dry_run
+      config.run_once = ENV["MANGRULLO_RUN_ONCE"]? == "true" || config.run_once?
+      config.dry_run = ENV["MANGRULLO_DRY_RUN"]? == "true" || config.dry_run?
 
       config
     end
@@ -117,11 +117,11 @@ module Mangrullo
       <<-CONFIG
       Mangrullo Configuration:
         Interval: #{interval} seconds
-        Allow major upgrades: #{allow_major_upgrade}
+        Allow major upgrades: #{allow_major_upgrade?}
         Docker socket: #{docker_socket_path}
         Log level: #{log_level}
-        Run once: #{run_once}
-        Dry run: #{dry_run}
+        Run once: #{run_once?}
+        Dry run: #{dry_run?}
       CONFIG
     end
   end

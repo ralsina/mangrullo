@@ -2,12 +2,19 @@ require "docr"
 require "./types"
 
 module Mangrullo
+  # Custom Docker client that supports configurable socket paths
+  class CustomDockerClient < Docr::Client
+    def initialize(socket_path : String = "/var/run/docker.sock")
+      socket = UNIXSocket.new(socket_path)
+      @client = HTTP::Client.new(socket)
+    end
+  end
+
   class DockerClient
     @api : Docr::API
 
     def initialize(socket_path : String = "/var/run/docker.sock")
-      # TODO: Configure socket path if needed
-      client = Docr::Client.new
+      client = CustomDockerClient.new(socket_path)
       @api = Docr::API.new(client)
     end
 

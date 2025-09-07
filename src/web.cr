@@ -16,7 +16,7 @@ module Mangrullo
   puts "Starting Mangrullo Web UI on http://0.0.0.0:3000"
 
   # Initialize the web server
-  server = WebServer.new
+  WebServer.new
 
   # Start Kemal
   Kemal.run
