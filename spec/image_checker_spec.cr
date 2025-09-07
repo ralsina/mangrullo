@@ -126,7 +126,7 @@ describe Mangrullo::ImageChecker do
     it "returns update info when update is available" do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
-      container = create_container("nginx:1.2.3")
+      create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 4))
 
       info = checker.get_image_update_info("nginx:1.2.3")
@@ -147,7 +147,7 @@ describe Mangrullo::ImageChecker do
     it "returns no update when versions are the same" do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
-      container = create_container("nginx:1.2.3")
+      create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 3))
 
       info = checker.get_image_update_info("nginx:1.2.3")

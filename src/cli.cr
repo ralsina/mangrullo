@@ -10,7 +10,7 @@ module Mangrullo
     property config : Config
     property docker_client : DockerClient
     property update_manager : UpdateManager
-    property running : Bool = true
+    property? running : Bool = true
 
     def initialize(@config : Config)
       config.setup_logging
@@ -26,9 +26,9 @@ module Mangrullo
 
       cli = CLI.new(config)
 
-      if config.dry_run
+      if config.dry_run?
         cli.dry_run
-      elsif config.run_once
+      elsif config.run_once?
         cli.run_once
       else
         cli.run_daemon
@@ -40,10 +40,10 @@ module Mangrullo
       Log.info { config.to_s }
 
       begin
-        results = update_manager.check_and_update_containers(config.allow_major_upgrade)
+        results = update_manager.check_and_update_containers(config.allow_major_upgrade?)
 
-        updated_count = results.count { |r| r[:updated] }
-        error_count = results.count { |r| r[:error] }
+        updated_count = results.count { |result| result[:updated] }
+        error_count = results.count { |result| result[:error] }
 
         Log.info { "Update check completed" }
         Log.info { "Containers checked: #{results.size}" }
@@ -68,13 +68,13 @@ module Mangrullo
       Log.info { "Mangrullo starting (daemon mode)" }
       Log.info { config.to_s }
 
-      while running
+      while running?
         begin
           Log.info { "Starting update cycle" }
-          results = update_manager.check_and_update_containers(config.allow_major_upgrade)
+          results = update_manager.check_and_update_containers(config.allow_major_upgrade?)
 
-          updated_count = results.count { |r| r[:updated] }
-          error_count = results.count { |r| r[:error] }
+          updated_count = results.count { |result| result[:updated] }
+          error_count = results.count { |result| result[:error] }
 
           Log.info { "Update cycle completed" }
           Log.info { "Containers checked: #{results.size}" }
@@ -108,9 +108,9 @@ module Mangrullo
       Log.info { config.to_s }
 
       begin
-        results = update_manager.dry_run(config.allow_major_upgrade)
+        results = update_manager.dry_run(config.allow_major_upgrade?)
 
-        needing_update = results.select { |r| r[:needs_update] }
+        needing_update = results.select { |result| result[:needs_update] }
 
         Log.info { "Dry run results:" }
         Log.info { "Containers checked: #{results.size}" }

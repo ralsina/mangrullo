@@ -7,11 +7,11 @@ class WebViews
 
     # Calculate summary statistics
     total_containers = containers.size
-    updates_available = containers.count { |c|
+    updates_available = containers.count { |container|
       begin
         docker_client = Mangrullo::DockerClient.new("/var/run/docker.sock")
         image_checker = Mangrullo::ImageChecker.new(docker_client)
-        image_checker.needs_update?(c, false)
+        image_checker.needs_update?(container, false)
       rescue
         false
       end
