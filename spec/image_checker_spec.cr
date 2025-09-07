@@ -57,7 +57,10 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 3))
+      # Set available versions - only current version available
+      checker.set_all_versions("nginx:1.2.3", [
+        Mangrullo::Version.new(1, 2, 3)
+      ])
 
       result = checker.needs_update?(container, false)
       result.should be_false
@@ -67,7 +70,11 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 4))
+      # Set available versions including newer patch version
+      checker.set_all_versions("nginx:1.2.3", [
+        Mangrullo::Version.new(1, 2, 3),
+        Mangrullo::Version.new(1, 2, 4)
+      ])
 
       result = checker.needs_update?(container, false)
       result.should be_true
@@ -77,7 +84,11 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(2, 0, 0))
+      # Set available versions including major upgrade
+      checker.set_all_versions("nginx:1.2.3", [
+        Mangrullo::Version.new(1, 2, 3),
+        Mangrullo::Version.new(2, 0, 0)
+      ])
 
       result = checker.needs_update?(container, false)
       result.should be_false
@@ -87,7 +98,11 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(2, 0, 0))
+      # Set available versions including major upgrade
+      checker.set_all_versions("nginx:1.2.3", [
+        Mangrullo::Version.new(1, 2, 3),
+        Mangrullo::Version.new(2, 0, 0)
+      ])
 
       result = checker.needs_update?(container, true)
       result.should be_true
@@ -106,6 +121,8 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:latest")
+      # Set image digest to simulate update available
+      checker.set_image_digest("nginx:latest", "some_digest")
 
       result = checker.needs_update?(container, false)
       result.should be_true
@@ -115,7 +132,8 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", nil)
+      # Set empty versions list to simulate no remote versions available
+      checker.set_all_versions("nginx:1.2.3", [] of Mangrullo::Version)
 
       result = checker.needs_update?(container, false)
       result.should be_false
@@ -127,7 +145,11 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 4))
+      # Set available versions including newer patch version
+      checker.set_all_versions("nginx:1.2.3", [
+        Mangrullo::Version.new(1, 2, 3),
+        Mangrullo::Version.new(1, 2, 4)
+      ])
 
       info = checker.get_image_update_info("nginx:1.2.3")
       info[:has_update].should be_true
@@ -137,9 +159,12 @@ describe Mangrullo::ImageChecker do
       remote_version.should_not be_nil
       if local_version.is_a?(Mangrullo::Version)
         local_version.major.should eq(1)
+        local_version.minor.should eq(2)
+        local_version.patch.should eq(3)
       end
       if remote_version.is_a?(Mangrullo::Version)
         remote_version.major.should eq(1)
+        remote_version.minor.should eq(2)
         remote_version.patch.should eq(4)
       end
     end
@@ -148,7 +173,10 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       create_container("nginx:1.2.3")
-      checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 3))
+      # Set available versions - only current version available
+      checker.set_all_versions("nginx:1.2.3", [
+        Mangrullo::Version.new(1, 2, 3)
+      ])
 
       info = checker.get_image_update_info("nginx:1.2.3")
       info[:has_update].should be_false
@@ -181,13 +209,58 @@ end
 # Mock ImageChecker for testing
 class MockImageChecker < Mangrullo::ImageChecker
   @remote_versions = Hash(String, Mangrullo::Version?).new
+  @all_versions = Hash(String, Array(Mangrullo::Version)).new
+  @image_digests = Hash(String, String?).new
 
   def set_remote_version(image_name : String, version : Mangrullo::Version?)
     @remote_versions[image_name] = version
   end
 
+  def set_all_versions(image_name : String, versions : Array(Mangrullo::Version))
+    @all_versions[image_name] = versions
+  end
+
+  def set_image_digest(image_name : String, digest : String?)
+    @image_digests[image_name] = digest
+  end
+
   def get_latest_version(image_name : String) : Mangrullo::Version?
     @remote_versions[image_name]?
+  end
+
+  def get_all_versions(image_name : String) : Array(Mangrullo::Version)
+    @all_versions[image_name]? || [] of Mangrullo::Version
+  end
+
+  def find_target_update_version(image_name : String, current_version : Mangrullo::Version, allow_major_upgrade : Bool) : Mangrullo::Version?
+    all_versions = get_all_versions(image_name)
+    return nil if all_versions.empty?
+
+    # Filter versions that are newer than current version
+    newer_versions = all_versions.select { |v| v > current_version }
+
+    # Filter by major upgrade preference
+    if allow_major_upgrade
+      # Allow any newer version
+      newer_versions.max?
+    else
+      # Only allow minor/patch updates within the same major version
+      same_major_versions = newer_versions.select { |v| v.major == current_version.major }
+      same_major_versions.max?
+    end
+  end
+
+  def image_has_update?(image_name : String) : Bool
+    # Simple mock implementation - return false for tests unless specifically set
+    @image_digests[image_name]? != nil
+  end
+
+  def get_local_image_digest(image_name : String) : String?
+    @image_digests[image_name]?
+  end
+
+  def get_remote_image_digest(image_name : String) : String?
+    @image_digests[image_name]? ? "different_digest" : nil
   end
 end
 

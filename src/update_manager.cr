@@ -100,36 +100,29 @@ module Mangrullo
                          Log.debug { "Checking update info for: #{container.image}" }
                          update_info = @image_checker.get_image_update_info(container.image)
                          if update_info[:local_version] && update_info[:remote_version]
-                           "Version update available: #{update_info[:local_version]} -> #{update_info[:remote_version]}"
+                           "Version update available: #{update_info[:local_version].to_s} -> #{update_info[:remote_version].to_s}"
                          else
                            # Get local image info for better messaging
                            local_info = {id: container.image_id, digest: @image_checker.get_container_image_digest(container.image_id)}
                            
                            # Try to get more specific version information
                            if update_info[:local_version] && update_info[:remote_version]
-                             "Version update available: #{update_info[:local_version]} -> #{update_info[:remote_version]}"
+                             "Version update available: #{update_info[:local_version].to_s} -> #{update_info[:remote_version].to_s}"
                            elsif update_info[:local_version]
-                             "Update available for #{container.image} (current: #{update_info[:local_version]})"
+                             "Update available for #{container.image} (current: #{update_info[:local_version].to_s})"
                            elsif local_info[:digest]
-                             # Try to get at least some version info from the digest-based approach
-                             digest_version = @image_checker.get_current_version_from_digest(container.image)
-                             Log.debug { "Digest version lookup for #{container.image}: #{digest_version}" }
-                             if digest_version
-                               "Update available for #{container.image} (current: #{digest_version})"
+                             # For digest-based images, try to extract version from image tag
+                             simple_version = @image_checker.extract_version_from_image(container.image)
+                             Log.debug { "Simple version extraction for #{container.image}: #{simple_version}" }
+                             if simple_version
+                               "Update available for #{container.image} (current: #{simple_version})"
                              else
-                               # Fall back to simple version extraction from image tag
-                               simple_version = @image_checker.extract_version_from_image(container.image)
-                               Log.debug { "Simple version extraction for #{container.image}: #{simple_version}" }
-                               if simple_version
-                                 "Update available for #{container.image} (current: #{simple_version})"
+                               # Extract the tag directly for non-semantic versions like "latest"
+                               if container.image.includes?(":")
+                                 tag = container.image.split(":").last
+                                 "Update available for #{container.image} (current: #{tag})"
                                else
-                                 # Extract the tag directly for non-semantic versions like "latest"
-                                 if container.image.includes?(":")
-                                   tag = container.image.split(":").last
-                                   "Update available for #{container.image} (current: #{tag})"
-                                 else
-                                   "Update available for #{container.image} (current: latest)"
-                                 end
+                                 "Update available for #{container.image} (current: latest)"
                                end
                              end
                            elsif (image_id = local_info[:id])

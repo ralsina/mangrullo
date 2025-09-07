@@ -43,10 +43,10 @@
             %>
             <p><strong>Status:</strong> <span class="status-badge <%= status_class %>"><%= update_status %></span></p>
             <% if update_info[:local_version] %>
-                <p><strong>Current Version:</strong> <%= update_info[:local_version] %></p>
+                <p><strong>Current Version:</strong> <%= update_info[:local_version].to_s %></p>
             <% end %>
             <% if update_info[:remote_version] %>
-                <p><strong>Available Version:</strong> <%= update_info[:remote_version] %></p>
+                <p><strong>Available Version:</strong> <%= update_info[:remote_version].to_s %></p>
             <% end %>
             <footer>
                 <button onclick="showUpdateModal('<%= container.id %>')" class="primary">Update Container</button>
