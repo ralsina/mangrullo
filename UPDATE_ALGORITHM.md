@@ -2,66 +2,101 @@
 
 ## Overview
 
-Mangrullo uses a hierarchical approach to detect when Docker container images need updates. The algorithm prioritizes semantic version comparison for clear user messaging and falls back to digest comparison for complex or non-standard image naming schemes.
+Mangrullo uses a simplified, efficient approach to detect when Docker container images need updates. The algorithm clearly separates handling for "latest" tags versus versioned tags, optimizing for performance and maintainability.
 
 ## Update Decision Flow
 
-### 1. Primary Check: Special Tags
-```crystal
-return true if container.image.includes?("latest")
-```
-- **Always considers `:latest` tags as outdated**
-- This is a safety measure since `:latest` by definition should be the most recent
+### 1. Tag Type Detection
 
-### 2. Version-Based Detection (Preferred)
-
-#### 2.1 Enhanced Local Version Detection
-The algorithm first tries to determine the actual semantic version of the running container:
+The algorithm first determines the type of image tag:
 
 ```crystal
-# Step 1: Try digest-based version lookup (most accurate)
-local_version = get_current_version_from_digest(image_name)
+def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false) : Bool
+  # If using 'latest' tag, use simple digest comparison
+  if container.image.includes?("latest")
+    return image_has_update?(container.image)
+  end
 
-# Step 2: Fall back to tag parsing if digest fails
-local_version ||= extract_version_from_image(image_name)
-```
+  # For versioned tags, find available updates based on version
+  current_version = extract_version_from_image(container.image)
+  return false unless current_version
 
-**Digest-based Version Lookup:**
-1. Get local image digest from Docker daemon
-2. Query Docker Hub API for all tags pointing to that digest
-3. Extract semantic versions from those tags
-4. Return the highest semantic version found
-
-**Tag-based Version Extraction:**
-- Parses version from image tag (e.g., `nginx:1.21.0` → `1.21.0`)
-- Supports semantic versioning with prereleases and build metadata
-- Handles `v` prefixes (e.g., `v1.2.3`)
-
-#### 2.2 Remote Version Detection
-```crystal
-remote_version = get_latest_version(image_name)
-```
-- Queries Docker Hub API at `/v2/{image}/tags/list`
-- Parses all available tags to find the highest semantic version
-- Returns `nil` if no semantic versions can be found
-
-#### 2.3 Version Comparison
-```crystal
-if allow_major_upgrade
-  remote_version > local_version  # Any version increase
-else
-  remote_version > local_version && !current_version.major_upgrade?(remote_version)
+  target_version = find_target_update_version(container.image, current_version, allow_major_upgrade)
+  target_version != nil
 end
 ```
 
-### 3. Fallback: Digest Comparison
+### 2. Latest Tag Handling
 
-When version-based detection fails:
+For images using `:latest` tags, the algorithm uses simple digest comparison:
+
 ```crystal
 def image_has_update?(image_name : String) : Bool
   local_digest = get_local_image_digest(image_name)
+  return false unless local_digest
+
   remote_digest = get_remote_image_digest(image_name)
+  return false unless remote_digest
+
   local_digest != remote_digest
+end
+```
+
+**Benefits:**
+- Single API call to get remote manifest digest
+- No need to parse hundreds or thousands of tags
+- Fast and efficient
+
+### 3. Versioned Tag Handling
+
+For images with semantic version tags (e.g., `nginx:1.2.3`):
+
+#### 3.1 Version Extraction
+```crystal
+def extract_version_from_image(image_name : String) : Version?
+  # Skip SHA256 digests (they are image IDs, not versioned images)
+  return nil if image_name.starts_with?("sha256:")
+
+  # Extract tag from image name (format: name:tag or name)
+  parts = image_name.split(":")
+  tag = parts.size > 1 ? parts.last : "latest"
+
+  Version.parse(tag)
+end
+```
+
+#### 3.2 Target Version Discovery
+```crystal
+def find_target_update_version(image_name : String, current_version : Version, allow_major_upgrade : Bool) : Version?
+  # Get all available versions from the registry
+  all_versions = get_all_versions(image_name)
+  return nil if all_versions.empty?
+
+  # Filter versions that are newer than current version
+  newer_versions = all_versions.select { |v| v > current_version }
+  
+  # Filter by major upgrade preference
+  if allow_major_upgrade
+    # Allow any newer version
+    newer_versions.max?
+  else
+    # Only allow minor/patch updates within the same major version
+    same_major_versions = newer_versions.select { |v| v.major == current_version.major }
+    same_major_versions.max?
+  end
+end
+```
+
+#### 3.3 Version Collection
+```crystal
+def get_all_versions(image_name : String) : Array(Version)
+  # Single API call to get all tags
+  response = registry_client.get("/v2/#{repository_path}/tags/list")
+  
+  # Parse and filter semantic versions
+  tags = json["tags"].as_a.map(&.as_s)
+  versions = tags.compact_map { |tag| Version.parse(tag) }
+  versions.sort!
 end
 ```
 
@@ -73,97 +108,78 @@ end
 - Local image digests and metadata
 
 ### Remote Information  
-- **Docker Hub Registry API** (`registry-1.docker.io`)
-- **Endpoints:**
-  - `/v2/{image}/tags/list` - for version discovery
-  - `/v2/{image}/manifests/{tag}` - for digest retrieval
-  - Individual manifest checks for digest-to-tag mapping
+- **Registry APIs** with authentication support:
+  - **Docker Hub**: `registry-1.docker.io`
+  - **GitHub Container Registry**: `ghcr.io`
+  - **Other registries**: Dynamic detection
 
-## Message Generation Hierarchy
+**Authentication:**
+- JWT token authentication with caching
+- Support for both Docker Hub and ghcr.io token endpoints
+- Graceful fallback to unauthenticated requests
 
-The algorithm generates user-friendly messages based on what information is available:
+## Message Generation
 
-### 1. Full Version Information (Best)
-```
-"Version update available: 1.2.3 -> 1.2.4"
-```
+The algorithm generates clean, user-friendly messages:
 
-### 2. Current Version Known
+### Latest Tags
 ```
-"Update available for nginx:latest (current: 1.21.6)"
-```
-
-### 3. Digest Difference with Version Info
-```
-"Update available for redis (digest differs)"
-```
-*Note: Tries digest-based version lookup first*
-
-### 4. Image ID Available
-```
-"Update available for app (image ID: sha256:1a2b3c...)"
+"Update available for ghcr.io/home-assistant/home-assistant:latest (current: latest)"
 ```
 
-### 5. Generic Fallback
+### Versioned Tags
 ```
-"Update available for app"
+"Version update available: 1.2.0 -> 1.4.5"
 ```
 
 ## Key Methods and Their Roles
 
-### ImageChecker Methods
+### Core Methods
 
 #### `needs_update?(container, allow_major_upgrade)`
-Main entry point - determines if an update is needed
-
-#### `get_current_version_from_digest(image_name)`
-**NEW:** Gets actual semantic version of running container by:
-1. Getting local image digest
-2. Finding all tags pointing to that digest
-3. Extracting and returning highest semantic version
-
-#### `extract_version_from_image(image_name)`
-Original method - parses version from image tag name
-
-#### `get_latest_version(image_name)`
-Gets highest semantic version available remotely
-
-#### `get_tags_for_digest(image_name, digest)`
-**NEW:** Returns all tags that point to a specific digest
-
-#### `get_local_image_digest(image_name)`
-Gets SHA256 digest of local image
-
-#### `get_remote_image_digest(image_name)`
-Gets SHA256 digest of remote image manifest
+Main entry point - routes to appropriate detection strategy based on tag type
 
 #### `image_has_update?(image_name)`
-Fallback method using digest comparison
+Handles latest tag updates via digest comparison
 
-### Version Comparison
-- Uses standard semantic versioning rules
-- Supports prerelease versions (alpha, beta, etc.)
-- Ignores build metadata in comparisons
-- Major upgrade control via `allow_major_upgrade` flag
+#### `find_target_update_version(image_name, current_version, allow_major_upgrade)`
+Finds the best available update version based on current version and upgrade preferences
 
-## Registry Limitations
+#### `get_all_versions(image_name)`
+Performs single API call to get all available versions from registry
 
-### Current Limitations
-1. **Docker Hub Only:** Hardcoded to `registry-1.docker.io`
-2. **No Authentication:** Doesn't support private registries
-3. **Image Name Parsing:** Strips registry prefixes, so `gcr.io/app` becomes `app`
+#### `extract_version_from_image(image_name)`
+Parses semantic version from image tag
 
-### What Breaks with Non-Docker Hub Images
-- Google Container Registry (`gcr.io`)
-- GitLab Registry (`registry.gitlab.com`)
-- Amazon ECR, Azure Container Registry
-- Private registries
+### Authentication Methods
 
-### Current Behavior for Non-Docker Hub
-- Version detection typically fails
-- Falls back to digest comparison
-- Shows generic "update available" messages
-- May miss updates entirely
+#### `get_registry_token(registry_host, repository_path)`
+Fetches JWT tokens for registry authentication with caching
+
+#### `create_authenticated_client(registry_host, repository_path)`
+Creates HTTP client with proper authorization headers
+
+## Registry Support
+
+### Supported Registries
+- **Docker Hub** (`registry-1.docker.io`)
+- **GitHub Container Registry** (`ghcr.io`)
+- **Generic registries** with standard API v2
+
+### Registry Detection
+```crystal
+# Automatic registry host detection
+if base_name.includes?("/")
+  parts = base_name.split("/")
+  if parts[0].includes?(".") || parts[0].includes?(":")
+    registry_host = parts[0]
+    repository_path = parts[1..-1].join("/")
+  end
+end
+```
+
+### Special Mappings
+- `lscr.io` → redirects to `ghcr.io/linuxserver/`
 
 ## Version Parsing Support
 
@@ -173,10 +189,10 @@ Fallback method using digest comparison
 - Build metadata: `1.2.3+build.123` (ignored in comparison)
 - 'v' prefix: `v1.2.3`
 
-### Unsupported Scenarios
-- Custom version schemes (dates, commit hashes)
-- Floating tags without semantic versions (`:stable`, `:alpine`)
-- Images from non-Docker Hub registries
+### Exclusions
+- `latest` tags (handled separately)
+- SHA256 digests (image IDs)
+- Non-semantic version strings
 
 ## Major Upgrade Control
 
@@ -184,57 +200,66 @@ The `allow_major_upgrade` parameter controls upgrade behavior:
 - **`true`**: Any version increase (1.2.3 → 2.0.0)
 - **`false`**: Only minor/patch updates (1.2.3 → 1.3.0, NOT 1.2.3 → 2.0.0)
 
-This is implemented via the `major_upgrade?` method:
-```crystal
-def major_upgrade?(other : Version) : Bool
-  self.major != other.major
-end
-```
+## Performance Characteristics
+
+### API Efficiency
+- **Latest tags**: 2 API calls (local digest + remote manifest)
+- **Versioned tags**: 1 API call (tags list) + local version parsing
+- **No individual tag checking**: Eliminated the N+1 query problem
+
+### Authentication Caching
+- JWT tokens cached with 4-minute expiration
+- Reduces authentication overhead for multiple checks
+
+### Network Optimization
+- Single HTTP request per image for versioned tags
+- Proper error handling and graceful degradation
+- Minimal external dependencies
 
 ## Error Handling
 
 ### Graceful Degradation
-The algorithm is designed to fail gracefully:
-- Network failures → fall back to digest comparison
-- API rate limits → show generic messages
-- Parsing failures → use alternative methods
-- Registry issues → skip problematic containers
+- Network failures → return false (no update detected)
+- API errors → log debug information and continue
+- Authentication failures → fall back to unauthenticated requests
+- Parsing failures → skip problematic containers
 
 ### Resilience Features
 - Rescue blocks around all external API calls
-- Multiple fallback strategies
-- Container-level error isolation (one failure doesn't stop all checks)
+- Container-level error isolation
+- Comprehensive debug logging
+- Authentication token caching
 
-## Performance Considerations
+## Security Considerations
 
-### API Calls
-- Each image may require multiple Docker Hub API calls
-- Digest-based lookup requires N+1 calls (one for tag list, one per tag)
-- No caching of remote data (fresh check each time)
+### Authentication
+- JWT tokens from official registry endpoints
+- Token caching with proper expiration
+- No hardcoded credentials
 
-### Network Dependency
-- Requires internet access to Docker Hub API
-- No offline mode capability
-- Rate limiting could impact large deployments
+### Registry Communication
+- HTTPS-only communication
+- Standard Docker Registry API v2
+- Support for private registries with authentication
 
 ## Future Improvements
 
-### Registry Support
-- Dynamic registry detection from image names
-- Support for multiple registry APIs
-- Authentication for private registries
+### Enhanced Registry Support
+- Additional registry types (GitLab, ECR, GCR)
+- Registry-specific configuration
+- Custom authentication methods
 
-### Performance
-- API response caching
+### Performance Optimizations
+- Parallel container checking
+- Response caching for repeated checks
 - Batch operations for multiple images
-- Parallel version checking
 
-### Enhanced Messaging
-- Change logs and release notes
-- Security vulnerability information
-- Download size estimates
+### User Experience
+- More detailed update information
+- Change log integration
+- Security vulnerability reporting
 
-### Configuration
-- Per-image registry configuration
-- Custom version parsing rules
-- Whitelisting/blacklisting of updates
+### Configuration Options
+- Per-image update policies
+- Custom version filtering rules
+- Registry-specific settings
