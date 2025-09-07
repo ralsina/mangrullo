@@ -128,5 +128,4 @@ module Mangrullo
       result
     end
   end
-
-  end
+end

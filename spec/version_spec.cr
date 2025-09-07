@@ -93,7 +93,7 @@ describe Mangrullo::Version do
     it "compares major versions" do
       v1_0_0 = Mangrullo::Version.new(1, 0, 0)
       v2_0_0 = Mangrullo::Version.new(2, 0, 0)
-      
+
       (v1_0_0 < v2_0_0).should be_true
       (v2_0_0 > v1_0_0).should be_true
       (v1_0_0 == v1_0_0).should be_true
@@ -102,7 +102,7 @@ describe Mangrullo::Version do
     it "compares minor versions" do
       v1_0_0 = Mangrullo::Version.new(1, 0, 0)
       v1_1_0 = Mangrullo::Version.new(1, 1, 0)
-      
+
       (v1_0_0 < v1_1_0).should be_true
       (v1_1_0 > v1_0_0).should be_true
     end
@@ -110,7 +110,7 @@ describe Mangrullo::Version do
     it "compares patch versions" do
       v1_0_0 = Mangrullo::Version.new(1, 0, 0)
       v1_0_1 = Mangrullo::Version.new(1, 0, 1)
-      
+
       (v1_0_0 < v1_0_1).should be_true
       (v1_0_1 > v1_0_0).should be_true
     end
@@ -118,7 +118,7 @@ describe Mangrullo::Version do
     it "compares prerelease versions" do
       v1_0_0 = Mangrullo::Version.new(1, 0, 0)
       v1_0_0_alpha = Mangrullo::Version.new(1, 0, 0, "alpha")
-      
+
       (v1_0_0_alpha < v1_0_0).should be_true
       (v1_0_0 > v1_0_0_alpha).should be_true
     end
@@ -127,7 +127,7 @@ describe Mangrullo::Version do
       v_alpha = Mangrullo::Version.new(1, 0, 0, "alpha")
       v_beta = Mangrullo::Version.new(1, 0, 0, "beta")
       v_rc = Mangrullo::Version.new(1, 0, 0, "rc")
-      
+
       (v_alpha < v_beta).should be_true
       (v_beta < v_rc).should be_true
       (v_rc > v_beta).should be_true
@@ -136,7 +136,7 @@ describe Mangrullo::Version do
     it "handles equal versions" do
       v1 = Mangrullo::Version.new(1, 2, 3, "alpha", "build.123")
       v2 = Mangrullo::Version.new(1, 2, 3, "alpha", "build.456")
-      
+
       (v1 == v2).should be_true
       (v1 <= v2).should be_true
       (v1 >= v2).should be_true
@@ -151,15 +151,15 @@ describe Mangrullo::Version do
         Mangrullo::Version.new(1, 0, 0, "alpha"),
         Mangrullo::Version.new(1, 0, 0, "beta"),
       ]
-      
+
       sorted = versions.sort
       sorted.map(&.to_s).should eq([
         "1.0.0-alpha",
-        "1.0.0-beta", 
+        "1.0.0-beta",
         "1.0.0",
         "1.0.1",
         "1.1.0",
-        "2.0.0"
+        "2.0.0",
       ])
     end
   end
@@ -168,7 +168,7 @@ describe Mangrullo::Version do
     it "returns true for major version differences" do
       v1 = Mangrullo::Version.new(1, 2, 3)
       v2 = Mangrullo::Version.new(2, 0, 0)
-      
+
       v1.major_upgrade?(v2).should be_true
       v2.major_upgrade?(v1).should be_true
     end
@@ -176,7 +176,7 @@ describe Mangrullo::Version do
     it "returns false for same major version" do
       v1 = Mangrullo::Version.new(1, 2, 3)
       v2 = Mangrullo::Version.new(1, 5, 0)
-      
+
       v1.major_upgrade?(v2).should be_false
       v2.major_upgrade?(v1).should be_false
     end
@@ -185,7 +185,7 @@ describe Mangrullo::Version do
       v1 = Mangrullo::Version.new(1, 2, 3)
       v2 = Mangrullo::Version.new(1, 3, 0)
       v3 = Mangrullo::Version.new(1, 2, 4)
-      
+
       v1.major_upgrade?(v2).should be_false
       v1.major_upgrade?(v3).should be_false
     end

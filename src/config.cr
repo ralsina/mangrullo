@@ -7,7 +7,7 @@ module Mangrullo
     Mangrullo - Docker container update automation tool
 
     Usage:
-      mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>] 
+      mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
                [--log-level=<level>] [--once] [--dry-run] [--help] [--version]
 
     Options:
@@ -28,27 +28,25 @@ module Mangrullo
     property run_once : Bool
     property dry_run : Bool
 
-    def initialize(@interval : Int32 = 300, @allow_major_upgrade : Bool = false, 
-                   @docker_socket_path : String = "/var/run/docker.sock", 
+    def initialize(@interval : Int32 = 300, @allow_major_upgrade : Bool = false,
+                   @docker_socket_path : String = "/var/run/docker.sock",
                    @log_level : String = "info", @run_once : Bool = false, @dry_run : Bool = false)
     end
 
     def self.parse(args : Array(String)) : Config
-      begin
-        docopt = Docopt.docopt(DOCOPT, argv: args, help: true, version: "Mangrullo #{::VERSION}")
-        
-        Config.new(
-          interval: docopt["--interval"].as(String).to_i,
-          allow_major_upgrade: docopt["--allow-major"].as(Bool | Nil) || false,
-          docker_socket_path: docopt["--socket"].as(String),
-          log_level: docopt["--log-level"].as(String),
-          run_once: docopt["--once"].as(Bool | Nil) || false,
-          dry_run: docopt["--dry-run"].as(Bool | Nil) || false
-        )
-      rescue ex
-        puts ex.message
-        exit
-      end
+      docopt = Docopt.docopt(DOCOPT, argv: args, help: true, version: "Mangrullo #{::VERSION}")
+
+      Config.new(
+        interval: docopt["--interval"].as(String).to_i,
+        allow_major_upgrade: docopt["--allow-major"].as(Bool | Nil) || false,
+        docker_socket_path: docopt["--socket"].as(String),
+        log_level: docopt["--log-level"].as(String),
+        run_once: docopt["--once"].as(Bool | Nil) || false,
+        dry_run: docopt["--dry-run"].as(Bool | Nil) || false
+      )
+    rescue ex
+      puts ex.message
+      exit
     end
 
     def self.from_env : Config
@@ -65,7 +63,7 @@ module Mangrullo
     def self.from_args_and_env(args : Array(String)) : Config
       # Parse command line args first, then override with environment variables
       config = parse(args)
-      
+
       # Environment variables override command line arguments
       config.interval = ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || config.interval
       config.allow_major_upgrade = ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true" || config.allow_major_upgrade
@@ -73,7 +71,7 @@ module Mangrullo
       config.log_level = ENV["MANGRULLO_LOG_LEVEL"]? || config.log_level
       config.run_once = ENV["MANGRULLO_RUN_ONCE"]? == "true" || config.run_once
       config.dry_run = ENV["MANGRULLO_DRY_RUN"]? == "true" || config.dry_run
-      
+
       config
     end
 

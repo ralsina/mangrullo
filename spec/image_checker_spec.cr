@@ -7,7 +7,7 @@ describe Mangrullo::ImageChecker do
   describe "#extract_version_from_image" do
     it "extracts version from simple image names" do
       checker = Mangrullo::ImageChecker.new(MockDockerClient.new)
-      
+
       version = checker.extract_version_from_image("nginx:1.2.3")
       version.should_not be_nil
       version.should be_a(Mangrullo::Version)
@@ -20,14 +20,14 @@ describe Mangrullo::ImageChecker do
 
     it "defaults to latest when no tag is specified" do
       checker = Mangrullo::ImageChecker.new(MockDockerClient.new)
-      
+
       version = checker.extract_version_from_image("nginx")
-      version.should be_nil  # "latest" is not a semantic version
+      version.should be_nil # "latest" is not a semantic version
     end
 
     it "handles complex image names with registry" do
       checker = Mangrullo::ImageChecker.new(MockDockerClient.new)
-      
+
       version = checker.extract_version_from_image("docker.io/library/nginx:1.2.3")
       version.should_not be_nil
       if version.is_a?(Mangrullo::Version)
@@ -39,27 +39,26 @@ describe Mangrullo::ImageChecker do
 
     it "returns nil for SHA256 digests" do
       checker = Mangrullo::ImageChecker.new(MockDockerClient.new)
-      
+
       version = checker.extract_version_from_image("sha256:8124f5e2ddf9a4985ca653c7bd4bb0132eef4316aaf2975181a5f6a9d0f14ced")
       version.should be_nil
     end
 
     it "returns nil for invalid version tags" do
       checker = Mangrullo::ImageChecker.new(MockDockerClient.new)
-      
+
       version = checker.extract_version_from_image("nginx:invalid")
       version.should be_nil
     end
   end
 
   describe "#needs_update?" do
-
     it "returns false when no update is needed" do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 3))
-      
+
       result = checker.needs_update?(container, false)
       result.should be_false
     end
@@ -69,7 +68,7 @@ describe Mangrullo::ImageChecker do
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 4))
-      
+
       result = checker.needs_update?(container, false)
       result.should be_true
     end
@@ -79,7 +78,7 @@ describe Mangrullo::ImageChecker do
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(2, 0, 0))
-      
+
       result = checker.needs_update?(container, false)
       result.should be_false
     end
@@ -89,7 +88,7 @@ describe Mangrullo::ImageChecker do
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(2, 0, 0))
-      
+
       result = checker.needs_update?(container, true)
       result.should be_true
     end
@@ -98,7 +97,7 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("sha256:8124f5e2ddf9a4985ca653c7bd4bb0132eef4316aaf2975181a5f6a9d0f14ced")
-      
+
       result = checker.needs_update?(container, false)
       result.should be_false
     end
@@ -107,7 +106,7 @@ describe Mangrullo::ImageChecker do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:latest")
-      
+
       result = checker.needs_update?(container, false)
       result.should be_true
     end
@@ -117,20 +116,19 @@ describe Mangrullo::ImageChecker do
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", nil)
-      
+
       result = checker.needs_update?(container, false)
       result.should be_false
     end
   end
 
   describe "#get_image_update_info" do
-
     it "returns update info when update is available" do
       mock_client = MockDockerClient.new
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 4))
-      
+
       info = checker.get_image_update_info("nginx:1.2.3")
       info[:has_update].should be_true
       local_version = info[:local_version]
@@ -151,7 +149,7 @@ describe Mangrullo::ImageChecker do
       checker = MockImageChecker.new(mock_client)
       container = create_container("nginx:1.2.3")
       checker.set_remote_version("nginx:1.2.3", Mangrullo::Version.new(1, 2, 3))
-      
+
       info = checker.get_image_update_info("nginx:1.2.3")
       info[:has_update].should be_false
     end

@@ -4,10 +4,10 @@ require "ecr"
 class WebViews
   def dashboard(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo))
     env.response.content_type = "text/html"
-    
+
     # Calculate summary statistics
     total_containers = containers.size
-    updates_available = containers.count { |c| 
+    updates_available = containers.count { |c|
       begin
         docker_client = Mangrullo::DockerClient.new("/var/run/docker.sock")
         image_checker = Mangrullo::ImageChecker.new(docker_client)
@@ -16,7 +16,7 @@ class WebViews
         false
       end
     }
-    
+
     # Create a simple template string rendering
     html = <<-HTML
     <!DOCTYPE html>
@@ -33,9 +33,9 @@ class WebViews
             .status-error { color: #dc3545; }
             .status-latest { color: #17a2b8; }
             .container-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-            .status-badge { 
-                padding: 0.25rem 0.5rem; 
-                border-radius: 0.25rem; 
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
                 font-size: 0.875rem;
                 font-weight: bold;
             }
@@ -83,16 +83,16 @@ class WebViews
 
             <div class="container-grid">
     HTML
-    
+
     containers.each do |container|
       status_class = "status-error"
       status_text = "Unknown"
-      
+
       begin
         docker_client = Mangrullo::DockerClient.new("/var/run/docker.sock")
         image_checker = Mangrullo::ImageChecker.new(docker_client)
         needs_update = image_checker.needs_update?(container, false)
-        
+
         if container.image.includes?("latest")
           status_class = "status-latest"
           status_text = "Latest Tag"
@@ -107,7 +107,7 @@ class WebViews
         status_class = "status-error"
         status_text = "Error"
       end
-      
+
       html += <<-HTML
                 <div class="card status-#{status_class.split('-').last}" data-container-id="#{container.id}">
                     <article>
@@ -127,7 +127,7 @@ class WebViews
                 </div>
       HTML
     end
-    
+
     if containers.empty?
       html += <<-HTML
                 <div class="card">
@@ -138,7 +138,7 @@ class WebViews
                 </div>
       HTML
     end
-    
+
     html += <<-HTML
             </div>
         </main>
@@ -162,7 +162,7 @@ class WebViews
                     alert('Error checking update');
                 });
             }
-            
+
             function showUpdateModal(containerId) {
                 if (confirm('Are you sure you want to update this container?')) {
                     fetch('/containers/' + containerId + '/update', {
@@ -180,7 +180,7 @@ class WebViews
                     });
                 }
             }
-            
+
             function checkAllUpdates() {
                 fetch('/api/updates')
                     .then(response => response.json())
@@ -191,7 +191,7 @@ class WebViews
                         alert('Error checking updates');
                     });
             }
-            
+
             function updateAllContainers() {
                 if (confirm('Are you sure you want to update all containers?')) {
                     fetch('/api/updates', {
@@ -213,16 +213,16 @@ class WebViews
     </body>
     </html>
     HTML
-    
+
     html
   end
 
   def container_details(env : HTTP::Server::Context, container : Mangrullo::ContainerInfo, update_info)
     env.response.content_type = "text/html"
-    
+
     update_status = "Unknown"
     status_class = "status-error"
-    
+
     if update_info[:has_update]
       update_status = "Update Available"
       status_class = "status-update-available"
@@ -230,7 +230,7 @@ class WebViews
       update_status = "Up to Date"
       status_class = "status-up-to-date"
     end
-    
+
     html = <<-HTML
     <!DOCTYPE html>
     <html lang="en">
@@ -244,9 +244,9 @@ class WebViews
             .status-up-to-date { color: #28a745; }
             .status-update-available { color: #ffc107; }
             .status-error { color: #dc3545; }
-            .status-badge { 
-                padding: 0.25rem 0.5rem; 
-                border-radius: 0.25rem; 
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
                 font-size: 0.875rem;
                 font-weight: bold;
             }
@@ -287,7 +287,7 @@ class WebViews
                         <p><strong>Created:</strong> #{container.created}</p>
                     </article>
                 </div>
-                
+
                 <div class="card">
                     <article>
                         <header>
@@ -323,10 +323,9 @@ class WebViews
                     <header>
                         <h3>Container Labels</h3>
                     </header>
-                    #{container.labels.empty? ? "<p>No labels found for this container.</p>" : 
-                      "<table><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody>" +
-                      container.labels.map { |k, v| "<tr><td><code>#{k}</code></td><td>#{v}</td></tr>" }.join("") +
-                      "</tbody></table>"}
+                    #{container.labels.empty? ? "<p>No labels found for this container.</p>" : "<table><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody>" +
+                                                                                               container.labels.map { |k, v| "<tr><td><code>#{k}</code></td><td>#{v}</td></tr>" }.join("") +
+                                                                                               "</tbody></table>"}
                 </article>
             </div>
         </main>
@@ -349,7 +348,7 @@ class WebViews
                     });
                 }
             }
-            
+
             function checkUpdate(containerId) {
                 fetch('/containers/' + containerId + '/check-update', {
                     method: 'POST',
@@ -364,7 +363,7 @@ class WebViews
                     alert('Error checking update');
                 });
             }
-            
+
             function restartContainer(containerId) {
                 if (confirm('Are you sure you want to restart this container?')) {
                     fetch('/containers/' + containerId + '/restart', {
@@ -385,7 +384,7 @@ class WebViews
     </body>
     </html>
     HTML
-    
+
     html
   end
 end

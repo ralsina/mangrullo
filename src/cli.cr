@@ -16,16 +16,16 @@ module Mangrullo
       config.setup_logging
       @docker_client = DockerClient.new(config.docker_socket_path)
       @update_manager = UpdateManager.new(@docker_client)
-      
+
       setup_signal_handlers
     end
 
     def self.run(args : Array(String))
       config = Config.from_args_and_env(args)
       config.validate!
-      
+
       cli = CLI.new(config)
-      
+
       if config.dry_run
         cli.dry_run
       elsif config.run_once
@@ -41,7 +41,7 @@ module Mangrullo
 
       begin
         results = update_manager.check_and_update_containers(config.allow_major_upgrade)
-        
+
         updated_count = results.count { |r| r[:updated] }
         error_count = results.count { |r| r[:error] }
 
@@ -72,7 +72,7 @@ module Mangrullo
         begin
           Log.info { "Starting update cycle" }
           results = update_manager.check_and_update_containers(config.allow_major_upgrade)
-          
+
           updated_count = results.count { |r| r[:updated] }
           error_count = results.count { |r| r[:error] }
 
@@ -109,9 +109,9 @@ module Mangrullo
 
       begin
         results = update_manager.dry_run(config.allow_major_upgrade)
-        
+
         needing_update = results.select { |r| r[:needs_update] }
-        
+
         Log.info { "Dry run results:" }
         Log.info { "Containers checked: #{results.size}" }
         Log.info { "Containers needing updates: #{needing_update.size}" }

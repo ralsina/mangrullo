@@ -21,7 +21,7 @@ module Mangrullo
 
       containers.each do |container|
         Log.info { "Checking container: #{container.name} (#{container.image})" }
-        
+
         result = update_container(container, allow_major_upgrade)
         results << result
 
@@ -39,35 +39,33 @@ module Mangrullo
     end
 
     def update_container(container : ContainerInfo, allow_major_upgrade : Bool = false) : NamedTuple(container: ContainerInfo, updated: Bool, error: String?)
-      begin
-        # Check if update is needed
-        unless @image_checker.needs_update?(container, allow_major_upgrade)
-          return {container: container, updated: false, error: nil}
-        end
-
-        Log.info { "Update needed for container: #{container.name}" }
-
-        # Extract image name and tag
-        image_parts = container.image.split(":")
-        image_name = image_parts[0]
-        image_tag = image_parts.size > 1 ? image_parts[1] : "latest"
-
-        # Pull the new image
-        Log.info { "Pulling new image: #{container.image}" }
-        unless @docker_client.pull_image(image_name, image_tag)
-          return {container: container, updated: false, error: "Failed to pull image"}
-        end
-
-        # Restart the container
-        Log.info { "Restarting container: #{container.name}" }
-        unless @docker_client.restart_container(container.id)
-          return {container: container, updated: false, error: "Failed to restart container"}
-        end
-
-        {container: container, updated: true, error: nil}
-      rescue ex : Exception
-        {container: container, updated: false, error: ex.message}
+      # Check if update is needed
+      unless @image_checker.needs_update?(container, allow_major_upgrade)
+        return {container: container, updated: false, error: nil}
       end
+
+      Log.info { "Update needed for container: #{container.name}" }
+
+      # Extract image name and tag
+      image_parts = container.image.split(":")
+      image_name = image_parts[0]
+      image_tag = image_parts.size > 1 ? image_parts[1] : "latest"
+
+      # Pull the new image
+      Log.info { "Pulling new image: #{container.image}" }
+      unless @docker_client.pull_image(image_name, image_tag)
+        return {container: container, updated: false, error: "Failed to pull image"}
+      end
+
+      # Restart the container
+      Log.info { "Restarting container: #{container.name}" }
+      unless @docker_client.restart_container(container.id)
+        return {container: container, updated: false, error: "Failed to restart container"}
+      end
+
+      {container: container, updated: true, error: nil}
+    rescue ex : Exception
+      {container: container, updated: false, error: ex.message}
     end
 
     def get_containers_needing_update(allow_major_upgrade : Bool = false) : Array(ContainerInfo)
@@ -80,9 +78,9 @@ module Mangrullo
       needing_update = get_containers_needing_update(allow_major_upgrade)
 
       {
-        total: containers.size,
-        needing_update: needing_update.size,
-        update_candidates: needing_update
+        total:             containers.size,
+        needing_update:    needing_update.size,
+        update_candidates: needing_update,
       }
     end
 
