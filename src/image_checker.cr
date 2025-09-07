@@ -34,24 +34,24 @@ module Mangrullo
     def extract_version_from_image(image_name : String) : Version?
       # Skip SHA256 digests (they are image IDs, not versioned images)
       return nil if image_name.starts_with?("sha256:")
-      
+
       # Extract tag from image name (format: name:tag or name)
       parts = image_name.split(":")
       tag = parts.size > 1 ? parts.last : "latest"
-      
+
       Version.parse(tag)
     end
 
     def get_latest_version(image_name : String) : Version?
       # Skip SHA256 digests (they are image IDs, not versioned images)
       return nil if image_name.starts_with?("sha256:")
-      
+
       # Remove tag from image name
       base_name = image_name.split(":").first
-      
+
       # Remove registry prefix if present
       base_name = base_name.split("/").last if base_name.includes?("/")
-      
+
       # Get image manifest from Docker Hub API
       begin
         response = @registry_client.get("/v2/#{base_name}/tags/list")
@@ -59,9 +59,9 @@ module Mangrullo
 
         json = JSON.parse(response.body)
         tags = json["tags"].as_a.map(&.as_s)
-        
+
         # Filter out version tags and find the latest
-        versions = tags.compact_map { |tag| Version.parse(tag) }.sort
+        versions = tags.compact_map { |tag| Version.parse(tag) }.sort!
         versions.last?
       rescue
         nil
@@ -71,23 +71,23 @@ module Mangrullo
     def get_remote_image_digest(image_name : String) : String?
       # Skip SHA256 digests (they are image IDs, not versioned images)
       return nil if image_name.starts_with?("sha256:")
-      
+
       # Remove tag from image name
       base_name = image_name.split(":").first
       tag = image_name.includes?(":") ? image_name.split(":").last : "latest"
-      
+
       # Remove registry prefix if present
       base_name = base_name.split("/").last if base_name.includes?("/")
-      
+
       begin
         # Get image manifest to get digest
-        response = @registry_client.get("/v2/#{base_name}/manifests/#{tag}", 
+        response = @registry_client.get("/v2/#{base_name}/manifests/#{tag}",
           HTTP::Headers{
-            "Accept" => "application/vnd.docker.distribution.manifest.v2+json"
+            "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
           })
-        
+
         return nil unless response.status_code == 200
-        
+
         # The digest is in the Docker-Content-Digest header
         response.headers["Docker-Content-Digest"]?
       rescue
@@ -113,7 +113,7 @@ module Mangrullo
     def get_image_update_info(image_name : String) : NamedTuple(has_update: Bool, local_version: Version?, remote_version: Version?)
       local_version = extract_version_from_image(image_name)
       remote_version = get_latest_version(image_name)
-      
+
       has_update = if local_version && remote_version
                      remote_version > local_version
                    else
