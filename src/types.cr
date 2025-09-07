@@ -78,28 +78,6 @@ module Mangrullo
       self.major != other.major
     end
 
-    def <(other : Version) : Bool
-      return false if major > other.major
-      return true if major < other.major
-
-      return false if minor > other.minor
-      return true if minor < other.minor
-
-      return false if patch > other.patch
-      return true if patch < other.patch
-
-      # Compare prerelease versions
-      if prerelease && other.prerelease
-        prerelease.to_s < other.prerelease.to_s
-      elsif prerelease
-        true # prerelease versions are older than release versions
-      elsif other.prerelease
-        false
-      else
-        false
-      end
-    end
-
     def <=>(other : Version) : Int32
       if major != other.major
         major <=> other.major
@@ -107,17 +85,23 @@ module Mangrullo
         minor <=> other.minor
       elsif patch != other.patch
         patch <=> other.patch
+      elsif prerelease != other.prerelease
+        compare_prereleases(prerelease, other.prerelease)
       else
-        # Compare prerelease versions
-        if prerelease && other.prerelease
-          prerelease.to_s <=> other.prerelease.to_s
-        elsif prerelease
-          -1 # prerelease versions are older than release versions
-        elsif other.prerelease
-          1
-        else
-          0
-        end
+        0 # Versions are exactly equal
+      end
+    end
+
+    private def compare_prereleases(self_prerelease : String?, other_prerelease : String?) : Int32
+      return -1 if self_prerelease && !other_prerelease # prerelease < release
+      return 1 if !self_prerelease && other_prerelease  # release > prerelease
+      return 0 if !self_prerelease && !other_prerelease # both are releases
+
+      # Both have prereleases, compare them as strings
+      if (self_pre = self_prerelease) && (other_pre = other_prerelease)
+        self_pre <=> other_pre
+      else
+        0
       end
     end
 
