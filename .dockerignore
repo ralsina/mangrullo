@@ -1,0 +1,63 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Crystal build artifacts
+lib/
+bin/
+*.dll
+*.dylib
+*.so
+
+# Documentation
+*.md
+!README.md
+!DOCKER.md
+!UPDATE_ALGORITHM.md
+
+# Logs
+*.log
+logs/
+
+# Development files
+spec/
+.crystal/
+.shards/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Docker files (avoid recursive copy)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Build scripts
+*.sh
+!entrypoint.sh
+
+# Test coverage
+coverage/
+
+# Dependency cache
+.shards/
