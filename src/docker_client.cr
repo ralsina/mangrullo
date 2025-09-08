@@ -88,17 +88,37 @@ module Mangrullo
     end
 
     def get_image_info(image_name : String) : ImageInfo?
+      Log.debug { "get_image_info: Looking for image #{image_name}" }
       images = @api.images.list(filters: {"reference" => [image_name]})
+      Log.debug { "get_image_info: Found #{images.size} images for #{image_name}" }
       return nil if images.empty?
 
-      image = images.first
-      ImageInfo.new(
-        id: image.id,
-        repo_tags: image.repo_tags || [] of String,
-        created: Time.unix(image.created),
-        size: image.size.to_u64,
-        labels: image.labels || {} of String => String
+      # Find the image that actually has the matching repo tag
+      # The Docker API reference filter is not reliable, so we need to manually verify
+      correct_image = images.find do |img|
+        (img.repo_tags || [] of String).includes?(image_name)
+      end
+
+      unless correct_image
+        Log.debug { "get_image_info: No image found with exact tag match for #{image_name}" }
+        Log.debug { "get_image_info: Available tags from first few images:" }
+        images.first(3).each_with_index do |img, i|
+          Log.debug { "get_image_info: Image #{i + 1}: tags=#{img.repo_tags}" }
+        end
+        return nil
+      end
+
+      Log.debug { "get_image_info: Found correct image ID=#{correct_image.id}, repo_tags=#{correct_image.repo_tags}" }
+
+      result = ImageInfo.new(
+        id: correct_image.id,
+        repo_tags: correct_image.repo_tags || [] of String,
+        created: Time.unix(correct_image.created),
+        size: correct_image.size.to_u64,
+        labels: correct_image.labels || {} of String => String
       )
+      Log.debug { "get_image_info: Returning ImageInfo with id=#{result.id}" }
+      result
     rescue ex : Docr::Errors::DockerAPIError
       Log.error { "Docker API error getting image info: #{ex.message}" }
       nil
