@@ -3,7 +3,7 @@ require "./types"
 module Mangrullo
   # Standard Result type for consistent error handling
   struct Result(T, E)
-    property success : Bool
+    property? success : Bool
     property value : T?
     property error : E?
 
@@ -47,7 +47,7 @@ module Mangrullo
     end
 
     # Wrap Docker API operations with consistent error handling
-    def self.docker_api_operation(operation : String, context : String? = nil, &block) : Result(Bool, String)
+    def self.docker_api_operation(operation : String, context : String? = nil, &) : Result(Bool, String)
       yield
       Result(Bool, String).new(true, true, nil)
     rescue ex : Docr::Errors::DockerAPIError
@@ -62,8 +62,8 @@ module Mangrullo
     end
 
     # Wrap operations that might return nil, but still want error handling
-    def self.docker_api_operation_with_nil(operation : String, context : String? = nil, &block) : Result(Bool, String)
-      result = yield
+    def self.docker_api_operation_with_nil(operation : String, context : String? = nil, &) : Result(Bool, String)
+      yield
       Result(Bool, String).new(true, true, nil)
     rescue ex : Docr::Errors::DockerAPIError
       error_result = log_and_return_error("Docker API operation: #{operation}", ex, Log::Severity::Error, context)
@@ -77,7 +77,7 @@ module Mangrullo
     end
 
     # Generic Docker API operation wrapper for operations that return specific types
-    def self.docker_api_operation_typed(operation : String, context : String? = nil, &block)
+    def self.docker_api_operation_typed(operation : String, context : String? = nil, &)
       result = yield
       Result.new(true, result, nil)
     rescue ex : Docr::Errors::DockerAPIError
@@ -92,7 +92,7 @@ module Mangrullo
     end
 
     # Wrap HTTP operations with consistent error handling
-    def self.http_operation(operation : String, context : String? = nil, &block) : Result(HTTP::Client::Response, String)
+    def self.http_operation(operation : String, context : String? = nil, &) : Result(HTTP::Client::Response, String)
       yield
     rescue ex : Socket::Error | IO::Error
       error_result = log_and_return_error("HTTP operation: #{operation}", ex, Log::Severity::Warn, context)
