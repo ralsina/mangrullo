@@ -191,12 +191,22 @@ module Mangrullo
 
       tag = image_name.includes?(":") ? image_name.split(":").last : "latest"
 
+      Log.debug { "Getting remote digest for #{image_name} -> #{registry_host}/#{repository_path}:#{tag}" }
+
       begin
         response = fetch_registry_digest(registry_host, repository_path, tag)
         return nil unless response && response.status_code == 200
 
         # The digest is in the Docker-Content-Digest header
-        response.headers["Docker-Content-Digest"]?
+        digest = response.headers["Docker-Content-Digest"]?
+        Log.debug { "Extracted remote digest for #{image_name}: #{digest}" }
+        
+        unless digest
+          Log.error { "No Docker-Content-Digest header found for #{image_name}" }
+          Log.debug { "Available headers: #{response.headers.keys}" }
+        end
+        
+        digest
       rescue ex : Socket::Error | IO::Error
         Log.error { "Network error getting remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
         nil
@@ -208,22 +218,42 @@ module Mangrullo
 
     private def fetch_registry_digest(registry_host : String, repository_path : String, tag : String) : HTTP::Client::Response?
       headers = HTTP::Headers{
-        "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
+        "Accept" => "application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json",
+        "User-Agent" => "mangrullo/1.0",
       }
 
       # Try authenticated client first
       auth_client = create_authenticated_client(registry_host, repository_path)
 
-      if auth_client
+      response = if auth_client
         Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
-        response = auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+        auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
       else
         # Fall back to unauthenticated client
         Log.debug { "Using unauthenticated client for digest lookup on #{registry_host}" }
         registry_client = create_registry_client(registry_host)
-        response = registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+        registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
       end
 
+      Log.debug { "Registry response for #{registry_host}/#{repository_path}:#{tag} - Status: #{response.status_code}" }
+      Log.debug { "Response headers: #{response.headers}" }
+      
+      if response.status_code != 200
+        Log.error { "Registry returned status #{response.status_code} for #{registry_host}/#{repository_path}:#{tag}" }
+        Log.debug { "Response body: #{response.body}" }
+        return nil
+      end
+
+      digest_header = response.headers["Docker-Content-Digest"]?
+      Log.debug { "Docker-Content-Digest header: #{digest_header}" }
+      
+      # Fallback: try to extract digest from manifest body if header is missing
+      unless digest_header
+        Log.debug { "No digest header found, trying to extract from manifest body" }
+        digest_header = extract_digest_from_manifest(response.body)
+        Log.debug { "Extracted digest from manifest: #{digest_header}" }
+      end
+      
       response
     rescue ex : Socket::Error | IO::Error
       Log.error { "Network error fetching digest from #{registry_host}: #{ex.message}" }
@@ -313,6 +343,57 @@ module Mangrullo
       else
         "sha256:#{digest}"
       end
+    end
+
+    private def extract_digest_from_manifest(manifest_body : String) : String?
+      begin
+        json = JSON.parse(manifest_body)
+        
+        # Try different manifest formats
+        if json["manifest"]? && json["manifest"].as_h?
+          # Manifest list (multi-arch)
+          manifest = json["manifest"].as_h
+          manifest["digest"]?.try(&.as_s)
+        elsif json["config"]? && json["config"].as_h?
+          # Single manifest
+          config = json["config"].as_h
+          config["digest"]?.try(&.as_s)
+        elsif json["layers"]? && json["layers"].as_a?
+          # Another manifest format - look for digest in layers
+          layers = json["layers"].as_a
+          first_layer = layers.first?
+          first_layer.try(&.as_h?).try(&.dig("digest")).try(&.as_s)
+        else
+          # Try to find any digest field in the JSON
+          find_digest_in_json(json)
+        end
+      rescue ex : JSON::ParseException
+        Log.debug { "Failed to parse manifest JSON: #{ex.message}" }
+        nil
+      rescue ex
+        Log.debug { "Error extracting digest from manifest: #{ex.message}" }
+        nil
+      end
+    end
+
+    private def find_digest_in_json(json : JSON::Any) : String?
+      # Recursively search for a digest field in the JSON
+      if json.as_h?
+        json.as_h.each do |key, value|
+          if key == "digest" && value.as_s?
+            return value.as_s
+          elsif value.as_h? || value.as_a?
+            result = find_digest_in_json(value)
+            return result if result
+          end
+        end
+      elsif json.as_a?
+        json.as_a.each do |item|
+          result = find_digest_in_json(item)
+          return result if result
+        end
+      end
+      nil
     end
 
     def get_remote_image_info(image_name : String) : NamedTuple(id: String?, digest: String?)
