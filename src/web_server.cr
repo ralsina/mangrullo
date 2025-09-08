@@ -29,124 +29,251 @@ class WebServer
 
     # Main page
     get "/" do |env|
-      containers = @docker_client.running_containers
-      @web_views.dashboard(env, containers)
+      begin
+        containers = @docker_client.running_containers
+        @web_views.dashboard(env, containers)
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error loading dashboard: #{ex.message}" }
+        env.response.status_code = 500
+        "Error connecting to Docker API. Please check if Docker is running."
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error loading dashboard: #{ex.message}" }
+        env.response.status_code = 500
+        "Network error connecting to Docker. Please check your connection."
+      rescue ex
+        Log.error { "Unexpected error loading dashboard: #{ex.message}" }
+        env.response.status_code = 500
+        "An unexpected error occurred while loading the dashboard."
+      end
     end
 
     # Container details
     get "/containers/:id" do |env|
-      container_id = env.params.url["id"]
-      container = @docker_client.get_container_info(container_id)
+      begin
+        container_id = env.params.url["id"]
+        container = @docker_client.get_container_info(container_id)
 
-      if container
-        update_info = @image_checker.get_image_update_info(container.image)
-        @web_views.container_details(env, container, update_info)
-      else
-        env.response.status_code = 404
-        "Container not found"
+        if container
+          update_info = @image_checker.get_image_update_info(container.image)
+          @web_views.container_details(env, container, update_info)
+        else
+          env.response.status_code = 404
+          "Container not found"
+        end
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error getting container details: #{ex.message}" }
+        env.response.status_code = 500
+        "Error connecting to Docker API. Please check if Docker is running."
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting container details: #{ex.message}" }
+        env.response.status_code = 500
+        "Network error connecting to Docker. Please check your connection."
+      rescue ex
+        Log.error { "Unexpected error getting container details: #{ex.message}" }
+        env.response.status_code = 500
+        "An unexpected error occurred while loading container details."
       end
     end
 
     # Check for updates
     post "/containers/:id/check-update" do |env|
-      container_id = env.params.url["id"]
-      container = @docker_client.get_container_info(container_id)
+      begin
+        container_id = env.params.url["id"]
+        container = @docker_client.get_container_info(container_id)
 
-      if container
-        update_info = @image_checker.get_image_update_info(container.image)
+        if container
+          update_info = @image_checker.get_image_update_info(container.image)
+          env.response.content_type = "application/json"
+          {
+            container_id:   container_id,
+            has_update:     update_info[:has_update],
+            local_version:  update_info[:local_version].try(&.to_s),
+            remote_version: update_info[:remote_version].try(&.to_s),
+          }.to_json
+        else
+          env.response.status_code = 404
+          {error: "Container not found"}.to_json
+        end
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error checking container update: #{ex.message}" }
+        env.response.status_code = 500
         env.response.content_type = "application/json"
-        {
-          container_id:   container_id,
-          has_update:     update_info[:has_update],
-          local_version:  update_info[:local_version].try(&.to_s),
-          remote_version: update_info[:remote_version].try(&.to_s),
-        }.to_json
-      else
-        env.response.status_code = 404
-        {error: "Container not found"}.to_json
+        {error: "Docker API error", message: "Error connecting to Docker API"}.to_json
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error checking container update: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Network error", message: "Network error connecting to Docker"}.to_json
+      rescue ex
+        Log.error { "Unexpected error checking container update: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Unexpected error", message: "An unexpected error occurred"}.to_json
       end
     end
 
     # Update container
     post "/containers/:id/update" do |env|
-      container_id = env.params.url["id"]
-      container = @docker_client.get_container_info(container_id)
-      allow_major = env.params.body["allow_major"]?.try(&.downcase) == "true"
+      begin
+        container_id = env.params.url["id"]
+        container = @docker_client.get_container_info(container_id)
+        allow_major = env.params.body["allow_major"]?.try(&.downcase) == "true"
 
-      if container
-        result = @update_manager.update_container(container, allow_major)
+        if container
+          result = @update_manager.update_container(container, allow_major)
+          env.response.content_type = "application/json"
+          {
+            container_id: container_id,
+            updated:      result[:updated],
+            error:        result[:error],
+          }.to_json
+        else
+          env.response.status_code = 404
+          {error: "Container not found"}.to_json
+        end
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error updating container: #{ex.message}" }
+        env.response.status_code = 500
         env.response.content_type = "application/json"
-        {
-          container_id: container_id,
-          updated:      result[:updated],
-          error:        result[:error],
-        }.to_json
-      else
-        env.response.status_code = 404
-        {error: "Container not found"}.to_json
+        {error: "Docker API error", message: "Error connecting to Docker API"}.to_json
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error updating container: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Network error", message: "Network error connecting to Docker"}.to_json
+      rescue ex
+        Log.error { "Unexpected error updating container: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Unexpected error", message: "An unexpected error occurred"}.to_json
       end
     end
 
     # Check all containers for updates
     get "/api/updates" do |env|
-      allow_major = env.params.query["allow_major"]?.try(&.downcase) == "true"
-      containers = @docker_client.running_containers
+      begin
+        allow_major = env.params.query["allow_major"]?.try(&.downcase) == "true"
+        containers = @docker_client.running_containers
 
-      results = containers.map do |container|
-        {
-          id:           container.id,
-          name:         container.name,
-          image:        container.image,
-          needs_update: @image_checker.needs_update?(container, allow_major),
-          update_info:  @image_checker.get_image_update_info(container.image),
-        }
+        results = containers.map do |container|
+          {
+            id:           container.id,
+            name:         container.name,
+            image:        container.image,
+            needs_update: @image_checker.needs_update?(container, allow_major),
+            update_info:  @image_checker.get_image_update_info(container.image),
+          }
+        end
+
+        env.response.content_type = "application/json"
+        results.to_json
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error checking all updates: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Docker API error", message: "Error connecting to Docker API"}.to_json
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error checking all updates: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Network error", message: "Network error connecting to Docker"}.to_json
+      rescue ex
+        Log.error { "Unexpected error checking all updates: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Unexpected error", message: "An unexpected error occurred"}.to_json
       end
-
-      env.response.content_type = "application/json"
-      results.to_json
     end
 
     # Update all containers
     post "/api/updates" do |env|
-      allow_major = env.params.body["allow_major"]?.try(&.downcase) == "true"
-      dry_run = env.params.body["dry_run"]?.try(&.downcase) == "true"
+      begin
+        allow_major = env.params.body["allow_major"]?.try(&.downcase) == "true"
+        dry_run = env.params.body["dry_run"]?.try(&.downcase) == "true"
 
-      if dry_run
-        results = @update_manager.dry_run(allow_major)
-      else
-        results = @update_manager.check_and_update_containers(allow_major)
+        if dry_run
+          results = @update_manager.dry_run(allow_major)
+        else
+          results = @update_manager.check_and_update_containers(allow_major)
+        end
+
+        env.response.content_type = "application/json"
+        results.to_json
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error updating all containers: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Docker API error", message: "Error connecting to Docker API"}.to_json
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error updating all containers: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Network error", message: "Network error connecting to Docker"}.to_json
+      rescue ex
+        Log.error { "Unexpected error updating all containers: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Unexpected error", message: "An unexpected error occurred"}.to_json
       end
-
-      env.response.content_type = "application/json"
-      results.to_json
     end
 
     # Container logs
     get "/containers/:id/logs" do |env|
-      container_id = env.params.url["id"]
-      tail = env.params.query["tail"]?.try(&.to_i) || 100
+      begin
+        container_id = env.params.url["id"]
+        tail = env.params.query["tail"]?.try(&.to_i) || 100
 
-      if @docker_client.container_exists?(container_id)
-        logs = @docker_client.get_container_logs(container_id, tail)
-        env.response.content_type = "text/plain"
-        logs
-      else
-        env.response.status_code = 404
-        "Container not found"
+        if @docker_client.container_exists?(container_id)
+          logs = @docker_client.get_container_logs(container_id, tail)
+          env.response.content_type = "text/plain"
+          logs
+        else
+          env.response.status_code = 404
+          "Container not found"
+        end
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error getting container logs: #{ex.message}" }
+        env.response.status_code = 500
+        "Error connecting to Docker API. Please check if Docker is running."
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting container logs: #{ex.message}" }
+        env.response.status_code = 500
+        "Network error connecting to Docker. Please check your connection."
+      rescue ex
+        Log.error { "Unexpected error getting container logs: #{ex.message}" }
+        env.response.status_code = 500
+        "An unexpected error occurred while getting container logs."
       end
     end
 
     # Restart container
     post "/containers/:id/restart" do |env|
-      container_id = env.params.url["id"]
+      begin
+        container_id = env.params.url["id"]
 
-      if @docker_client.container_exists?(container_id)
-        success = @docker_client.restart_container(container_id)
+        if @docker_client.container_exists?(container_id)
+          success = @docker_client.restart_container(container_id)
+          env.response.content_type = "application/json"
+          {success: success}.to_json
+        else
+          env.response.status_code = 404
+          {error: "Container not found"}.to_json
+        end
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error restarting container: #{ex.message}" }
+        env.response.status_code = 500
         env.response.content_type = "application/json"
-        {success: success}.to_json
-      else
-        env.response.status_code = 404
-        {error: "Container not found"}.to_json
+        {error: "Docker API error", message: "Error connecting to Docker API"}.to_json
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error restarting container: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Network error", message: "Network error connecting to Docker"}.to_json
+      rescue ex
+        Log.error { "Unexpected error restarting container: #{ex.message}" }
+        env.response.status_code = 500
+        env.response.content_type = "application/json"
+        {error: "Unexpected error", message: "An unexpected error occurred"}.to_json
       end
     end
 

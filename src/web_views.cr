@@ -4,10 +4,10 @@ require "ecr"
 class WebViews
   def dashboard(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo))
     env.response.content_type = "text/html"
-    
+
     # Calculate summary statistics
     dashboard_stats = calculate_dashboard_stats(containers)
-    
+
     # Generate HTML
     render_dashboard_html(env, containers, dashboard_stats)
   end
@@ -23,7 +23,7 @@ class WebViews
         false
       end
     }
-    
+
     {total_containers: total_containers, updates_available: updates_available}
   end
 
