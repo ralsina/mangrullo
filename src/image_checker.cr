@@ -122,14 +122,33 @@ module Mangrullo
       # Try authenticated client first
       auth_client = create_authenticated_client(registry_host, repository_path)
 
-      if auth_client
-        Log.debug { "Using authenticated client for #{registry_host}" }
-        response = auth_client.get("/v2/#{repository_path}/tags/list")
-      else
-        # Fall back to unauthenticated client for registries that don't require auth
-        Log.debug { "Using unauthenticated client for #{registry_host}" }
-        registry_client = create_registry_client(registry_host)
-        response = registry_client.get("/v2/#{repository_path}/tags/list")
+      response = if auth_client
+                   Log.debug { "Using authenticated client for #{registry_host}" }
+                   auth_client.get("/v2/#{repository_path}/tags/list")
+                 else
+                   # Fall back to unauthenticated client for registries that don't require auth
+                   Log.debug { "Using unauthenticated client for #{registry_host}" }
+                   registry_client = create_registry_client(registry_host)
+                   registry_client.get("/v2/#{repository_path}/tags/list")
+                 end
+
+      Log.debug { "Tags response for #{registry_host}/#{repository_path} - Status: #{response.status_code}" }
+
+      if response.status_code != 200
+        Log.error { "Registry returned status #{response.status_code} fetching tags for #{registry_host}/#{repository_path}" }
+        Log.debug { "Response body: #{response.body}" }
+
+        # For 404 errors, provide more helpful information
+        if response.status_code == 404
+          Log.error { "Image repository not found. This could mean:" }
+          Log.error { "1. The repository doesn't exist in the registry" }
+          Log.error { "2. The repository path is incorrect" }
+          Log.error { "3. Authentication is required for this repository" }
+          Log.error { "4. The repository name has been changed or moved" }
+          Log.error { "   Expected repository path: #{repository_path}" }
+          Log.error { "   Full URL: https://#{registry_host}/v2/#{repository_path}/tags/list" }
+        end
+        return nil
       end
 
       response
@@ -201,12 +220,12 @@ module Mangrullo
         # The digest is in the Docker-Content-Digest header
         digest = response.headers["Docker-Content-Digest"]?
         Log.debug { "Extracted remote digest for #{image_name}: #{digest}" }
-        
+
         unless digest
           Log.error { "No Docker-Content-Digest header found for #{image_name}" }
           Log.debug { "Available headers: #{response.headers.keys}" }
         end
-        
+
         digest
       rescue ex : Socket::Error | IO::Error
         Log.error { "Network error getting remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
@@ -219,7 +238,7 @@ module Mangrullo
 
     private def fetch_registry_digest(registry_host : String, repository_path : String, tag : String) : HTTP::Client::Response?
       headers = HTTP::Headers{
-        "Accept" => "application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json",
+        "Accept"     => "application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.manifest.v1+json",
         "User-Agent" => "mangrullo/1.0",
       }
 
@@ -227,34 +246,51 @@ module Mangrullo
       auth_client = create_authenticated_client(registry_host, repository_path)
 
       response = if auth_client
-        Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
-        auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
-      else
-        # Fall back to unauthenticated client
-        Log.debug { "Using unauthenticated client for digest lookup on #{registry_host}" }
-        registry_client = create_registry_client(registry_host)
-        registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
-      end
+                   Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
+                   auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+                 else
+                   # Fall back to unauthenticated client
+                   Log.debug { "Using unauthenticated client for digest lookup on #{registry_host}" }
+                   registry_client = create_registry_client(registry_host)
+                   registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+                 end
 
       Log.debug { "Registry response for #{registry_host}/#{repository_path}:#{tag} - Status: #{response.status_code}" }
       Log.debug { "Response headers: #{response.headers}" }
-      
+      Log.debug { "Content-Type: #{response.headers.fetch("Content-Type", nil)}" }
+
       if response.status_code != 200
         Log.error { "Registry returned status #{response.status_code} for #{registry_host}/#{repository_path}:#{tag}" }
         Log.debug { "Response body: #{response.body}" }
+
+        # For 404 errors, provide more helpful information
+        if response.status_code == 404
+          Log.error { "Image not found in registry. This could mean:" }
+          Log.error { "1. The image doesn't exist in the registry" }
+          Log.error { "2. The repository path is incorrect" }
+          Log.error { "3. Authentication is required for this image" }
+          Log.error { "4. The image name has been changed or moved" }
+        end
         return nil
       end
 
       digest_header = response.headers["Docker-Content-Digest"]?
       Log.debug { "Docker-Content-Digest header: #{digest_header}" }
-      
+
+      # If we got a manifest list, we need to parse it to find the manifest for our architecture
+      content_type = response.headers["Content-Type"]?
+      if content_type && content_type.includes?("manifest.list")
+        Log.debug { "Got manifest list, need to find architecture-specific manifest" }
+        Log.debug { "Manifest list body: #{response.body}" }
+      end
+
       # Fallback: try to extract digest from manifest body if header is missing
       unless digest_header
         Log.debug { "No digest header found, trying to extract from manifest body" }
         digest_header = extract_digest_from_manifest(response.body)
         Log.debug { "Extracted digest from manifest: #{digest_header}" }
       end
-      
+
       response
     rescue ex : Socket::Error | IO::Error
       Log.error { "Network error fetching digest from #{registry_host}: #{ex.message}" }
@@ -265,11 +301,33 @@ module Mangrullo
     end
 
     def get_local_image_digest(image_name : String) : String?
-      # Get the actual image info for the specified image name
-      # This should return the latest version of the image available locally
+      Log.debug { "get_local_image_digest: image_name=#{image_name}" }
+
+      # First try to get the repository digest from Docker CLI
+      # This is what Docker uses for "up to date" comparisons
+      begin
+        output = IO::Memory.new
+        error = IO::Memory.new
+        status = Process.run("docker", ["image", "inspect", "--format={{index .RepoDigests 0}}", image_name],
+          output: output, error: error)
+        if status.success?
+          repo_digest = output.to_s.strip
+          if repo_digest.includes?("@sha256:")
+            digest = repo_digest.split("@sha256:").last
+            full_digest = "sha256:#{digest}"
+            Log.debug { "get_local_image_digest: Got repo digest from docker inspect: #{full_digest}" }
+            return full_digest
+          end
+        end
+      rescue ex
+        Log.debug { "get_local_image_digest: Docker inspect failed: #{ex.message}" }
+      end
+
+      # Fallback: Get the actual image info for the specified image name
+      # This returns the image ID (manifest digest), which may not match remote digest for multi-arch images
       image_info = @docker_client.get_image_info(image_name)
       result = image_info.try(&.id)
-      Log.debug { "get_local_image_digest: image_name=#{image_name}, result=#{result}" }
+      Log.debug { "get_local_image_digest: Falling back to image ID: #{result}" }
       result
     end
 
@@ -288,38 +346,38 @@ module Mangrullo
       Log.debug { "  Original: local=#{local_digest}, remote=#{remote_digest}" }
       Log.debug { "  Normalized: local=#{normalized_local}, remote=#{normalized_remote}" }
       Log.debug { "  Digests equal? #{normalized_local == normalized_remote}" }
-      
+
       normalized_local != normalized_remote
     end
 
     def get_update_status(container : ContainerInfo) : NamedTuple(needs_pull: Bool, needs_restart: Bool, local_digest: String?, remote_digest: String?)
       # Get the container's current image digest
       container_digest = container.image_id
-      
+
       # Get the latest local image digest
       local_digest = get_local_image_digest(container.image)
-      
+
       # Get the remote digest
       remote_digest = get_remote_image_digest(container.image)
-      
+
       needs_pull = false
       needs_restart = false
-      
+
       if local_digest && remote_digest
         normalized_local = normalize_digest(local_digest)
         normalized_remote = normalize_digest(remote_digest)
         normalized_container = normalize_digest(container_digest)
-        
+
         needs_pull = normalized_local != normalized_remote
         needs_restart = normalized_container != normalized_local && !needs_pull
-        
+
         Log.debug { "Update status for #{container.name}:" }
         Log.debug { "  Container digest: #{normalized_container}" }
         Log.debug { "  Local latest digest: #{normalized_local}" }
         Log.debug { "  Remote digest: #{normalized_remote}" }
         Log.debug { "  Needs pull: #{needs_pull}, Needs restart: #{needs_restart}" }
       end
-      
+
       {
         needs_pull:    needs_pull,
         needs_restart: needs_restart,
@@ -387,7 +445,7 @@ module Mangrullo
     private def extract_digest_from_manifest(manifest_body : String) : String?
       begin
         json = JSON.parse(manifest_body)
-        
+
         # Try different manifest formats
         if json["manifest"]? && json["manifest"].as_h?
           # Manifest list (multi-arch)
@@ -532,7 +590,10 @@ module Mangrullo
                     end
 
         Log.debug { "Getting token from: #{token_url}" }
+        Log.debug { "For repository: #{repository_path}" }
         response = HTTP::Client.get(token_url)
+        Log.debug { "Token response status: #{response.status_code}" }
+        Log.debug { "Token response body: #{response.body}" }
         return nil unless response.status_code == 200
 
         json = JSON.parse(response.body)

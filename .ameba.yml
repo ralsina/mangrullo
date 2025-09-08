@@ -12,3 +12,10 @@ Metrics/CyclomaticComplexity:
   - src/web_server.cr
   Enabled: true
   Severity: Warning
+
+# Ignore redundant begin block in extract_digest_from_manifest method
+# The begin block is needed for proper exception handling with rescue blocks
+Style/RedundantBegin:
+  Enabled: true
+  Excluded:
+  - src/image_checker.cr

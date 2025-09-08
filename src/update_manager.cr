@@ -142,7 +142,7 @@ module Mangrullo
 
     private def process_container_for_dry_run(container : ContainerInfo, allow_major_upgrade : Bool) : NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
       Log.debug { "Processing container: #{container.name} (#{container.image})" }
-      
+
       # For latest tags, use detailed status to provide better reasons
       if container.image.includes?("latest")
         status = @image_checker.get_update_status(container)
@@ -182,8 +182,13 @@ module Mangrullo
       Log.debug { "Checking update info for: #{container.image}" }
       update_info = @image_checker.get_image_update_info(container.image)
 
+      Log.debug { "Update info: local_version=#{update_info[:local_version].inspect}, remote_version=#{update_info[:remote_version].inspect}" }
+
       if update_info[:local_version] && update_info[:remote_version]
-        "Version update available: #{update_info[:local_version]} -> #{update_info[:remote_version]}"
+        local_str = update_info[:local_version].to_s
+        remote_str = update_info[:remote_version].to_s
+        Log.debug { "Version strings: local='#{local_str}', remote='#{remote_str}'" }
+        "Version update available: #{local_str} -> #{remote_str}"
       else
         generate_fallback_update_message(container, update_info)
       end
