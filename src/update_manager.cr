@@ -11,14 +11,27 @@ module Mangrullo
       @image_checker = ImageChecker.new(@docker_client)
     end
 
-    def check_and_update_containers(allow_major_upgrade : Bool = false) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?))
+    def check_and_update_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?))
       results = [] of NamedTuple(container: ContainerInfo, updated: Bool, error: String?)
 
       Log.info { "Starting container update check" }
 
       begin
         containers = @docker_client.running_containers
-        Log.info { "Found #{containers.size} running containers" }
+
+        # Filter containers if specific names were provided
+        unless container_names.empty?
+          # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
+          normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+          containers = containers.select { |container| 
+            # Check both the actual container name and a version without leading slash
+            normalized_input_names.includes?(container.name) || 
+            normalized_input_names.includes?(container.name.lchop('/'))
+          }
+          Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
+        end
+
+        Log.info { "Processing #{containers.size} containers" }
 
         containers.each do |container|
           Log.info { "Checking container: #{container.name} (#{container.image})" }
@@ -87,8 +100,20 @@ module Mangrullo
       {container: container, updated: false, error: "Unexpected error: #{ex.message}"}
     end
 
-    def get_containers_needing_update(allow_major_upgrade : Bool = false) : Array(ContainerInfo)
+    def get_containers_needing_update(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(ContainerInfo)
       containers = @docker_client.running_containers
+
+      # Filter containers if specific names were provided
+      unless container_names.empty?
+        # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
+        normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+        containers = containers.select { |container| 
+          # Check both the actual container name and a version without leading slash
+          normalized_input_names.includes?(container.name) || 
+          normalized_input_names.includes?(container.name.lchop('/'))
+        }
+      end
+
       containers.select { |container| @image_checker.needs_update?(container, allow_major_upgrade) }
     rescue ex : Docr::Errors::DockerAPIError
       Log.error { "Docker API error getting containers needing update: #{ex.message}" }
@@ -101,9 +126,21 @@ module Mangrullo
       [] of ContainerInfo
     end
 
-    def get_update_summary(allow_major_upgrade : Bool = false) : NamedTuple(total: Int32, needing_update: Int32, update_candidates: Array(ContainerInfo))
+    def get_update_summary(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : NamedTuple(total: Int32, needing_update: Int32, update_candidates: Array(ContainerInfo))
       containers = @docker_client.running_containers
-      needing_update = get_containers_needing_update(allow_major_upgrade)
+
+      # Filter containers if specific names were provided
+      unless container_names.empty?
+        # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
+        normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+        containers = containers.select { |container| 
+          # Check both the actual container name and a version without leading slash
+          normalized_input_names.includes?(container.name) || 
+          normalized_input_names.includes?(container.name.lchop('/'))
+        }
+      end
+
+      needing_update = get_containers_needing_update(allow_major_upgrade, container_names)
 
       {
         total:             containers.size,
@@ -121,9 +158,16 @@ module Mangrullo
       {total: 0, needing_update: 0, update_candidates: [] of ContainerInfo}
     end
 
-    def dry_run(allow_major_upgrade : Bool = false) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
+    def dry_run(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
       containers = @docker_client.running_containers
-      Log.info { "Dry run: checking #{containers.size} containers" }
+
+      # Filter containers if specific names were provided
+      if container_names.empty?
+        Log.info { "Dry run: checking all #{containers.size} containers" }
+      else
+        containers = containers.select { |container| container_names.includes?(container.name) }
+        Log.info { "Dry run: filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
+      end
 
       containers.map { |container| process_container_for_dry_run(container, allow_major_upgrade) }
     rescue ex : Docr::Errors::DockerAPIError

@@ -40,7 +40,7 @@ module Mangrullo
       Log.info { config.to_s }
 
       begin
-        results = update_manager.check_and_update_containers(config.allow_major_upgrade?)
+        results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
 
         updated_count = results.count { |result| result[:updated] }
         error_count = results.count { |result| result[:error] }
@@ -71,7 +71,7 @@ module Mangrullo
       while running?
         begin
           Log.info { "Starting update cycle" }
-          results = update_manager.check_and_update_containers(config.allow_major_upgrade?)
+          results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
 
           updated_count = results.count { |result| result[:updated] }
           error_count = results.count { |result| result[:error] }
@@ -108,7 +108,7 @@ module Mangrullo
       Log.info { config.to_s }
 
       begin
-        results = update_manager.dry_run(config.allow_major_upgrade?)
+        results = update_manager.dry_run(config.allow_major_upgrade?, config.container_names)
 
         needing_update = results.select { |result| result[:needs_update] }
 

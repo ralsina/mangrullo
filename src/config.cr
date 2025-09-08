@@ -8,7 +8,8 @@ module Mangrullo
 
     Usage:
       mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
-               [--log-level=<level>] [--once] [--dry-run] [--help] [--version]
+               [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
+               [--help] [--version]
 
     Options:
       --interval=<seconds>   Check interval in seconds [default: 300]
@@ -19,6 +20,9 @@ module Mangrullo
       --dry-run              Show what would be updated without actually updating
       --help                 Show this help message
       --version              Show version information
+
+    Arguments:
+      <container-name>       Specific container names to check (if not specified, checks all containers)
     DOC
 
     property interval : Int32
@@ -27,14 +31,23 @@ module Mangrullo
     property log_level : String
     property? run_once : Bool
     property? dry_run : Bool
+    property container_names : Array(String)
 
     def initialize(@interval : Int32 = 300, @allow_major_upgrade : Bool = false,
                    @docker_socket_path : String = "/var/run/docker.sock",
-                   @log_level : String = "info", @run_once : Bool = false, @dry_run : Bool = false)
+                   @log_level : String = "info", @run_once : Bool = false, @dry_run : Bool = false,
+                   @container_names : Array(String) = [] of String)
     end
 
     def self.parse(args : Array(String)) : Config
       docopt = Docopt.docopt(DOCOPT, argv: args, help: true, version: "Mangrullo #{::VERSION}")
+
+      # Parse container names
+      container_names = if docopt["<container-name>"]?
+                          docopt["<container-name>"].as(Array).map(&.as(String))
+                        else
+                          [] of String
+                        end
 
       Config.new(
         interval: docopt["--interval"].as(String).to_i,
@@ -42,7 +55,8 @@ module Mangrullo
         docker_socket_path: docopt["--socket"].as(String),
         log_level: docopt["--log-level"].as(String),
         run_once: docopt["--once"].as(Bool | Nil) || false,
-        dry_run: docopt["--dry-run"].as(Bool | Nil) || false
+        dry_run: docopt["--dry-run"].as(Bool | Nil) || false,
+        container_names: container_names
       )
     rescue ex
       puts ex.message
@@ -56,7 +70,8 @@ module Mangrullo
         docker_socket_path: ENV["MANGRULLO_DOCKER_SOCKET"]? || "/var/run/docker.sock",
         log_level: ENV["MANGRULLO_LOG_LEVEL"]? || "info",
         run_once: ENV["MANGRULLO_RUN_ONCE"]? == "true",
-        dry_run: ENV["MANGRULLO_DRY_RUN"]? == "true"
+        dry_run: ENV["MANGRULLO_DRY_RUN"]? == "true",
+        container_names: [] of String
       )
     end
 
@@ -114,6 +129,8 @@ module Mangrullo
     end
 
     def to_s : String
+      container_info = container_names.empty? ? "All containers" : "Specific containers: #{container_names.join(", ")}"
+
       <<-CONFIG
       Mangrullo Configuration:
         Interval: #{interval} seconds
@@ -122,6 +139,7 @@ module Mangrullo
         Log level: #{log_level}
         Run once: #{run_once?}
         Dry run: #{dry_run?}
+        Target: #{container_info}
       CONFIG
     end
   end
