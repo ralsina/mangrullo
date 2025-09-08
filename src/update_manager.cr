@@ -85,72 +85,74 @@ module Mangrullo
     end
 
     def dry_run(allow_major_upgrade : Bool = false) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
-      results = [] of NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
-
       begin
         containers = @docker_client.running_containers
         Log.info { "Dry run: checking #{containers.size} containers" }
 
-        containers.each do |container|
-          begin
-            Log.debug { "Processing container: #{container.name} (#{container.image})" }
-            needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
-            reason = if needs_update
-                       begin
-                         Log.debug { "Checking update info for: #{container.image}" }
-                         update_info = @image_checker.get_image_update_info(container.image)
-                         if update_info[:local_version] && update_info[:remote_version]
-                           "Version update available: #{update_info[:local_version].to_s} -> #{update_info[:remote_version].to_s}"
-                         else
-                           # Get local image info for better messaging
-                           local_info = {id: container.image_id, digest: @image_checker.get_container_image_digest(container.image_id)}
-                           
-                           # Try to get more specific version information
-                           if update_info[:local_version] && update_info[:remote_version]
-                             "Version update available: #{update_info[:local_version].to_s} -> #{update_info[:remote_version].to_s}"
-                           elsif update_info[:local_version]
-                             "Update available for #{container.image} (current: #{update_info[:local_version].to_s})"
-                           elsif local_info[:digest]
-                             # For digest-based images, try to extract version from image tag
-                             simple_version = @image_checker.extract_version_from_image(container.image)
-                             Log.debug { "Simple version extraction for #{container.image}: #{simple_version}" }
-                             if simple_version
-                               "Update available for #{container.image} (current: #{simple_version})"
-                             else
-                               # Extract the tag directly for non-semantic versions like "latest"
-                               if container.image.includes?(":")
-                                 tag = container.image.split(":").last
-                                 "Update available for #{container.image} (current: #{tag})"
-                               else
-                                 "Update available for #{container.image} (current: latest)"
-                               end
-                             end
-                           elsif (image_id = local_info[:id])
-                             "Update available for #{container.image} (image ID: #{image_id[0..11]}...)"
-                           else
-                             "Update available for #{container.image}"
-                           end
-                         end
-                       rescue ex
-                         "Update available for #{container.image}"
-                       end
-                     else
-                       nil
-                     end
-
-            results << {container: container, needs_update: needs_update, reason: reason}
-          rescue ex
-            Log.error { "Error processing container #{container.name}: #{ex.message}" }
-            Log.debug { "Container details - ID: #{container.id}, Image: #{container.image}" }
-            results << {container: container, needs_update: false, reason: "Error processing container"}
-          end
-        end
+        containers.map { |container| process_container_for_dry_run(container, allow_major_upgrade) }
       rescue ex
         Log.error { "Error during dry run: #{ex.message}" }
         Log.error { ex.backtrace.join("\n") } if ex.backtrace
+        [] of NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
       end
+    end
 
-      results
+    private def process_container_for_dry_run(container : ContainerInfo, allow_major_upgrade : Bool) : NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
+      begin
+        Log.debug { "Processing container: #{container.name} (#{container.image})" }
+        needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
+        reason = if needs_update
+                   generate_update_reason(container)
+                 else
+                   nil
+                 end
+
+        {container: container, needs_update: needs_update, reason: reason}
+      rescue ex
+        Log.error { "Error processing container #{container.name}: #{ex.message}" }
+        Log.debug { "Container details - ID: #{container.id}, Image: #{container.image}" }
+        {container: container, needs_update: false, reason: "Error processing container"}
+      end
+    end
+
+    private def generate_update_reason(container : ContainerInfo) : String
+      begin
+        Log.debug { "Checking update info for: #{container.image}" }
+        update_info = @image_checker.get_image_update_info(container.image)
+        
+        if update_info[:local_version] && update_info[:remote_version]
+          "Version update available: #{update_info[:local_version].to_s} -> #{update_info[:remote_version].to_s}"
+        else
+          generate_fallback_update_message(container, update_info)
+        end
+      rescue ex
+        "Update available for #{container.image}"
+      end
+    end
+
+    private def generate_fallback_update_message(container : ContainerInfo, update_info) : String
+      # Get local image info for better messaging
+      local_info = {id: container.image_id, digest: @image_checker.get_container_image_digest(container.image_id)}
+      
+      if update_info[:local_version]
+        "Update available for #{container.image} (current: #{update_info[:local_version].to_s})"
+      elsif local_info[:digest]
+        # For digest-based images, try to extract version from image tag
+        simple_version = @image_checker.extract_version_from_image(container.image)
+        Log.debug { "Simple version extraction for #{container.image}: #{simple_version}" }
+        
+        if simple_version
+          "Update available for #{container.image} (current: #{simple_version})"
+        else
+          # Extract the tag directly for non-semantic versions like "latest"
+          tag = container.image.includes?(":") ? container.image.split(":").last : "latest"
+          "Update available for #{container.image} (current: #{tag})"
+        end
+      elsif (image_id = local_info[:id])
+        "Update available for #{container.image} (image ID: #{image_id[0..11]}...)"
+      else
+        "Update available for #{container.image}"
+      end
     end
   end
 end

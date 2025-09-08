@@ -100,33 +100,47 @@ module Mangrullo
       registry_host = registry_info[:registry_host]
       repository_path = registry_info[:repository_path]
 
-      # Get image manifest from appropriate registry API with authentication
       begin
-        # Try authenticated client first
-        auth_client = create_authenticated_client(registry_host, repository_path)
-        
-        if auth_client
-          Log.debug { "Using authenticated client for #{registry_host}" }
-          response = auth_client.get("/v2/#{repository_path}/tags/list")
-        else
-          # Fall back to unauthenticated client for registries that don't require auth
-          Log.debug { "Using unauthenticated client for #{registry_host}" }
-          registry_client = create_registry_client(registry_host)
-          response = registry_client.get("/v2/#{repository_path}/tags/list")
-        end
-        
-        return [] of Version unless response.status_code == 200
+        response = fetch_registry_tags(registry_host, repository_path)
+        return [] of Version unless response && response.status_code == 200
 
-        json = JSON.parse(response.body)
-        tags = json["tags"].as_a.map(&.as_s)
-
-        # Filter and parse version tags
-        versions = tags.compact_map { |tag| Version.parse(tag) }
-        versions.sort!
+        parse_versions_from_response(response)
       rescue ex
         Log.debug { "Failed to get all versions for #{image_name} from #{registry_host}: #{ex.message}" }
         [] of Version
       end
+    end
+
+    private def fetch_registry_tags(registry_host : String, repository_path : String) : HTTP::Client::Response?
+      # Try authenticated client first
+      auth_client = create_authenticated_client(registry_host, repository_path)
+      
+      if auth_client
+        Log.debug { "Using authenticated client for #{registry_host}" }
+        response = auth_client.get("/v2/#{repository_path}/tags/list")
+      else
+        # Fall back to unauthenticated client for registries that don't require auth
+        Log.debug { "Using unauthenticated client for #{registry_host}" }
+        registry_client = create_registry_client(registry_host)
+        response = registry_client.get("/v2/#{repository_path}/tags/list")
+      end
+      
+      response
+    rescue ex
+      Log.debug { "Failed to fetch tags from #{registry_host}: #{ex.message}" }
+      nil
+    end
+
+    private def parse_versions_from_response(response : HTTP::Client::Response) : Array(Version)
+      json = JSON.parse(response.body)
+      tags = json["tags"].as_a.map(&.as_s)
+
+      # Filter and parse version tags
+      versions = tags.compact_map { |tag| Version.parse(tag) }
+      versions.sort!
+    rescue ex
+      Log.debug { "Failed to parse versions from response: #{ex.message}" }
+      [] of Version
     end
 
     def get_latest_version(image_name : String) : Version?
@@ -137,28 +151,11 @@ module Mangrullo
       registry_host = registry_info[:registry_host]
       repository_path = registry_info[:repository_path]
 
-      # Get image manifest from appropriate registry API with authentication
       begin
-        # Try authenticated client first
-        auth_client = create_authenticated_client(registry_host, repository_path)
-        
-        if auth_client
-          Log.debug { "Using authenticated client for #{registry_host}" }
-          response = auth_client.get("/v2/#{repository_path}/tags/list")
-        else
-          # Fall back to unauthenticated client for registries that don't require auth
-          Log.debug { "Using unauthenticated client for #{registry_host}" }
-          registry_client = create_registry_client(registry_host)
-          response = registry_client.get("/v2/#{repository_path}/tags/list")
-        end
-        
-        return nil unless response.status_code == 200
+        response = fetch_registry_tags(registry_host, repository_path)
+        return nil unless response && response.status_code == 200
 
-        json = JSON.parse(response.body)
-        tags = json["tags"].as_a.map(&.as_s)
-
-        # Filter out version tags and find the latest
-        versions = tags.compact_map { |tag| Version.parse(tag) }.sort!
+        versions = parse_versions_from_response(response)
         versions.last?
       rescue ex
         Log.debug { "Failed to get latest version for #{image_name} from #{registry_host}: #{ex.message}" }
@@ -177,24 +174,8 @@ module Mangrullo
       tag = image_name.includes?(":") ? image_name.split(":").last : "latest"
 
       begin
-        # Try authenticated client first
-        auth_client = create_authenticated_client(registry_host, repository_path)
-        
-        headers = HTTP::Headers{
-          "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
-        }
-        
-        if auth_client
-          Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
-          response = auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
-        else
-          # Fall back to unauthenticated client
-          Log.debug { "Using unauthenticated client for digest lookup on #{registry_host}" }
-          registry_client = create_registry_client(registry_host)
-          response = registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
-        end
-
-        return nil unless response.status_code == 200
+        response = fetch_registry_digest(registry_host, repository_path, tag)
+        return nil unless response && response.status_code == 200
 
         # The digest is in the Docker-Content-Digest header
         response.headers["Docker-Content-Digest"]?
@@ -202,6 +183,30 @@ module Mangrullo
         Log.debug { "Failed to get remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
         nil
       end
+    end
+
+    private def fetch_registry_digest(registry_host : String, repository_path : String, tag : String) : HTTP::Client::Response?
+      headers = HTTP::Headers{
+        "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
+      }
+      
+      # Try authenticated client first
+      auth_client = create_authenticated_client(registry_host, repository_path)
+      
+      if auth_client
+        Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
+        response = auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+      else
+        # Fall back to unauthenticated client
+        Log.debug { "Using unauthenticated client for digest lookup on #{registry_host}" }
+        registry_client = create_registry_client(registry_host)
+        response = registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+      end
+      
+      response
+    rescue ex
+      Log.debug { "Failed to fetch digest from #{registry_host}: #{ex.message}" }
+      nil
     end
 
     def get_local_image_digest(image_name : String) : String?

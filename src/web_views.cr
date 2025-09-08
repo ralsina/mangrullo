@@ -4,8 +4,15 @@ require "ecr"
 class WebViews
   def dashboard(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo))
     env.response.content_type = "text/html"
-
+    
     # Calculate summary statistics
+    dashboard_stats = calculate_dashboard_stats(containers)
+    
+    # Generate HTML
+    render_dashboard_html(env, containers, dashboard_stats)
+  end
+
+  private def calculate_dashboard_stats(containers : Array(Mangrullo::ContainerInfo)) : NamedTuple(total_containers: Int32, updates_available: Int32)
     total_containers = containers.size
     updates_available = containers.count { |container|
       begin
@@ -16,8 +23,11 @@ class WebViews
         false
       end
     }
+    
+    {total_containers: total_containers, updates_available: updates_available}
+  end
 
-    # Create a simple template string rendering
+  private def render_dashboard_html(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo), stats : NamedTuple(total_containers: Int32, updates_available: Int32))
     html = <<-HTML
     <!DOCTYPE html>
     <html lang="en">
@@ -67,11 +77,11 @@ class WebViews
             <div class="header-stats">
                 <div class="stat-card">
                     <h4>Total Containers</h4>
-                    <p style="font-size: 2rem; margin: 0; font-weight: bold;">#{total_containers}</p>
+                    <p style="font-size: 2rem; margin: 0; font-weight: bold;">#{stats[:total_containers]}</p>
                 </div>
                 <div class="stat-card">
                     <h4>Updates Available</h4>
-                    <p style="font-size: 2rem; margin: 0; font-weight: bold; color: #ffc107;">#{updates_available}</p>
+                    <p style="font-size: 2rem; margin: 0; font-weight: bold; color: #ffc107;">#{stats[:updates_available]}</p>
                 </div>
                 <div class="stat-card">
                     <h4>Last Updated</h4>
