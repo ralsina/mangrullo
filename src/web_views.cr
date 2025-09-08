@@ -304,8 +304,8 @@ class WebViews
                             <h3>Update Status</h3>
                         </header>
                         <p><strong>Status:</strong> <span class="status-badge #{status_class}">#{update_status}</span></p>
-                        #{update_info[:local_version] ? "<p><strong>Current Version:</strong> #{update_info[:local_version].to_s}</p>" : ""}
-                        #{update_info[:remote_version] ? "<p><strong>Available Version:</strong> #{update_info[:remote_version].to_s}</p>" : ""}
+                        #{update_info[:local_version] ? "<p><strong>Current Version:</strong> #{update_info[:local_version]}</p>" : ""}
+                        #{update_info[:remote_version] ? "<p><strong>Available Version:</strong> #{update_info[:remote_version]}</p>" : ""}
                         <footer>
                             <button onclick="showUpdateModal('#{container.id}')" class="primary">Update Container</button>
                             <button onclick="checkUpdate('#{container.id}')" class="secondary">Check Again</button>

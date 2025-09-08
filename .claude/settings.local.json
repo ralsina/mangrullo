@@ -13,7 +13,10 @@
       "Bash(timeout:*)",
       "Bash(git push:*)",
       "Bash(shards build:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(ameba:*)"
     ],
     "deny": [],
     "ask": []

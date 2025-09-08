@@ -269,24 +269,22 @@ module Mangrullo
     end
 
     def get_local_image_info(image_name : String) : NamedTuple(id: String?, digest: String?)
-      begin
-        # Get local image info through docker client
-        image_info = @docker_client.get_image_info(image_name)
-        if image_info
-          {id: image_info.id, digest: nil} # Note: repo_digests not available in current implementation
-        else
-          {id: nil, digest: nil}
-        end
-      rescue ex : Docr::Errors::DockerAPIError
-        Log.error { "Docker API error getting local image info for #{image_name}: #{ex.message}" }
-        {id: nil, digest: nil}
-      rescue ex : Socket::Error | IO::Error
-        Log.error { "Network error getting local image info for #{image_name}: #{ex.message}" }
-        {id: nil, digest: nil}
-      rescue ex
-        Log.error { "Unexpected error getting local image info for #{image_name}: #{ex.message}" }
+      # Get local image info through docker client
+      image_info = @docker_client.get_image_info(image_name)
+      if image_info
+        {id: image_info.id, digest: nil} # Note: repo_digests not available in current implementation
+      else
         {id: nil, digest: nil}
       end
+    rescue ex : Docr::Errors::DockerAPIError
+      Log.error { "Docker API error getting local image info for #{image_name}: #{ex.message}" }
+      {id: nil, digest: nil}
+    rescue ex : Socket::Error | IO::Error
+      Log.error { "Network error getting local image info for #{image_name}: #{ex.message}" }
+      {id: nil, digest: nil}
+    rescue ex
+      Log.error { "Unexpected error getting local image info for #{image_name}: #{ex.message}" }
+      {id: nil, digest: nil}
     end
 
     def get_container_image_digest(container_image_id : String) : String?
@@ -300,18 +298,16 @@ module Mangrullo
     end
 
     def get_remote_image_info(image_name : String) : NamedTuple(id: String?, digest: String?)
-      begin
-        # Try to get remote image info by creating it (this pulls latest info)
-        # Note: This is a simplified approach - in practice we'd need a more sophisticated way
-        # to get remote manifest without actually pulling
-        {id: nil, digest: nil}
-      rescue ex : Socket::Error | IO::Error
-        Log.error { "Network error getting remote image info for #{image_name}: #{ex.message}" }
-        {id: nil, digest: nil}
-      rescue ex
-        Log.error { "Unexpected error getting remote image info for #{image_name}: #{ex.message}" }
-        {id: nil, digest: nil}
-      end
+      # Try to get remote image info by creating it (this pulls latest info)
+      # Note: This is a simplified approach - in practice we'd need a more sophisticated way
+      # to get remote manifest without actually pulling
+      {id: nil, digest: nil}
+    rescue ex : Socket::Error | IO::Error
+      Log.error { "Network error getting remote image info for #{image_name}: #{ex.message}" }
+      {id: nil, digest: nil}
+    rescue ex
+      Log.error { "Unexpected error getting remote image info for #{image_name}: #{ex.message}" }
+      {id: nil, digest: nil}
     end
 
     private def map_registry_host(registry_host : String, repository_path : String) : NamedTuple(registry_host: String, repository_path: String)

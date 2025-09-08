@@ -59,7 +59,7 @@ describe Mangrullo::ImageChecker do
       container = create_container("nginx:1.2.3")
       # Set available versions - only current version available
       checker.set_all_versions("nginx:1.2.3", [
-        Mangrullo::Version.new(1, 2, 3)
+        Mangrullo::Version.new(1, 2, 3),
       ])
 
       result = checker.needs_update?(container, false)
@@ -73,7 +73,7 @@ describe Mangrullo::ImageChecker do
       # Set available versions including newer patch version
       checker.set_all_versions("nginx:1.2.3", [
         Mangrullo::Version.new(1, 2, 3),
-        Mangrullo::Version.new(1, 2, 4)
+        Mangrullo::Version.new(1, 2, 4),
       ])
 
       result = checker.needs_update?(container, false)
@@ -87,7 +87,7 @@ describe Mangrullo::ImageChecker do
       # Set available versions including major upgrade
       checker.set_all_versions("nginx:1.2.3", [
         Mangrullo::Version.new(1, 2, 3),
-        Mangrullo::Version.new(2, 0, 0)
+        Mangrullo::Version.new(2, 0, 0),
       ])
 
       result = checker.needs_update?(container, false)
@@ -101,7 +101,7 @@ describe Mangrullo::ImageChecker do
       # Set available versions including major upgrade
       checker.set_all_versions("nginx:1.2.3", [
         Mangrullo::Version.new(1, 2, 3),
-        Mangrullo::Version.new(2, 0, 0)
+        Mangrullo::Version.new(2, 0, 0),
       ])
 
       result = checker.needs_update?(container, true)
@@ -148,7 +148,7 @@ describe Mangrullo::ImageChecker do
       # Set available versions including newer patch version
       checker.set_all_versions("nginx:1.2.3", [
         Mangrullo::Version.new(1, 2, 3),
-        Mangrullo::Version.new(1, 2, 4)
+        Mangrullo::Version.new(1, 2, 4),
       ])
 
       info = checker.get_image_update_info("nginx:1.2.3")
@@ -175,7 +175,7 @@ describe Mangrullo::ImageChecker do
       create_container("nginx:1.2.3")
       # Set available versions - only current version available
       checker.set_all_versions("nginx:1.2.3", [
-        Mangrullo::Version.new(1, 2, 3)
+        Mangrullo::Version.new(1, 2, 3),
       ])
 
       info = checker.get_image_update_info("nginx:1.2.3")
