@@ -30,18 +30,18 @@ module Mangrullo
     private def parse_registry_info(image_name : String) : NamedTuple(registry_host: String, repository_path: String)
       # Parse the image name to extract registry and repository
       base_name = image_name.split(":").first
-      
+
       # Handle different registry formats
-      registry_host = "registry-1.docker.io"  # Default to Docker Hub
+      registry_host = "registry-1.docker.io" # Default to Docker Hub
       repository_path = base_name
-      
+
       if base_name.includes?("/")
         parts = base_name.split("/")
         if parts[0].includes?(".") || parts[0].includes?(":")
           # This looks like a registry host (e.g., ghcr.io, registry.example.com:5000)
           registry_host = parts[0]
           repository_path = parts[1..-1].join("/")
-          
+
           # Handle special registry mappings
           if registry_host == "lscr.io"
             # lscr.io is a vanity URL that redirects to ghcr.io
@@ -81,7 +81,7 @@ module Mangrullo
 
       # Filter versions that are newer than current version
       newer_versions = all_versions.select { |v| v > current_version }
-      
+
       # Filter by major upgrade preference
       if allow_major_upgrade
         # Allow any newer version
@@ -105,8 +105,14 @@ module Mangrullo
         return [] of Version unless response && response.status_code == 200
 
         parse_versions_from_response(response)
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting all versions for #{image_name} from #{registry_host}: #{ex.message}" }
+        [] of Version
+      rescue ex : JSON::ParseException
+        Log.error { "JSON parsing error getting all versions for #{image_name} from #{registry_host}: #{ex.message}" }
+        [] of Version
       rescue ex
-        Log.debug { "Failed to get all versions for #{image_name} from #{registry_host}: #{ex.message}" }
+        Log.error { "Unexpected error getting all versions for #{image_name} from #{registry_host}: #{ex.message}" }
         [] of Version
       end
     end
@@ -114,7 +120,7 @@ module Mangrullo
     private def fetch_registry_tags(registry_host : String, repository_path : String) : HTTP::Client::Response?
       # Try authenticated client first
       auth_client = create_authenticated_client(registry_host, repository_path)
-      
+
       if auth_client
         Log.debug { "Using authenticated client for #{registry_host}" }
         response = auth_client.get("/v2/#{repository_path}/tags/list")
@@ -124,10 +130,13 @@ module Mangrullo
         registry_client = create_registry_client(registry_host)
         response = registry_client.get("/v2/#{repository_path}/tags/list")
       end
-      
+
       response
+    rescue ex : Socket::Error | IO::Error
+      Log.error { "Network error fetching tags from #{registry_host}: #{ex.message}" }
+      nil
     rescue ex
-      Log.debug { "Failed to fetch tags from #{registry_host}: #{ex.message}" }
+      Log.error { "Unexpected error fetching tags from #{registry_host}: #{ex.message}" }
       nil
     end
 
@@ -138,8 +147,11 @@ module Mangrullo
       # Filter and parse version tags
       versions = tags.compact_map { |tag| Version.parse(tag) }
       versions.sort!
+    rescue ex : JSON::ParseException
+      Log.error { "JSON parsing error parsing versions from response: #{ex.message}" }
+      [] of Version
     rescue ex
-      Log.debug { "Failed to parse versions from response: #{ex.message}" }
+      Log.error { "Unexpected error parsing versions from response: #{ex.message}" }
       [] of Version
     end
 
@@ -157,8 +169,14 @@ module Mangrullo
 
         versions = parse_versions_from_response(response)
         versions.last?
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting latest version for #{image_name} from #{registry_host}: #{ex.message}" }
+        nil
+      rescue ex : JSON::ParseException
+        Log.error { "JSON parsing error getting latest version for #{image_name} from #{registry_host}: #{ex.message}" }
+        nil
       rescue ex
-        Log.debug { "Failed to get latest version for #{image_name} from #{registry_host}: #{ex.message}" }
+        Log.error { "Unexpected error getting latest version for #{image_name} from #{registry_host}: #{ex.message}" }
         nil
       end
     end
@@ -179,8 +197,11 @@ module Mangrullo
 
         # The digest is in the Docker-Content-Digest header
         response.headers["Docker-Content-Digest"]?
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
+        nil
       rescue ex
-        Log.debug { "Failed to get remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
+        Log.error { "Unexpected error getting remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
         nil
       end
     end
@@ -189,10 +210,10 @@ module Mangrullo
       headers = HTTP::Headers{
         "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
       }
-      
+
       # Try authenticated client first
       auth_client = create_authenticated_client(registry_host, repository_path)
-      
+
       if auth_client
         Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
         response = auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
@@ -202,10 +223,13 @@ module Mangrullo
         registry_client = create_registry_client(registry_host)
         response = registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
       end
-      
+
       response
+    rescue ex : Socket::Error | IO::Error
+      Log.error { "Network error fetching digest from #{registry_host}: #{ex.message}" }
+      nil
     rescue ex
-      Log.debug { "Failed to fetch digest from #{registry_host}: #{ex.message}" }
+      Log.error { "Unexpected error fetching digest from #{registry_host}: #{ex.message}" }
       nil
     end
 
@@ -238,7 +262,7 @@ module Mangrullo
       return {has_update: false, local_version: local_version, remote_version: nil} unless local_version
 
       # Find the target version we would update to
-      target_version = find_target_update_version(image_name, local_version, true)  # Use true to get latest available
+      target_version = find_target_update_version(image_name, local_version, true) # Use true to get latest available
       has_update = target_version != nil
 
       {has_update: has_update, local_version: local_version, remote_version: target_version}
@@ -249,11 +273,18 @@ module Mangrullo
         # Get local image info through docker client
         image_info = @docker_client.get_image_info(image_name)
         if image_info
-          {id: image_info.id, digest: nil}  # Note: repo_digests not available in current implementation
+          {id: image_info.id, digest: nil} # Note: repo_digests not available in current implementation
         else
           {id: nil, digest: nil}
         end
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error getting local image info for #{image_name}: #{ex.message}" }
+        {id: nil, digest: nil}
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting local image info for #{image_name}: #{ex.message}" }
+        {id: nil, digest: nil}
       rescue ex
+        Log.error { "Unexpected error getting local image info for #{image_name}: #{ex.message}" }
         {id: nil, digest: nil}
       end
     end
@@ -274,7 +305,11 @@ module Mangrullo
         # Note: This is a simplified approach - in practice we'd need a more sophisticated way
         # to get remote manifest without actually pulling
         {id: nil, digest: nil}
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting remote image info for #{image_name}: #{ex.message}" }
+        {id: nil, digest: nil}
       rescue ex
+        Log.error { "Unexpected error getting remote image info for #{image_name}: #{ex.message}" }
         {id: nil, digest: nil}
       end
     end
@@ -290,10 +325,9 @@ module Mangrullo
       end
     end
 
-    
     def create_registry_client(registry_host : String) : HTTP::Client
       if registry_host == "registry-1.docker.io"
-        @registry_client  # Reuse the existing Docker Hub client
+        @registry_client # Reuse the existing Docker Hub client
       else
         # Create a new client for other registries
         HTTP::Client.new(registry_host, 443, tls: true)
@@ -314,11 +348,11 @@ module Mangrullo
       begin
         # Try authenticated client first
         auth_client = create_authenticated_client(registry_host, repository_path)
-        
+
         headers = HTTP::Headers{
           "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
         }
-        
+
         if auth_client
           Log.debug { "get_remote_image_digest_for_registry: Using authenticated client for #{registry_host}" }
           response = auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
@@ -328,22 +362,24 @@ module Mangrullo
           registry_client = create_registry_client(registry_host)
           response = registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
         end
-        
+
         return nil unless response.status_code == 200
 
         # Extract digest from response headers
         response.headers["Docker-Content-Digest"]?
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
+        nil
       rescue ex
-        Log.debug { "Failed to get remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
+        Log.error { "Unexpected error getting remote digest for #{image_name} from #{registry_host}: #{ex.message}" }
         nil
       end
     end
 
-    
     # Authentication helper methods
     private def get_registry_token(registry_host : String, repository_path : String) : String?
       cache_key = "#{registry_host}:#{repository_path}"
-      
+
       # Check cache first
       if cached = @auth_cache[cache_key]?
         return cached[:token] if cached[:expires_at] > Time.utc
@@ -351,15 +387,15 @@ module Mangrullo
 
       begin
         token_url = case registry_host
-                   when "registry-1.docker.io"
-                     "https://auth.docker.io/token?service=registry.docker.io&scope=repository:#{repository_path}:pull"
-                   when "ghcr.io"
-                     "https://ghcr.io/token?scope=repository:#{repository_path}:pull"
-                   else
-                     # For other registries, try common patterns or return nil
-                     Log.debug { "Unknown registry auth pattern for #{registry_host}" }
-                     return nil
-                   end
+                    when "registry-1.docker.io"
+                      "https://auth.docker.io/token?service=registry.docker.io&scope=repository:#{repository_path}:pull"
+                    when "ghcr.io"
+                      "https://ghcr.io/token?scope=repository:#{repository_path}:pull"
+                    else
+                      # For other registries, try common patterns or return nil
+                      Log.debug { "Unknown registry auth pattern for #{registry_host}" }
+                      return nil
+                    end
 
         Log.debug { "Getting token from: #{token_url}" }
         response = HTTP::Client.get(token_url)
@@ -372,10 +408,16 @@ module Mangrullo
         # Cache the token (tokens typically expire in 5 minutes, be conservative)
         @auth_cache[cache_key] = {token: token, expires_at: Time.utc + 4.minutes}
         Log.debug { "Successfully cached token for #{cache_key}" }
-        
+
         token
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error getting registry token for #{registry_host}: #{ex.message}" }
+        nil
+      rescue ex : JSON::ParseException
+        Log.error { "JSON parsing error getting registry token for #{registry_host}: #{ex.message}" }
+        nil
       rescue ex
-        Log.debug { "Failed to get registry token for #{registry_host}: #{ex.message}" }
+        Log.error { "Unexpected error getting registry token for #{registry_host}: #{ex.message}" }
         nil
       end
     end
