@@ -142,12 +142,26 @@ module Mangrullo
 
     private def process_container_for_dry_run(container : ContainerInfo, allow_major_upgrade : Bool) : NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
       Log.debug { "Processing container: #{container.name} (#{container.image})" }
-      needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
-      reason = if needs_update
-                 generate_update_reason(container)
-               else
-                 nil
-               end
+      
+      # For latest tags, use detailed status to provide better reasons
+      if container.image.includes?("latest")
+        status = @image_checker.get_update_status(container)
+        needs_update = status[:needs_pull] || status[:needs_restart]
+        reason = if status[:needs_pull]
+                   "New image version available (requires pull)"
+                 elsif status[:needs_restart]
+                   "Container restart required to use latest local image"
+                 else
+                   nil
+                 end
+      else
+        needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
+        reason = if needs_update
+                   generate_update_reason(container)
+                 else
+                   nil
+                 end
+      end
 
       {container: container, needs_update: needs_update, reason: reason}
     rescue ex : Docr::Errors::DockerAPIError

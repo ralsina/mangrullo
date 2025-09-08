@@ -14,9 +14,10 @@ module Mangrullo
     end
 
     def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false) : Bool
-      # If using 'latest' tag, use simple digest comparison
+      # If using 'latest' tag, use the enhanced update status check
       if container.image.includes?("latest")
-        return image_has_update?(container.image)
+        status = get_update_status(container)
+        return status[:needs_pull] || status[:needs_restart]
       end
 
       # For versioned tags, find available updates based on version
@@ -264,6 +265,8 @@ module Mangrullo
     end
 
     def get_local_image_digest(image_name : String) : String?
+      # Get the actual image info for the specified image name
+      # This should return the latest version of the image available locally
       image_info = @docker_client.get_image_info(image_name)
       result = image_info.try(&.id)
       Log.debug { "get_local_image_digest: image_name=#{image_name}, result=#{result}" }
@@ -287,6 +290,42 @@ module Mangrullo
       Log.debug { "  Digests equal? #{normalized_local == normalized_remote}" }
       
       normalized_local != normalized_remote
+    end
+
+    def get_update_status(container : ContainerInfo) : NamedTuple(needs_pull: Bool, needs_restart: Bool, local_digest: String?, remote_digest: String?)
+      # Get the container's current image digest
+      container_digest = container.image_id
+      
+      # Get the latest local image digest
+      local_digest = get_local_image_digest(container.image)
+      
+      # Get the remote digest
+      remote_digest = get_remote_image_digest(container.image)
+      
+      needs_pull = false
+      needs_restart = false
+      
+      if local_digest && remote_digest
+        normalized_local = normalize_digest(local_digest)
+        normalized_remote = normalize_digest(remote_digest)
+        normalized_container = normalize_digest(container_digest)
+        
+        needs_pull = normalized_local != normalized_remote
+        needs_restart = normalized_container != normalized_local && !needs_pull
+        
+        Log.debug { "Update status for #{container.name}:" }
+        Log.debug { "  Container digest: #{normalized_container}" }
+        Log.debug { "  Local latest digest: #{normalized_local}" }
+        Log.debug { "  Remote digest: #{normalized_remote}" }
+        Log.debug { "  Needs pull: #{needs_pull}, Needs restart: #{needs_restart}" }
+      end
+      
+      {
+        needs_pull:    needs_pull,
+        needs_restart: needs_restart,
+        local_digest:  local_digest,
+        remote_digest: remote_digest,
+      }
     end
 
     def get_image_update_info(image_name : String) : NamedTuple(has_update: Bool, local_version: Version?, remote_version: Version?)
