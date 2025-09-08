@@ -247,7 +247,16 @@ module Mangrullo
       remote_digest = get_remote_image_digest(image_name)
       return false unless remote_digest
 
-      local_digest != remote_digest
+      # Normalize digest formats for comparison
+      normalized_local = normalize_digest(local_digest)
+      normalized_remote = normalize_digest(remote_digest)
+
+      Log.debug { "Digest comparison for #{image_name}:" }
+      Log.debug { "  Original: local=#{local_digest}, remote=#{remote_digest}" }
+      Log.debug { "  Normalized: local=#{normalized_local}, remote=#{normalized_remote}" }
+      Log.debug { "  Digests equal? #{normalized_local == normalized_remote}" }
+      
+      normalized_local != normalized_remote
     end
 
     def get_image_update_info(image_name : String) : NamedTuple(has_update: Bool, local_version: Version?, remote_version: Version?)
@@ -294,6 +303,15 @@ module Mangrullo
         container_image_id
       else
         "sha256:#{container_image_id}"
+      end
+    end
+
+    private def normalize_digest(digest : String) : String
+      # Ensure digest has consistent sha256: prefix format
+      if digest.starts_with?("sha256:")
+        digest
+      else
+        "sha256:#{digest}"
       end
     end
 
