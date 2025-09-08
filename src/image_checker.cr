@@ -27,6 +27,42 @@ module Mangrullo
       target_version != nil
     end
 
+    private def parse_registry_info(image_name : String) : NamedTuple(registry_host: String, repository_path: String)
+      # Parse the image name to extract registry and repository
+      base_name = image_name.split(":").first
+      
+      # Handle different registry formats
+      registry_host = "registry-1.docker.io"  # Default to Docker Hub
+      repository_path = base_name
+      
+      if base_name.includes?("/")
+        parts = base_name.split("/")
+        if parts[0].includes?(".") || parts[0].includes?(":")
+          # This looks like a registry host (e.g., ghcr.io, registry.example.com:5000)
+          registry_host = parts[0]
+          repository_path = parts[1..-1].join("/")
+          
+          # Handle special registry mappings
+          if registry_host == "lscr.io"
+            # lscr.io is a vanity URL that redirects to ghcr.io
+            # Images are actually hosted at ghcr.io/linuxserver
+            registry_host = "ghcr.io"
+            repository_path = "linuxserver/#{repository_path}"
+          end
+        else
+          # This is a Docker Hub namespace/image (e.g., library/nginx)
+          registry_host = "registry-1.docker.io"
+          repository_path = base_name
+        end
+      else
+        # Simple image name, assume Docker Hub library
+        registry_host = "registry-1.docker.io"
+        repository_path = "library/#{base_name}"
+      end
+
+      {registry_host: registry_host, repository_path: repository_path}
+    end
+
     def extract_version_from_image(image_name : String) : Version?
       # Skip SHA256 digests (they are image IDs, not versioned images)
       return nil if image_name.starts_with?("sha256:")
@@ -60,37 +96,9 @@ module Mangrullo
     end
 
     def get_all_versions(image_name : String) : Array(Version)
-      # Parse the image name to extract registry and repository
-      base_name = image_name.split(":").first
-      
-      # Handle different registry formats
-      registry_host = "registry-1.docker.io"  # Default to Docker Hub
-      repository_path = base_name
-      
-      if base_name.includes?("/")
-        parts = base_name.split("/")
-        if parts[0].includes?(".") || parts[0].includes?(":")
-          # This looks like a registry host (e.g., ghcr.io, registry.example.com:5000)
-          registry_host = parts[0]
-          repository_path = parts[1..-1].join("/")
-          
-          # Handle special registry mappings
-          if registry_host == "lscr.io"
-            # lscr.io is a vanity URL that redirects to ghcr.io
-            # Images are actually hosted at ghcr.io/linuxserver
-            registry_host = "ghcr.io"
-            repository_path = "linuxserver/#{repository_path}"
-          end
-        else
-          # This is a Docker Hub namespace/image (e.g., library/nginx)
-          registry_host = "registry-1.docker.io"
-          repository_path = base_name
-        end
-      else
-        # Simple image name, assume Docker Hub library
-        registry_host = "registry-1.docker.io"
-        repository_path = "library/#{base_name}"
-      end
+      registry_info = parse_registry_info(image_name)
+      registry_host = registry_info[:registry_host]
+      repository_path = registry_info[:repository_path]
 
       # Get image manifest from appropriate registry API with authentication
       begin
@@ -125,37 +133,9 @@ module Mangrullo
       # Skip SHA256 digests (they are image IDs, not versioned images)
       return nil if image_name.starts_with?("sha256:")
 
-      # Parse the image name to extract registry and repository
-      base_name = image_name.split(":").first
-      
-      # Handle different registry formats
-      registry_host = "registry-1.docker.io"  # Default to Docker Hub
-      repository_path = base_name
-      
-      if base_name.includes?("/")
-        parts = base_name.split("/")
-        if parts[0].includes?(".") || parts[0].includes?(":")
-          # This looks like a registry host (e.g., ghcr.io, registry.example.com:5000)
-          registry_host = parts[0]
-          repository_path = parts[1..-1].join("/")
-          
-          # Handle special registry mappings
-          if registry_host == "lscr.io"
-            # lscr.io is a vanity URL that redirects to ghcr.io
-            # Images are actually hosted at ghcr.io/linuxserver
-            registry_host = "ghcr.io"
-            repository_path = "linuxserver/#{repository_path}"
-          end
-        else
-          # This is a Docker Hub namespace/image (e.g., library/nginx)
-          registry_host = "registry-1.docker.io"
-          repository_path = base_name
-        end
-      else
-        # Simple image name, assume Docker Hub library
-        registry_host = "registry-1.docker.io"
-        repository_path = "library/#{base_name}"
-      end
+      registry_info = parse_registry_info(image_name)
+      registry_host = registry_info[:registry_host]
+      repository_path = registry_info[:repository_path]
 
       # Get image manifest from appropriate registry API with authentication
       begin
@@ -190,37 +170,9 @@ module Mangrullo
       # Skip SHA256 digests (they are image IDs, not versioned images)
       return nil if image_name.starts_with?("sha256:")
 
-      # Parse the image name to extract registry and repository
-      base_name = image_name.split(":").first
-      
-      # Handle different registry formats
-      registry_host = "registry-1.docker.io"  # Default to Docker Hub
-      repository_path = base_name
-      
-      if base_name.includes?("/")
-        parts = base_name.split("/")
-        if parts[0].includes?(".") || parts[0].includes?(":")
-          # This looks like a registry host (e.g., ghcr.io, registry.example.com:5000)
-          registry_host = parts[0]
-          repository_path = parts[1..-1].join("/")
-          
-          # Handle special registry mappings
-          if registry_host == "lscr.io"
-            # lscr.io is a vanity URL that redirects to ghcr.io
-            # Images are actually hosted at ghcr.io/linuxserver
-            registry_host = "ghcr.io"
-            repository_path = "linuxserver/#{repository_path}"
-          end
-        else
-          # This is a Docker Hub namespace/image (e.g., library/nginx)
-          registry_host = "registry-1.docker.io"
-          repository_path = base_name
-        end
-      else
-        # Simple image name, assume Docker Hub library
-        registry_host = "registry-1.docker.io"
-        repository_path = "library/#{base_name}"
-      end
+      registry_info = parse_registry_info(image_name)
+      registry_host = registry_info[:registry_host]
+      repository_path = registry_info[:repository_path]
 
       tag = image_name.includes?(":") ? image_name.split(":").last : "latest"
 
