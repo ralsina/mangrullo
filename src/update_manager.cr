@@ -71,6 +71,17 @@ module Mangrullo
 
       Log.info { "Update needed for container: #{container.name}" }
 
+      # Debug: Show container state before update
+      Log.debug { "Container state before update:" }
+      Log.debug { "  Container image: #{container.image}" }
+      Log.debug { "  Container image_id: #{container.image_id}" }
+      
+      # Get current digest information for debugging
+      local_digest_before = @image_checker.get_local_image_digest(container.image)
+      remote_digest_before = @image_checker.get_remote_image_digest(container.image)
+      Log.debug { "  Local digest before: #{local_digest_before}" }
+      Log.debug { "  Remote digest before: #{remote_digest_before}" }
+
       # Extract image name and tag
       image_parts = container.image.split(":")
       image_name = image_parts[0]
@@ -82,10 +93,43 @@ module Mangrullo
         return {container: container, updated: false, error: "Failed to pull image"}
       end
 
-      # Restart the container
-      Log.info { "Restarting container: #{container.name}" }
-      unless @docker_client.restart_container(container.id)
-        return {container: container, updated: false, error: "Failed to restart container"}
+      # Debug: Show state after pull
+      Log.debug { "Container state after pull:" }
+      local_digest_after_pull = @image_checker.get_local_image_digest(container.image)
+      Log.debug { "  Local digest after pull: #{local_digest_after_pull}" }
+      Log.debug { "  Remote digest: #{remote_digest_before}" }
+      Log.debug { "  Digests match after pull? #{local_digest_after_pull == remote_digest_before}" }
+
+      # Recreate the container with the new image (like watchtower does)
+      Log.info { "Recreating container: #{container.name} with new image" }
+      new_container_id = @docker_client.recreate_container_with_new_image(container.id, container.image)
+      unless new_container_id
+        return {container: container, updated: false, error: "Failed to recreate container with new image"}
+      end
+
+      Log.info { "Container successfully recreated with new image. New container ID: #{new_container_id}" }
+
+      # Verify the recreation worked by checking the new container
+      sleep 2.seconds # Give Docker a moment to fully start the new container
+      updated_container = @docker_client.get_container_info(new_container_id)
+      if updated_container
+        Log.debug { "New container state after recreation:" }
+        Log.debug { "  New container ID: #{updated_container.id}" }
+        Log.debug { "  New container image_id: #{updated_container.image_id}" }
+        Log.debug { "  Image ID changed from original? #{updated_container.image_id != container.image_id}" }
+        
+        # Verify the new container is actually using the new image
+        local_digest_after = @image_checker.get_local_image_digest(container.image)
+        remote_digest = @image_checker.get_remote_image_digest(container.image)
+        if local_digest_after && remote_digest && local_digest_after == remote_digest
+          Log.debug { "✅ Verification successful: new container is using the updated image" }
+        else
+          Log.warn { "⚠️  Verification warning: new container may not be using the latest image" }
+          Log.debug { "  Local digest: #{local_digest_after}" }
+          Log.debug { "  Remote digest: #{remote_digest}" }
+        end
+      else
+        Log.warn { "Could not verify new container state - container may not be running" }
       end
 
       {container: container, updated: true, error: nil}
@@ -165,7 +209,13 @@ module Mangrullo
       if container_names.empty?
         Log.info { "Dry run: checking all #{containers.size} containers" }
       else
-        containers = containers.select { |container| container_names.includes?(container.name) }
+        # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
+        normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+        containers = containers.select { |container| 
+          # Check both the actual container name and a version without leading slash
+          normalized_input_names.includes?(container.name) || 
+          normalized_input_names.includes?(container.name.lchop('/'))
+        }
         Log.info { "Dry run: filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
       end
 

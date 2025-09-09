@@ -16,7 +16,11 @@
       "Bash(git stash:*)",
       "Bash(docker build:*)",
       "Bash(docker run:*)",
-      "Bash(ameba:*)"
+      "Bash(ameba:*)",
+      "Bash(curl:*)",
+      "Bash(docker ps:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.docker.com)"
     ],
     "deny": [],
     "ask": []

@@ -48,7 +48,12 @@ module Mangrullo
             # lscr.io is a vanity URL that redirects to ghcr.io
             # Images are actually hosted at ghcr.io/linuxserver
             registry_host = "ghcr.io"
-            repository_path = "linuxserver/#{repository_path}"
+            # Don't double-prepend linuxserver if it's already there
+            if repository_path.starts_with?("linuxserver/")
+              repository_path = repository_path
+            else
+              repository_path = "linuxserver/#{repository_path}"
+            end
           end
         else
           # This is a Docker Hub namespace/image (e.g., library/nginx)
