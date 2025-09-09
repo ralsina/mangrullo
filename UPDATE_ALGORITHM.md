@@ -26,6 +26,22 @@ def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false)
 end
 ```
 
+### 1.1 Enhanced Update Status Detection
+
+For more granular update detection, the algorithm provides detailed status:
+
+```crystal
+def get_update_status(container : ContainerInfo) : NamedTuple(needs_pull: Bool, needs_restart: Bool)
+  local_digest = get_local_image_digest(container.image)
+  remote_digest = get_remote_image_digest(container.image)
+  
+  {
+    needs_pull: local_digest != remote_digest,
+    needs_restart: local_digest == remote_digest && container.image.includes?("latest")
+  }
+end
+```
+
 ### 2. Latest Tag Handling
 
 For images using `:latest` tags, the algorithm uses simple digest comparison:
@@ -179,7 +195,22 @@ end
 ```
 
 ### Special Mappings
-- `lscr.io` → redirects to `ghcr.io/linuxserver/`
+- `lscr.io` → redirects to `ghcr.io/linuxserver/` (with double-prefix prevention)
+
+The algorithm handles the lscr.io to ghcr.io mapping with special logic to avoid double "linuxserver" prefixes:
+
+```crystal
+# Handle special registry mappings
+if registry_host == "lscr.io"
+  # lscr.io is a vanity URL that redirects to ghcr.io
+  # Images are actually hosted at ghcr.io/linuxserver
+  registry_host = "ghcr.io"
+  # Don't double-prepend linuxserver if it's already there
+  unless repository_path.starts_with?("linuxserver/")
+    repository_path = "linuxserver/#{repository_path}"
+  end
+end
+```
 
 ## Version Parsing Support
 
