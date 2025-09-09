@@ -218,94 +218,31 @@ module Mangrullo
         
         # Extract the container configuration
         config_data = container_info.as_h
-        host_config = config_data["HostConfig"]?.try(&.as_h)
-        config = config_data["Config"]?.try(&.as_h)
-        
-        # Build docker create command with original configuration
-        create_args = ["create", "--name", container_name]
-        
-        # Add environment variables
-        if config && (env_vars = config["Env"]?.try(&.as_a))
-          env_vars.each do |env_var|
-            env_str = env_var.as_s
-            create_args << "--env"
-            create_args << env_str
-          end
+        host_config_json = config_data["HostConfig"]?.try(&.as_h)
+        config_json = config_data["Config"]?.try(&.as_h)
+
+        return nil unless config_json
+
+        # Build the container config
+        container_config = Docr::Type::ContainerConfig.from_json(config_json.to_json)
+        container_config.image = image_name
+
+        if host_config_json
+          host_config = Docr::Type::HostConfig.from_json(host_config_json.to_json)
+          container_config.host_config = host_config
         end
-        
-        # Add port mappings
-        if host_config && (port_bindings = host_config["PortBindings"]?.try(&.as_h))
-          port_bindings.each do |container_port_key, host_bindings|
-            container_port = container_port_key.to_s
-            if host_bindings.as_a.size > 0
-              host_binding = host_bindings.as_a.first.try(&.as_h)
-              if host_binding
-                host_ip = host_binding["HostIp"]?.try(&.as_s) || ""
-                host_port = host_binding["HostPort"]?.try(&.as_s) || ""
-                
-                port_mapping = if host_ip && !host_ip.empty?
-                             "#{host_ip}:#{host_port}:#{container_port}"
-                           elsif host_port && !host_port.empty?
-                             "#{host_port}:#{container_port}"
-                           else
-                             container_port
-                           end
-                
-                create_args << "-p"
-                create_args << port_mapping
-              end
-            end
-          end
-        end
-        
-        # Add volume mappings
-        if host_config && (volume_binds = host_config["Binds"]?.try(&.as_a))
-          volume_binds.each do |volume|
-            volume_str = volume.as_s
-            create_args << "-v"
-            create_args << volume_str
-          end
-        end
-        
-        # Add network settings
-        if config && (exposed_ports = config["ExposedPorts"]?.try(&.as_h))
-          exposed_ports.keys.each do |port|
-            port_str = port.to_s
-            create_args << "--expose"
-            create_args << port_str
-          end
-        end
-        
-        # Add restart policy
-        if host_config && (restart_policy = host_config["RestartPolicy"]?.try(&.as_h))
-          policy_name = restart_policy["Name"]?.try(&.as_s)
-          if policy_name && policy_name != "no"
-            create_args << "--restart"
-            create_args << policy_name
-          end
-        end
-        
-        # Add the new image
-        create_args << image_name
-        
-        Log.debug { "Docker create command: docker #{create_args.join(" ")}" }
-        
-        # Execute the docker create command
-        output = IO::Memory.new
-        error = IO::Memory.new
-        status = Process.run("docker", create_args,
-          output: output, error: error)
-        
-        if status.success?
-          container_id = output.to_s.strip
-          Log.debug { "Created new container: #{container_id}" }
-          container_id
-        else
-          Log.error { "Failed to create container: #{error.to_s}" }
-          nil
-        end
-      rescue ex
+
+        # Create the container
+        response = @api.containers.create(container_config, name: container_name)
+        response.id
+      rescue ex : Docr::Errors::DockerAPIError
         Log.error { "Error creating container from inspect data: #{ex.message}" }
+        nil
+      rescue ex : JSON::ParseException
+        Log.error { "Error parsing inspect data: #{ex.message}" }
+        nil
+      rescue ex
+        Log.error { "Unexpected error creating container from inspect data: #{ex.message}" }
         nil
       end
     end
@@ -326,97 +263,31 @@ module Mangrullo
         
         # Extract the container configuration
         config_data = container_info.as_h
-        host_config = config_data["HostConfig"]?.try(&.as_h)
-        config = config_data["Config"]?.try(&.as_h)
-        name = config_data["Name"]?.try(&.as_s)
-        
-        Log.debug { "Recreating container #{container_name} with original configuration" }
-        
-        # Build docker create command with original configuration
-        create_args = ["create", "--name", container_name]
-        
-        # Add environment variables
-        if config && (env_vars = config["Env"]?.try(&.as_a))
-          env_vars.each do |env_var|
-            env_str = env_var.as_s
-            create_args << "--env"
-            create_args << env_str
-          end
+        host_config_json = config_data["HostConfig"]?.try(&.as_h)
+        config_json = config_data["Config"]?.try(&.as_h)
+
+        return nil unless config_json
+
+        # Build the container config
+        container_config = Docr::Type::ContainerConfig.from_json(config_json.to_json)
+        container_config.image = image_name
+
+        if host_config_json
+          host_config = Docr::Type::HostConfig.from_json(host_config_json.to_json)
+          container_config.host_config = host_config
         end
-        
-        # Add port mappings
-        if host_config && (port_bindings = host_config["PortBindings"]?.try(&.as_h))
-          port_bindings.each do |container_port_key, host_bindings|
-            container_port = container_port_key.to_s
-            if host_bindings.as_a.size > 0
-              host_binding = host_bindings.as_a.first.try(&.as_h)
-              if host_binding
-                host_ip = host_binding["HostIp"]?.try(&.as_s) || ""
-                host_port = host_binding["HostPort"]?.try(&.as_s) || ""
-                
-                port_mapping = if host_ip && !host_ip.empty?
-                             "#{host_ip}:#{host_port}:#{container_port}"
-                           elsif host_port && !host_port.empty?
-                             "#{host_port}:#{container_port}"
-                           else
-                             container_port
-                           end
-                
-                create_args << "-p"
-                create_args << port_mapping
-              end
-            end
-          end
-        end
-        
-        # Add volume mappings
-        if host_config && (volume_binds = host_config["Binds"]?.try(&.as_a))
-          volume_binds.each do |volume|
-            volume_str = volume.as_s
-            create_args << "-v"
-            create_args << volume_str
-          end
-        end
-        
-        # Add network settings
-        if config && (exposed_ports = config["ExposedPorts"]?.try(&.as_h))
-          exposed_ports.keys.each do |port|
-            port_str = port.to_s
-            create_args << "--expose"
-            create_args << port_str
-          end
-        end
-        
-        # Add restart policy
-        if host_config && (restart_policy = host_config["RestartPolicy"]?.try(&.as_h))
-          policy_name = restart_policy["Name"]?.try(&.as_s)
-          if policy_name && policy_name != "no"
-            create_args << "--restart"
-            create_args << policy_name
-          end
-        end
-        
-        # Add the new image
-        create_args << image_name
-        
-        Log.debug { "Docker create command: docker #{create_args.join(" ")}" }
-        
-        # Execute the docker create command
-        output = IO::Memory.new
-        error = IO::Memory.new
-        status = Process.run("docker", create_args,
-          output: output, error: error)
-        
-        if status.success?
-          container_id = output.to_s.strip
-          Log.debug { "Created new container: #{container_id}" }
-          container_id
-        else
-          Log.error { "Failed to create container: #{error.to_s}" }
-          nil
-        end
-      rescue ex
+
+        # Create the container
+        response = @api.containers.create(container_config, name: container_name)
+        response.id
+      rescue ex : Docr::Errors::DockerAPIError
         Log.error { "Error creating container with config: #{ex.message}" }
+        nil
+      rescue ex : JSON::ParseException
+        Log.error { "Error parsing inspect data: #{ex.message}" }
+        nil
+      rescue ex
+        Log.error { "Unexpected error creating container with config: #{ex.message}" }
         nil
       end
     end
