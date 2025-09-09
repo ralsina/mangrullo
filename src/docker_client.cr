@@ -130,6 +130,17 @@ module Mangrullo
       nil
     end
 
+    def inspect_image(image_name : String) : String?
+      begin
+        image_inspect = @api.images.inspect(image_name)
+        repo_digest = image_inspect.repo_digests.first?
+        return repo_digest if repo_digest
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.debug { "docr error inspecting image #{image_name}: #{ex.message}" }
+      end
+      nil
+    end
+
     def pull_image(image_name : String, tag : String = "latest") : Bool
       @api.images.create("#{image_name}:#{tag}")
       true
