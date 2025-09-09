@@ -1,0 +1,8 @@
+site_name: Mangrullo Documentation
+nav:
+    - Home: index.md
+    - Design: DESIGN.md
+    - Docker: DOCKER.md
+    - Update Algorithm: UPDATE_ALGORITHM.md
+    - Web UI Design: WEB_UI_DESIGN.md
+    - Claude Integration: CLAUDE.md
