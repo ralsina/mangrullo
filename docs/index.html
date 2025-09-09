@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mangrullo - Docker Container Update Automation</title>
+    <meta name="description" content="A Crystal-based Docker container update automation tool similar to Watchtower">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><strong><a href="index.html" class="brand">Mangrullo</a></strong></li>
+        </ul>
+        <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#installation">Installation</a></li>
+            <li><a href="#usage">Usage</a></li>
+            <li><a href="docs/">Documentation</a></li>
+            <li><a href="#contributing">Contributing</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Mangrullo</h1>
+                <p class="subtitle">Docker Container Update Automation</p>
+                <p class="description">
+                    A Crystal-based tool that automatically monitors and updates your Docker containers, 
+                    similar to Watchtower but with a focus on simplicity and reliability.
+                </p>
+                <div class="cta-buttons">
+                    <a href="#installation" class="primary-button">Get Started</a>
+                    <a href="https://github.com/ralsina/mangrullo" class="secondary-button">View on GitHub</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="features">
+            <h2>Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🔍 Automatic Monitoring</h3>
+                    <p>Continuously monitors running Docker containers for image updates</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📦 Semantic Versioning</h3>
+                    <p>Intelligent version comparison with support for major/minor/patch updates</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🛡️ Safe Updates</h3>
+                    <p>Optional control over major version upgrades to prevent breaking changes</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🏃 Dry Run Mode</h3>
+                    <p>Test what would be updated without making actual changes</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎯 Container Filtering</h3>
+                    <p>Check specific containers by name instead of all containers</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔄 Container Recreation</h3>
+                    <p>Properly recreates containers with new images (like Watchtower)</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🌐 Multi-Registry Support</h3>
+                    <p>Works with Docker Hub, GitHub Container Registry, and more</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Detailed Logging</h3>
+                    <p>Comprehensive logging with configurable log levels</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="installation">
+            <h2>Installation</h2>
+            <div class="installation-methods">
+                <div class="method">
+                    <h3>From Source</h3>
+                    <div class="code-block">
+                        <pre><code># Install Crystal (>= 1.16.3)
+# Clone the repository
+git clone https://github.com/ralsina/mangrullo.git
+cd mangrullo
+
+# Install dependencies
+shards install
+
+# Build the project
+shards build
+
+# Run it
+./bin/mangrullo --once</code></pre>
+                    </div>
+                </div>
+                <div class="method">
+                    <h3>Using Docker</h3>
+                    <div class="code-block">
+                        <pre><code># Build the image
+docker build -t mangrullo .
+
+# Run once
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  mangrullo --once</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="usage">
+            <h2>Usage</h2>
+            <div class="usage-examples">
+                <div class="example">
+                    <h3>Basic Commands</h3>
+                    <div class="code-block">
+                        <pre><code># Check for updates once
+mangrullo --once
+
+# Monitor every 5 minutes
+mangrullo --interval=300
+
+# Dry run to see what would be updated
+mangrullo --dry-run
+
+# Allow major version upgrades
+mangrullo --allow-major</code></pre>
+                    </div>
+                </div>
+                <div class="example">
+                    <h3>Container Filtering</h3>
+                    <div class="code-block">
+                        <pre><code># Check specific containers
+mangrullo --once flatnotes atuin
+
+# Flexible name matching
+mangrullo --once /flatnotes atuin /radicale</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>Architecture</h2>
+            <p>Mangrullo is built with a modular architecture using Crystal:</p>
+            <div class="architecture-grid">
+                <div class="arch-component">
+                    <h4>Core Modules</h4>
+                    <ul>
+                        <li><strong>Docker Client</strong> - Docker API wrapper and container operations</li>
+                        <li><strong>Image Checker</strong> - Version checking and update detection</li>
+                        <li><strong>Update Manager</strong> - Coordinates updates with container filtering</li>
+                        <li><strong>Configuration</strong> - Command-line argument parsing</li>
+                    </ul>
+                </div>
+                <div class="arch-component">
+                    <h4>Key Features</h4>
+                    <ul>
+                        <li>Container recreation (not just restart)</li>
+                        <li>Flexible container name matching</li>
+                        <li>Multi-registry support</li>
+                        <li>Comprehensive error handling</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="contributing">
+            <h2>Contributing</h2>
+            <p>Contributions are welcome! Please feel free to submit a Pull Request.</p>
+            <div class="contributing-steps">
+                <div class="step">
+                    <h3>1. Fork the Repository</h3>
+                    <p>Create your feature branch: <code>git checkout -b my-new-feature</code></p>
+                </div>
+                <div class="step">
+                    <h3>2. Make Changes</h3>
+                    <p>Add tests for new functionality and ensure all tests pass</p>
+                </div>
+                <div class="step">
+                    <h3>3. Submit</h3>
+                    <p>Commit your changes and create a new Pull Request</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2>Ready to Get Started?</h2>
+            <p>Join the growing community of users automating their Docker container updates.</p>
+            <div class="cta-buttons">
+                <a href="#installation" class="primary-button">Install Mangrullo</a>
+                <a href="docs/" class="secondary-button">Read Documentation</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Mangrullo</h4>
+                <p>Docker container update automation tool</p>
+            </div>
+            <div class="footer-section">
+                <h4>Links</h4>
+                <ul>
+                    <li><a href="https://github.com/ralsina/mangrullo">GitHub</a></li>
+                    <li><a href="docs/">Documentation</a></li>
+                    <li><a href="https://github.com/ralsina/mangrullo/issues">Issues</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>License</h4>
+                <p>MIT License - see <a href="https://github.com/ralsina/mangrullo/blob/main/LICENSE">LICENSE</a> file for details</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Roberto Alsina. Built with <a href="https://crystal-lang.org/">Crystal</a>.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
