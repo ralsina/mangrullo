@@ -443,13 +443,10 @@ module Mangrullo
       Log.debug { "Capturing container configuration for #{container_name}" }
       
       # Get the container configuration using docker inspect BEFORE removing it
-      config_output = IO::Memory.new
-      config_error = IO::Memory.new
-      config_status = Process.run("docker", ["inspect", container_name],
-        output: config_output, error: config_error)
-      
-      unless config_status.success?
-        Log.error { "Failed to inspect container #{container_name} for configuration: #{config_error.to_s}" }
+      config_output = inspect_container(container_name)
+
+      unless config_output
+        Log.error { "Failed to inspect container #{container_name} for configuration" }
         return nil
       end
       
