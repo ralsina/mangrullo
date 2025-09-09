@@ -1,4 +1,6 @@
 site_name: Mangrullo Documentation
+theme:
+  name: material
 nav:
     - Home: index.md
     - Design: DESIGN.md
