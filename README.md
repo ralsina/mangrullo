@@ -1,5 +1,7 @@
 # Mangrullo
 
+[![Crystal CI](https://github.com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg)](https://github.com/ralsina/mangrullo/actions)
+
 Mangrullo is a Docker container update automation tool written in Crystal.
 
 ## Documentation
