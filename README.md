@@ -15,6 +15,9 @@ Mangrullo is a Docker container update automation tool written in Crystal. It mo
 - 📊 **Detailed Logging**: Comprehensive logging with configurable log levels
 - 🔄 **Flexible Scheduling**: Run once or set up continuous monitoring with custom intervals
 - 🔧 **Easy Configuration**: Simple command-line interface with sensible defaults
+- 🎯 **Container Filtering**: Check specific containers by name instead of all containers
+- 🔄 **Container Recreation**: Properly recreates containers with new images (like Watchtower)
+- 🌐 **Multi-Registry Support**: Works with Docker Hub, GitHub Container Registry, and more
 
 ## Installation
 
@@ -72,8 +75,9 @@ mangrullo --dry-run
 
 ```
 Usage:
-  mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>] 
-           [--log-level=<level>] [--once] [--dry-run] [--help] [--version]
+  mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
+           [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
+           [--help] [--version]
 
 Options:
   --interval=<seconds>   Check interval in seconds [default: 300]
@@ -84,6 +88,9 @@ Options:
   --dry-run              Show what would be updated without actually updating
   --help                 Show this help message
   --version              Show version information
+
+Arguments:
+  <container-name>       Specific container names to check (if not specified, checks all containers)
 ```
 
 ### Examples
@@ -101,6 +108,16 @@ mangrullo --interval=600 --log-level=debug
 **Test updates including major versions:**
 ```bash
 mangrullo --dry-run --allow-major
+```
+
+**Check only specific containers:**
+```bash
+mangrullo --once flatnotes atuin radicale
+```
+
+**Check specific containers (with or without leading slash):**
+```bash
+mangrullo --once /flatnotes atuin /radicale
 ```
 
 **Use custom Docker socket:**
@@ -131,6 +148,11 @@ Mangrullo works with:
 - Registry prefixes (docker.io/library/nginx:1.2.3)
 - SHA256 digests (skipped for version comparison)
 - Latest tags (always check for updates)
+- Multiple registries:
+  - Docker Hub (registry-1.docker.io)
+  - GitHub Container Registry (ghcr.io)
+  - LinuxServer.io (lscr.io - maps to ghcr.io/linuxserver/)
+  - Other standard Docker registry v2 implementations
 
 ## Development
 
@@ -172,11 +194,18 @@ The project includes comprehensive unit tests:
 crystal spec
 
 # Run specific test file
-crystal spec spec/version_spec.cr
+crystal spec spec/mangrullo_spec.cr
 
 # Run with verbose output
 crystal spec --verbose
 ```
+
+The test suite covers:
+- Container name matching and filtering
+- Registry mapping and authentication
+- Container recreation logic
+- Version parsing and comparison
+- Image update detection algorithms
 
 ### Code Style
 
@@ -196,11 +225,14 @@ crystal tool format
 Mangrullo is built with a modular architecture:
 
 - **Types** (`src/types.cr`): Core data structures and version comparison logic
-- **Docker Client** (`src/docker_client.cr`): Docker API wrapper
+- **Docker Client** (`src/docker_client.cr`): Docker API wrapper and container recreation
 - **Image Checker** (`src/image_checker.cr`): Version checking and update detection
-- **Update Manager** (`src/update_manager.cr`): Coordinates the update process
+- **Update Manager** (`src/update_manager.cr`): Coordinates the update process with container filtering
 - **Configuration** (`src/config.cr`): Command-line argument parsing
 - **CLI** (`src/cli.cr`): Main command-line interface
+- **Web Server** (`src/web_server.cr`): Web interface (optional)
+- **Web Views** (`src/web_views.cr`): Web interface templates
+- **Error Handling** (`src/error_handling.cr`): Centralized error management
 
 ## Contributing
 
@@ -244,3 +276,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Dry run mode
 - Comprehensive unit tests
 - Command-line interface
+- Container-specific filtering (check only specified containers)
+- Container recreation (properly updates containers with new images)
+- Multi-registry support (Docker Hub, GHCR, lscr.io)
+- Web interface framework (Kemal-based)
+- Flexible container name matching (handles both "name" and "/name")
+- Comprehensive error handling and logging
