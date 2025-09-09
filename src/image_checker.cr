@@ -308,24 +308,15 @@ module Mangrullo
     def get_local_image_digest(image_name : String) : String?
       Log.debug { "get_local_image_digest: image_name=#{image_name}" }
 
-      # First try to get the repository digest from Docker CLI
-      # This is what Docker uses for "up to date" comparisons
-      begin
-        output = IO::Memory.new
-        error = IO::Memory.new
-        status = Process.run("docker", ["image", "inspect", "--format={{index .RepoDigests 0}}", image_name],
-          output: output, error: error)
-        if status.success?
-          repo_digest = output.to_s.strip
-          if repo_digest.includes?("@sha256:")
-            digest = repo_digest.split("@sha256:").last
-            full_digest = "sha256:#{digest}"
-            Log.debug { "get_local_image_digest: Got repo digest from docker inspect: #{full_digest}" }
-            return full_digest
-          end
+      # First try to get the repository digest from the docker client
+      repo_digest = @docker_client.inspect_image(image_name)
+      if repo_digest
+        if repo_digest.includes?("@sha256:")
+          digest = repo_digest.split("@sha256:").last
+          full_digest = "sha256:#{digest}"
+          Log.debug { "get_local_image_digest: Got repo digest from docker inspect: #{full_digest}" }
+          return full_digest
         end
-      rescue ex
-        Log.debug { "get_local_image_digest: Docker inspect failed: #{ex.message}" }
       end
 
       # Fallback: Get the actual image info for the specified image name
