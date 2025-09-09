@@ -1,0 +1,13 @@
+name: Deploy Documentation
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mhausen/deploy-mkdocs@v3.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
