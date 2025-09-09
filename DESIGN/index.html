@@ -1,0 +1,1260 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../DOCKER/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+    
+    
+      
+        <title>Design - Mangrullo Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mangrullo-design-document" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Mangrullo Documentation" class="md-header__button md-logo" aria-label="Mangrullo Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Mangrullo Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Mangrullo Documentation" class="md-nav__button md-logo" aria-label="Mangrullo Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Mangrullo Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Modules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-mangrullodockerclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Mangrullo::DockerClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-mangrulloimagechecker" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Mangrullo::ImageChecker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-mangrulloupdatemanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Mangrullo::UpdateManager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-mangrulloconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Mangrullo::Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-mangrullotypes" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Mangrullo::Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-mangrullowebserver-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Mangrullo::WebServer (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-mangrulloerrorhandling" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Mangrullo::ErrorHandling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main Workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-core-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Core Infrastructure ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-update-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Update Logic ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-application-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Application Structure ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-container-recreation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Container Recreation ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-container-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Container Filtering ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-multi-registry-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 6: Multi-Registry Support ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 7: Testing ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-8-web-interface-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 8: Web Interface (Framework) ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-9-documentation-and-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 9: Documentation and Polish ✓
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docopt-usage-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docopt Usage String
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Strategy
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DOCKER/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Docker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../UPDATE_ALGORITHM/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update Algorithm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WEB_UI_DESIGN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web UI Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CLAUDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Modules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-mangrullodockerclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Mangrullo::DockerClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-mangrulloimagechecker" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Mangrullo::ImageChecker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-mangrulloupdatemanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Mangrullo::UpdateManager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-mangrulloconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Mangrullo::Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-mangrullotypes" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Mangrullo::Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-mangrullowebserver-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Mangrullo::WebServer (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-mangrulloerrorhandling" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Mangrullo::ErrorHandling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main Workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-core-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Core Infrastructure ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-update-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Update Logic ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-application-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Application Structure ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-container-recreation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Container Recreation ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-container-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Container Filtering ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-multi-registry-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 6: Multi-Registry Support ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 7: Testing ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-8-web-interface-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 8: Web Interface (Framework) ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-9-documentation-and-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 9: Documentation and Polish ✓
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docopt-usage-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docopt Usage String
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Strategy
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="mangrullo-design-document">Mangrullo Design Document</h1>
+<h2 id="overview">Overview</h2>
+<p>Mangrullo is a Crystal implementation of a Watchtower-like Docker container update automation tool.</p>
+<h2 id="core-features">Core Features</h2>
+<ul>
+<li>Monitor running Docker containers and their image versions</li>
+<li>Check for new image versions</li>
+<li>Calculate if updates are needed (with major version upgrade control)</li>
+<li>Perform graceful container recreation with new images (like Watchtower)</li>
+<li>Container-specific filtering (check only specified containers)</li>
+<li>Flexible container name matching (handles both "name" and "/name")</li>
+<li>Multi-registry support with authentication</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li><code>marghidanu/docr</code> - Docker API client for Crystal</li>
+<li><code>ralsina/docopt.cr</code> - Command line argument parsing</li>
+<li><code>kemalcr/kemal</code> - Web framework (for web interface)</li>
+<li><code>jeromegn/kilt</code> - Template engine (for web interface)</li>
+<li>Standard Crystal library for HTTP, JSON, logging</li>
+</ul>
+<h3 id="core-modules">Core Modules</h3>
+<h4 id="1-mangrullodockerclient">1. Mangrullo::DockerClient</h4>
+<ul>
+<li><strong>Purpose</strong>: Interface with Docker daemon</li>
+<li><strong>Responsibilities</strong>:</li>
+<li>Connect to Docker socket</li>
+<li>List running containers</li>
+<li>Get container details (image, labels, etc.)</li>
+<li>Pull images</li>
+<li>Container recreation (stop, remove, create, start)</li>
+<li>Container configuration preservation</li>
+<li><strong>Key Methods</strong>:</li>
+<li><code>running_containers</code></li>
+<li><code>get_container_info(id : String)</code></li>
+<li><code>pull_image(image_name : String, tag : String)</code></li>
+<li><code>recreate_container_with_new_image(container_id : String, new_image : String)</code></li>
+<li><code>stop_container(container_id : String)</code></li>
+<li><code>remove_container(container_id : String)</code></li>
+<li><code>create_container_from_inspect_data(image_name : String, container_name : String, inspect_data : String)</code></li>
+</ul>
+<h4 id="2-mangrulloimagechecker">2. Mangrullo::ImageChecker</h4>
+<ul>
+<li><strong>Purpose</strong>: Check for image updates</li>
+<li><strong>Responsibilities</strong>:</li>
+<li>Compare local and remote image digests</li>
+<li>Handle major version upgrade logic</li>
+<li>Multi-registry support with authentication</li>
+<li>Registry mapping (lscr.io → ghcr.io)</li>
+<li>Determine if update is needed</li>
+<li><strong>Key Methods</strong>:</li>
+<li><code>needs_update?(container : ContainerInfo, allow_major_upgrade : Bool) : Bool</code></li>
+<li><code>get_remote_image_digest(image_name : String) : String?</code></li>
+<li><code>get_local_image_digest(image_name : String) : String?</code></li>
+<li><code>get_image_update_info(image_name : String)</code></li>
+<li><code>extract_version_from_image(image_name : String) : Version?</code></li>
+<li><code>get_update_status(container : ContainerInfo)</code></li>
+</ul>
+<h4 id="3-mangrulloupdatemanager">3. Mangrullo::UpdateManager</h4>
+<ul>
+<li><strong>Purpose</strong>: Coordinate the update process</li>
+<li><strong>Responsibilities</strong>:</li>
+<li>Main update workflow with container recreation</li>
+<li>Container filtering and flexible name matching</li>
+<li>Handle update scheduling</li>
+<li>Logging and error handling</li>
+<li>Dry run functionality</li>
+<li><strong>Key Methods</strong>:</li>
+<li><code>check_and_update_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String)</code></li>
+<li><code>update_container(container : ContainerInfo, allow_major_upgrade : Bool = false)</code></li>
+<li><code>get_containers_needing_update(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String)</code></li>
+<li><code>dry_run(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String)</code></li>
+<li><code>get_update_summary(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String)</code></li>
+</ul>
+<h4 id="4-mangrulloconfig">4. Mangrullo::Config</h4>
+<ul>
+<li><strong>Purpose</strong>: Configuration management</li>
+<li><strong>Responsibilities</strong>:</li>
+<li>Parse command line arguments using Docopt</li>
+<li>Handle container name filtering</li>
+<li>Default configuration</li>
+<li><strong>Key Settings</strong>:</li>
+<li><code>interval</code> (check interval in seconds)</li>
+<li><code>allow_major_upgrade</code> (boolean)</li>
+<li><code>docker_socket_path</code> (default: "/var/run/docker.sock")</li>
+<li><code>log_level</code></li>
+<li><code>container_names</code> (array of specific containers to check)</li>
+<li><code>once</code> (run once and exit)</li>
+<li><code>dry_run</code> (show what would be updated)</li>
+</ul>
+<h4 id="5-mangrullotypes">5. Mangrullo::Types</h4>
+<ul>
+<li><strong>Purpose</strong>: Type definitions</li>
+<li><strong>Key Structs</strong>:</li>
+<li><code>ContainerInfo</code> - container details</li>
+<li><code>ImageInfo</code> - image metadata</li>
+<li><code>Version</code> - semantic version parsing and comparison</li>
+</ul>
+<h4 id="6-mangrullowebserver-optional">6. Mangrullo::WebServer (Optional)</h4>
+<ul>
+<li><strong>Purpose</strong>: Web interface for monitoring and management</li>
+<li><strong>Responsibilities</strong>:</li>
+<li>HTTP server using Kemal</li>
+<li>Container status dashboard</li>
+<li>API endpoints for container operations</li>
+<li><strong>Key Methods</strong>:</li>
+<li><code>start_server</code></li>
+<li>Container management endpoints</li>
+<li>Status monitoring</li>
+</ul>
+<h4 id="7-mangrulloerrorhandling">7. Mangrullo::ErrorHandling</h4>
+<ul>
+<li><strong>Purpose</strong>: Centralized error management</li>
+<li><strong>Responsibilities</strong>:</li>
+<li>Consistent error handling across modules</li>
+<li>User-friendly error messages</li>
+<li>Graceful degradation</li>
+</ul>
+<h2 id="main-workflow">Main Workflow</h2>
+<ol>
+<li><strong>Initialize</strong>:</li>
+<li>Parse configuration (including container name filtering)</li>
+<li>Connect to Docker daemon</li>
+<li>
+<p>Set up logging</p>
+</li>
+<li>
+<p><strong>Monitor Loop</strong>:</p>
+</li>
+<li>List running containers (or filter to specific containers)</li>
+<li>
+<p>For each container:</p>
+<ul>
+<li>Get current image digest</li>
+<li>Check remote registry for updates</li>
+<li>Compare versions (respecting major upgrade flag)</li>
+<li>If update needed: pull image → recreate container with new image</li>
+</ul>
+</li>
+<li>
+<p><strong>Container Recreation Process</strong>:</p>
+</li>
+<li>Stop the running container</li>
+<li>Remove the old container to free up the name</li>
+<li>Capture container configuration using <code>docker inspect</code></li>
+<li>Create new container with same configuration but new image</li>
+<li>Start the new container</li>
+<li>
+<p>Verify the recreation worked</p>
+</li>
+<li>
+<p><strong>Container Name Matching</strong>:</p>
+</li>
+<li>Support flexible matching (both "container" and "/container")</li>
+<li>Normalize input names for consistent comparison</li>
+<li>
+<p>Filter containers if specific names provided</p>
+</li>
+<li>
+<p><strong>Scheduling</strong>:</p>
+</li>
+<li>Run checks at configured intervals</li>
+<li>Handle graceful shutdown</li>
+</ol>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-core-infrastructure">Phase 1: Core Infrastructure ✓</h3>
+<ol>
+<li>Add <code>docr</code> and <code>docopt.cr</code> dependencies to shard.yml</li>
+<li>Implement basic Docker client wrapper</li>
+<li>Create type definitions</li>
+</ol>
+<h3 id="phase-2-update-logic">Phase 2: Update Logic ✓</h3>
+<ol>
+<li>Implement image version checking</li>
+<li>Add major version upgrade logic</li>
+<li>Create update manager</li>
+</ol>
+<h3 id="phase-3-application-structure">Phase 3: Application Structure ✓</h3>
+<ol>
+<li>Add configuration system</li>
+<li>Implement main CLI interface</li>
+<li>Add logging</li>
+</ol>
+<h3 id="phase-4-container-recreation">Phase 4: Container Recreation ✓</h3>
+<ol>
+<li>Implement container recreation (not just restart)</li>
+<li>Add configuration preservation</li>
+<li>Add verification and error handling</li>
+</ol>
+<h3 id="phase-5-container-filtering">Phase 5: Container Filtering ✓</h3>
+<ol>
+<li>Add container name filtering</li>
+<li>Implement flexible name matching</li>
+<li>Update all methods to support filtering</li>
+</ol>
+<h3 id="phase-6-multi-registry-support">Phase 6: Multi-Registry Support ✓</h3>
+<ol>
+<li>Add registry authentication</li>
+<li>Implement lscr.io → ghcr.io mapping</li>
+<li>Support multiple registry types</li>
+</ol>
+<h3 id="phase-7-testing">Phase 7: Testing ✓</h3>
+<ol>
+<li>Unit tests for all modules (56 examples)</li>
+<li>Integration tests for critical functionality</li>
+<li>Test edge cases and error conditions</li>
+</ol>
+<h3 id="phase-8-web-interface-framework">Phase 8: Web Interface (Framework) ✓</h3>
+<ol>
+<li>Add Kemal web framework</li>
+<li>Create basic web server structure</li>
+<li>Add web views templates</li>
+</ol>
+<h3 id="phase-9-documentation-and-polish">Phase 9: Documentation and Polish ✓</h3>
+<ol>
+<li>Update all documentation</li>
+<li>Add comprehensive examples</li>
+<li>Finalize error handling</li>
+</ol>
+<h2 id="configuration-options">Configuration Options</h2>
+<h3 id="docopt-usage-string">Docopt Usage String</h3>
+<pre><code>Mangrullo - Docker container update automation tool
+
+Usage:
+  mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;] 
+           [--log-level=&lt;level&gt;] [--once] [--help] [--version]
+
+Options:
+  --interval=&lt;seconds&gt;   Check interval in seconds [default: 300]
+  --allow-major          Allow major version upgrades
+  --socket=&lt;path&gt;        Docker socket path [default: /var/run/docker.sock]
+  --log-level=&lt;level&gt;    Log level (debug, info, warn, error) [default: info]
+  --once                 Run once and exit
+  --help                 Show this help message
+  --version              Show version information
+</code></pre>
+<p>Environment Variables:
+- <code>MANGRULLO_INTERVAL</code>
+- <code>MANGRULLO_ALLOW_MAJOR_UPGRADE</code>
+- <code>MANGRULLO_DOCKER_SOCKET</code>
+- <code>MANGRULLO_LOG_LEVEL</code></p>
+<h2 id="file-structure">File Structure</h2>
+<pre><code>src/
+├── mangrullo.cr              # Main module and CLI
+├── docker_client.cr          # Docker API wrapper
+├── image_checker.cr          # Image update logic
+├── update_manager.cr         # Update coordination
+├── config.cr                 # Configuration management
+└── types.cr                  # Type definitions
+
+spec/
+├── docker_client_spec.cr
+├── image_checker_spec.cr
+├── update_manager_spec.cr
+├── config_spec.cr
+└── types_spec.cr
+</code></pre>
+<h2 id="testing-strategy">Testing Strategy</h2>
+<ul>
+<li><strong>Unit Tests</strong>: Mock Docker API responses</li>
+<li><strong>Integration Tests</strong>: Use test containers</li>
+<li><strong>Version Parsing Tests</strong>: Edge cases for version comparison</li>
+<li><strong>Configuration Tests</strong>: Argument parsing and environment variables</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>
