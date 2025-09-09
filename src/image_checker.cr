@@ -50,7 +50,7 @@ module Mangrullo
             registry_host = "ghcr.io"
             # Don't double-prepend linuxserver if it's already there
             if repository_path.starts_with?("linuxserver/")
-              repository_path = repository_path
+              
             else
               repository_path = "linuxserver/#{repository_path}"
             end

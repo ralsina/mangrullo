@@ -224,16 +224,16 @@ module Mangrullo
         return nil unless config_json
 
         # Build the container config
-        container_config = Docr::Type::ContainerConfig.from_json(config_json.to_json)
+        container_config = Docr::Types::CreateContainerConfig.from_json(config_json.to_json)
         container_config.image = image_name
 
         if host_config_json
-          host_config = Docr::Type::HostConfig.from_json(host_config_json.to_json)
+          host_config = Docr::Types::HostConfig.from_json(host_config_json.to_json)
           container_config.host_config = host_config
         end
 
         # Create the container
-        response = @api.containers.create(container_config, name: container_name)
+        response = @api.containers.create(container_name, container_config)
         response.id
       rescue ex : Docr::Errors::DockerAPIError
         Log.error { "Error creating container from inspect data: #{ex.message}" }
@@ -269,16 +269,16 @@ module Mangrullo
         return nil unless config_json
 
         # Build the container config
-        container_config = Docr::Type::ContainerConfig.from_json(config_json.to_json)
+        container_config = Docr::Types::CreateContainerConfig.from_json(config_json.to_json)
         container_config.image = image_name
 
         if host_config_json
-          host_config = Docr::Type::HostConfig.from_json(host_config_json.to_json)
+          host_config = Docr::Types::HostConfig.from_json(host_config_json.to_json)
           container_config.host_config = host_config
         end
 
         # Create the container
-        response = @api.containers.create(container_config, name: container_name)
+        response = @api.containers.create(container_name, container_config)
         response.id
       rescue ex : Docr::Errors::DockerAPIError
         Log.error { "Error creating container with config: #{ex.message}" }
@@ -369,7 +369,7 @@ module Mangrullo
     end
 
     def inspect_container(container_id : String) : String?
-      @api.containers.inspect(container_id)
+      @api.containers.inspect(container_id).to_json
     rescue ex : Docr::Errors::DockerAPIError
       Log.error { "Docker API error inspecting container: #{ex.message}" }
       nil
