@@ -302,18 +302,15 @@ module Mangrullo
     def create_container_with_config(image_name : String, container_name : String, config : Hash(String, JSON::Any)) : String?
       # Get the original container's configuration using docker inspect
       begin
-        output = IO::Memory.new
-        error = IO::Memory.new
-        status = Process.run("docker", ["inspect", container_name],
-          output: output, error: error)
-        
-        unless status.success?
-          Log.error { "Failed to inspect container #{container_name}: #{error.to_s}" }
+        inspect_data = inspect_container(container_name)
+
+        unless inspect_data
+          Log.error { "Failed to inspect container #{container_name} for configuration" }
           return nil
         end
         
         # Parse the container inspection output
-        container_info = JSON.parse(output.to_s).as_a.first?
+        container_info = JSON.parse(inspect_data).as_a.first?
         return nil unless container_info
         
         # Extract the container configuration
