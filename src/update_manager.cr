@@ -1,66 +1,30 @@
 require "./types"
 require "./docker_client"
 require "./image_checker"
+require "progress"
+require "colorize"
 
 module Mangrullo
   class UpdateManager
     @docker_client : DockerClient
     @image_checker : ImageChecker
+    @log_level : String
 
-    def initialize(@docker_client : DockerClient)
+    def initialize(@docker_client : DockerClient, @log_level : String = "info")
       @image_checker = ImageChecker.new(@docker_client)
     end
 
     def check_and_update_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?))
-      results = [] of NamedTuple(container: ContainerInfo, updated: Bool, error: String?)
-
-      Log.info { "Starting container update check" }
-
-      begin
-        containers = @docker_client.running_containers
-
-        # Filter containers if specific names were provided
-        unless container_names.empty?
-          # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
-          normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-          containers = containers.select { |container| 
-            # Check both the actual container name and a version without leading slash
-            normalized_input_names.includes?(container.name) || 
-            normalized_input_names.includes?(container.name.lchop('/'))
-          }
-          Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
-        end
-
-        Log.info { "Processing #{containers.size} containers" }
-
-        containers.each do |container|
-          Log.info { "Checking container: #{container.name} (#{container.image})" }
-
-          result = update_container(container, allow_major_upgrade)
-          results << result
-
-          if result[:updated]
-            Log.info { "Successfully updated container: #{container.name}" }
-          elsif result[:error]
-            Log.error { "Failed to update container #{container.name}: #{result[:error]}" }
-          else
-            Log.info { "Container #{container.name} is up to date" }
-          end
-        end
-
-        Log.info { "Update check completed" }
-      rescue ex : Docr::Errors::DockerAPIError
-        Log.error { "Docker API error during container update check: #{ex.message}" }
-        # Return empty results on critical failure
-      rescue ex : Socket::Error | IO::Error
-        Log.error { "Network error during container update check: #{ex.message}" }
-        # Return empty results on critical failure
-      rescue ex
-        Log.error { "Unexpected error during container update check: #{ex.message}" }
-        # Return empty results on critical failure
+      unified_results = process_containers(allow_major_upgrade, container_names, dry_run: false)
+      
+      # Convert back to the expected format
+      unified_results.map do |result|
+        {
+          container: result[:container],
+          updated: result[:updated],
+          error: result[:error]
+        }
       end
-
-      results
     end
 
     def update_container(container : ContainerInfo, allow_major_upgrade : Bool = false) : NamedTuple(container: ContainerInfo, updated: Bool, error: String?)
@@ -212,36 +176,100 @@ module Mangrullo
       {total: 0, needing_update: 0, update_candidates: [] of ContainerInfo}
     end
 
-    def dry_run(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
-      containers = @docker_client.running_containers
+    private def process_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String, dry_run : Bool = false) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?, needs_update: Bool?, reason: String?))
+      results = [] of NamedTuple(container: ContainerInfo, updated: Bool, error: String?, needs_update: Bool?, reason: String?)
 
-      # Filter containers if specific names were provided
-      if container_names.empty?
-        Log.info { "Dry run: checking all #{containers.size} containers" }
-      else
-        # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
-        normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-        containers = containers.select { |container| 
-          # Check both the actual container name and a version without leading slash
-          normalized_input_names.includes?(container.name) || 
-          normalized_input_names.includes?(container.name.lchop('/'))
-        }
-        Log.info { "Dry run: filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
+      Log.info { "Starting container #{dry_run ? "dry run" : "update"} check" }
+
+      begin
+        containers = @docker_client.running_containers
+
+        # Filter containers if specific names were provided
+        unless container_names.empty?
+          # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
+          normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+          containers = containers.select { |container| 
+            # Check both the actual container name and a version without leading slash
+            normalized_input_names.includes?(container.name) || 
+            normalized_input_names.includes?(container.name.lchop('/'))
+          }
+          Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
+        end
+
+        Log.info { "Processing #{containers.size} containers" }
+
+        # Show progress bar unless in debug mode
+        progress = unless @log_level == "debug"
+          bar = ProgressBar.new(containers.size)
+          bar.width = 40
+          bar
+        end
+
+        containers.each do |container|
+          # Update progress bar
+          progress.try(&.inc)
+
+          if dry_run
+            # For dry run, we need to determine if an update is needed
+            needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
+            reason = if needs_update
+                       generate_update_reason(container)
+                     else
+                       nil
+                     end
+            
+            results << {
+              container: container,
+              updated: false,
+              error: nil,
+              needs_update: needs_update,
+              reason: reason
+            }
+          else
+            # For normal run, perform the actual update
+            result = update_container(container, allow_major_upgrade)
+            # Convert to unified format
+            results << {
+              container: result[:container],
+              updated: result[:updated],
+              error: result[:error],
+              needs_update: nil,
+              reason: nil
+            }
+          end
+        end
+
+        # Show results table unless in debug mode
+        unless @log_level == "debug"
+          display_results_table(results, dry_run)
+        end
+
+        Log.info { "#{dry_run ? "Dry run" : "Update"} check completed" }
+      rescue ex : Docr::Errors::DockerAPIError
+        Log.error { "Docker API error during #{dry_run ? "dry run" : "container update"} check: #{ex.message}" }
+        # Return empty results on critical failure
+      rescue ex : Socket::Error | IO::Error
+        Log.error { "Network error during #{dry_run ? "dry run" : "container update"} check: #{ex.message}" }
+        # Return empty results on critical failure
+      rescue ex
+        Log.error { "Unexpected error during #{dry_run ? "dry run" : "container update"} check: #{ex.message}" }
+        # Return empty results on critical failure
       end
 
-      containers.map { |container| process_container_for_dry_run(container, allow_major_upgrade) }
-    rescue ex : Docr::Errors::DockerAPIError
-      Log.error { "Docker API error during dry run: #{ex.message}" }
-      Log.error { ex.backtrace.join("\n") } if ex.backtrace
-      [] of NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
-    rescue ex : Socket::Error | IO::Error
-      Log.error { "Network error during dry run: #{ex.message}" }
-      Log.error { ex.backtrace.join("\n") } if ex.backtrace
-      [] of NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
-    rescue ex
-      Log.error { "Unexpected error during dry run: #{ex.message}" }
-      Log.error { ex.backtrace.join("\n") } if ex.backtrace
-      [] of NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
+      results
+    end
+
+    def dry_run(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
+      unified_results = process_containers(allow_major_upgrade, container_names, dry_run: true)
+      
+      # Convert back to the expected format
+      unified_results.map do |result|
+        {
+          container: result[:container],
+          needs_update: result[:needs_update] || false,
+          reason: result[:reason]
+        }
+      end
     end
 
     private def process_container_for_dry_run(container : ContainerInfo, allow_major_upgrade : Bool) : NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?)
@@ -336,6 +364,114 @@ module Mangrullo
     rescue ex
       Log.error { "Unexpected error generating fallback update message for #{container.image}: #{ex.message}" }
       "Update available for #{container.image}"
+    end
+
+    private def display_results_table(results : Array(NamedTuple(
+        container: ContainerInfo,
+        updated: Bool,
+        error: String?,
+        needs_update: Bool?,
+        reason: String?,
+      )), dry_run : Bool = false)
+      return if results.empty?
+
+      puts "\n" + "=" * 80
+      puts dry_run ? "Dry Run Results" : "Container Update Results"
+      puts "=" * 80
+
+      if dry_run
+        # Dry run format
+        # Calculate column widths
+        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, "Container".size].max
+        image_width = [results.map { |r| r[:container].image.size }.max, "Image".size].max
+        status_width = [results.map { |r| (r[:needs_update] ? "Needs update" : "Up to date").size }.max, "Status".size].max
+        reason_width = [results.map { |r| (r[:reason] || "").size }.max, "Reason".size].max
+
+        # Print header
+        printf "%-#{name_width}s  %-#{image_width}s  %-#{status_width}s  %-#{reason_width}s\n", "Container", "Image", "Status", "Reason"
+        puts "-" * (name_width + image_width + status_width + reason_width + 6)
+
+        # Print rows
+        results.each do |result|
+          container_name = result[:container].name.lchop('/')
+          image_name = result[:container].image
+          status = result[:needs_update] ? "Needs update" : "Up to date"
+          reason = result[:reason] || ""
+
+          # Color the status
+          if result[:needs_update]
+            status = status.colorize(:yellow)
+          else
+            status = status.colorize(:green)
+          end
+
+          printf "%-#{name_width}s  %-#{image_width}s  %-#{status_width}s  %-#{reason_width}s\n", container_name, image_name, status, reason
+        end
+
+        # Print summary
+        needing_update = results.count { |r| r[:needs_update] }
+        up_to_date = results.size - needing_update
+
+        puts "\nSummary:"
+        puts "  ⚠️  Needs update: #{needing_update}"
+        puts "  ✅ Up to date: #{up_to_date}"
+      else
+        # Normal run format
+        # Calculate column widths
+        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, "Container".size].max
+        image_width = [results.map { |r| r[:container].image.size }.max, "Image".size].max
+        status_width = [results.map { |r| get_status_string(r).size }.max, "Status".size].max
+
+        # Print header
+        printf "%-#{name_width}s  %-#{image_width}s  %-#{status_width}s\n", "Container", "Image", "Status"
+        puts "-" * (name_width + image_width + status_width + 4)
+
+        # Print rows
+        results.each do |result|
+          container_name = result[:container].name.lchop('/')
+          image_name = result[:container].image
+          status = get_status_string(result)
+
+          # Color the status
+          if result[:updated]
+            status = status.colorize(:green)
+          elsif result[:error]
+            status = status.colorize(:red)
+          else
+            status = status.colorize(:blue)
+          end
+
+          printf "%-#{name_width}s  %-#{image_width}s  %s\n", container_name, image_name, status
+        end
+
+        # Print summary
+        updated = results.count { |r| r[:updated] }
+        errors = results.count { |r| r[:error] }
+        up_to_date = results.size - updated - errors
+
+        puts "\nSummary:"
+        puts "  ✅ Updated: #{updated}"
+        puts "  ⚠️  Errors: #{errors}"
+        puts "  ✨ Up to date: #{up_to_date}"
+      end
+      
+      puts "=" * 80 + "\n"
+    end
+
+    private def get_status_string(result : NamedTuple(
+        container: ContainerInfo,
+        updated: Bool,
+        error: String?,
+        needs_update: Bool?,
+        reason: String?,
+      )) : String
+      if result[:updated]
+        "Updated"
+      elsif result[:error]
+        "Error: #{result[:error]}"
+      else
+        "Up to date"
+      end
     end
   end
 end

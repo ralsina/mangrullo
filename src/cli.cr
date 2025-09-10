@@ -15,7 +15,7 @@ module Mangrullo
     def initialize(@config : Config)
       config.setup_logging
       @docker_client = DockerClient.new(config.docker_socket_path)
-      @update_manager = UpdateManager.new(@docker_client)
+      @update_manager = UpdateManager.new(@docker_client, config.log_level)
 
       setup_signal_handlers
     end
