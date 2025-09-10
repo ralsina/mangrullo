@@ -175,10 +175,10 @@ module Mangrullo
     def create_container_from_inspect_data(image_name : String, container_name : String, inspect_data : String) : String?
       result = handle_docker_errors_typed("creating container from inspect data", "container=#{container_name}, image=#{image_name}") do
         Log.debug { "Creating container #{container_name} from inspect data with image #{image_name}" }
-        
+
         # Parse the container inspection output
         container_info = JSON.parse(inspect_data)
-        
+
         # Extract the container configuration
         config_data = container_info.as_h
         host_config_json = config_data["HostConfig"]?.try(&.as_h)
@@ -211,10 +211,10 @@ module Mangrullo
           Log.error { "Failed to inspect container #{container_name} for configuration" }
           return nil
         end
-        
+
         # Parse the container inspection output
         container_info = JSON.parse(inspect_data)
-        
+
         # Extract the container configuration
         config_data = container_info.as_h
         host_config_json = config_data["HostConfig"]?.try(&.as_h)
@@ -249,15 +249,15 @@ module Mangrullo
       # Get container info first
       container_info = get_container_info(container_id)
       return nil unless container_info
-      
+
       # Get the container name (remove leading slash)
       container_name = container_info.name.lchop('/')
-      
+
       Log.info { "Recreating container #{container_name} with image #{new_image}" }
-      
+
       # Capture container configuration BEFORE removing it
       Log.debug { "Capturing container configuration for #{container_name}" }
-      
+
       # Get the container configuration using docker inspect BEFORE removing it
       config_output = inspect_container(container_name)
 
@@ -265,29 +265,29 @@ module Mangrullo
         Log.error { "Failed to inspect container #{container_name} for configuration" }
         return nil
       end
-      
+
       # Stop the container
       unless stop_container(container_id)
         Log.error { "Failed to stop container #{container_name}" }
         return nil
       end
-      
+
       # Remove the old container FIRST to free up the name
       unless remove_container(container_id)
         Log.error { "Failed to remove old container #{container_name}" }
         return nil
       end
-      
+
       # Create new container with the captured configuration and new image
       new_container_id = create_container_from_inspect_data(new_image, container_name, config_output.to_s)
       return nil unless new_container_id
-      
+
       # Start the new container
       unless start_container(new_container_id)
         Log.error { "Failed to start new container #{container_name}" }
         return nil
       end
-      
+
       Log.info { "Successfully recreated container #{container_name} with new image" }
       new_container_id
     end

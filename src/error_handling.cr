@@ -31,10 +31,16 @@ module Mangrullo
         Log.warn { message }
       when Log::Severity::Error
         Log.error { message }
-        Log.error { error.backtrace.join("\n") } if error.backtrace
+        begin
+          if error.backtrace
+            Log.error { error.backtrace.join("\n") }
+          end
+        rescue
+          # Ignore logging errors in tests
+        end
       end
 
-      Result(Nil, String).new(false, nil, error.message)
+      Result(Nil, String).new(false, nil, message)
     end
 
     # Log a debug message and return error result (for non-critical failures)
@@ -51,29 +57,27 @@ module Mangrullo
       yield
       Result(Bool, String).new(true, true, nil)
     rescue ex : Docr::Errors::DockerAPIError
-      error_result = log_and_return_error("Docker API operation: #{operation}", ex, Log::Severity::Error, context)
-      Result(Bool, String).new(false, nil, error_result.error)
+      full_message = context ? "#{context}: Docker API operation: #{operation} failed: #{ex.message}" : "Docker API operation: #{operation} failed: #{ex.message}"
+      Result(Bool, String).new(false, nil, full_message)
     rescue ex : Socket::Error | IO::Error
-      error_result = log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
-      Result(Bool, String).new(false, nil, error_result.error)
+      log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
+      Result(Bool, String).new(false, nil, ex.message)
     rescue ex : Exception
-      error_result = log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
-      Result(Bool, String).new(false, nil, error_result.error)
+      log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
+      Result(Bool, String).new(false, nil, ex.message)
     end
 
     # Wrap operations that might return nil, but still want error handling
-    def self.docker_api_operation_with_nil(operation : String, context : String? = nil, &) : Result(Bool, String)
+    def self.docker_api_operation_with_nil(operation : String, context : String? = nil, &) : Result(Nil, String)
       yield
-      Result(Bool, String).new(true, true, nil)
+      Result(Nil, String).new(true, nil, nil)
     rescue ex : Docr::Errors::DockerAPIError
-      error_result = log_and_return_error("Docker API operation: #{operation}", ex, Log::Severity::Error, context)
-      Result(Bool, String).new(false, nil, error_result.error)
+      full_message = context ? "#{context}: Docker API operation: #{operation} failed: #{ex.message}" : "Docker API operation: #{operation} failed: #{ex.message}"
+      Result(Nil, String).new(false, nil, full_message)
     rescue ex : Socket::Error | IO::Error
-      error_result = log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
-      Result(Bool, String).new(false, nil, error_result.error)
+      log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
     rescue ex : Exception
-      error_result = log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
-      Result(Bool, String).new(false, nil, error_result.error)
+      log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
     end
 
     # Generic Docker API operation wrapper for operations that return specific types
@@ -81,48 +85,49 @@ module Mangrullo
       result = yield
       Result.new(true, result, nil)
     rescue ex : Docr::Errors::DockerAPIError
-      error_result = log_and_return_error("Docker API operation: #{operation}", ex, Log::Severity::Error, context)
-      Result.new(false, nil, error_result.error)
+      log_and_return_error("Docker API operation: #{operation}", ex, Log::Severity::Error, context)
+      Result.new(false, nil, ex.message)
     rescue ex : Socket::Error | IO::Error
-      error_result = log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
-      Result.new(false, nil, error_result.error)
+      log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
+      Result.new(false, nil, ex.message)
     rescue ex : Exception
-      error_result = log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
-      Result.new(false, nil, error_result.error)
+      log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
+      Result.new(false, nil, ex.message)
     end
 
     # Wrap HTTP operations with consistent error handling
     def self.http_operation(operation : String, context : String? = nil, &) : Result(HTTP::Client::Response, String)
-      yield
+      result = yield
+      Result(HTTP::Client::Response, String).new(true, result, nil)
     rescue ex : Socket::Error | IO::Error
-      error_result = log_and_return_error("HTTP operation: #{operation}", ex, Log::Severity::Warn, context)
-      Result(HTTP::Client::Response, String).new(false, nil, error_result.error)
+      log_and_return_error("HTTP operation: #{operation}", ex, Log::Severity::Warn, context)
+      Result(HTTP::Client::Response, String).new(false, nil, ex.message)
     rescue ex : JSON::ParseException
-      error_result = log_and_return_error("JSON parsing: #{operation}", ex, Log::Severity::Warn, context)
-      Result(HTTP::Client::Response, String).new(false, nil, error_result.error)
+      log_and_return_error("JSON parsing: #{operation}", ex, Log::Severity::Warn, context)
+      Result(HTTP::Client::Response, String).new(false, nil, ex.message)
     rescue ex : Exception
-      error_result = log_and_return_error("HTTP operation: #{operation}", ex, Log::Severity::Warn, context)
-      Result(HTTP::Client::Response, String).new(false, nil, error_result.error)
+      log_and_return_error("HTTP operation: #{operation}", ex, Log::Severity::Warn, context)
+      Result(HTTP::Client::Response, String).new(false, nil, ex.message)
     end
 
     # Create a success result
-    def self.success(value = nil) : Result(Nil, String)
-      Result(Nil, String).new(true, value, nil)
+    def self.success(value = nil)
+      Result(typeof(value), String).new(true, value, nil)
     end
 
     # Create an error result
-    def self.error(message : String, value = nil) : Result(Nil, String)
-      Result(Nil, String).new(false, value, message)
+    def self.error(message : String, value = nil)
+      Result(typeof(value), String).new(false, value, message)
     end
 
     # Check if a result is successful
     def self.successful?(result) : Bool
-      result.success
+      result.success?
     end
 
     # Check if a result failed
     def self.failed?(result) : Bool
-      !result.success
+      !result.success?
     end
 
     # Extract error message from result

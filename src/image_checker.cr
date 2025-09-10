@@ -50,7 +50,6 @@ module Mangrullo
             registry_host = "ghcr.io"
             # Don't double-prepend linuxserver if it's already there
             if repository_path.starts_with?("linuxserver/")
-              
             else
               repository_path = "linuxserver/#{repository_path}"
             end
@@ -366,7 +365,7 @@ module Mangrullo
 
         # Step 1: Pull if local and remote images are different
         needs_pull = normalized_local != normalized_remote
-        
+
         # Step 2: Check if container will need restart after pull
         # We restart if container != what will be latest after pull
         needs_restart = normalized_container != normalized_remote

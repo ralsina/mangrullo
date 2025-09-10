@@ -27,18 +27,18 @@ class WebServer
 
   private def handle_web_error(operation : String, env, error : Exception, json_response : Bool = true)
     Mangrullo::ErrorHandling.log_and_return_error(operation, error, Log::Severity::Error, "web_server")
-    
+
     if json_response
       env.response.status_code = 500
       env.response.content_type = "application/json"
       error_message = case error
-                       when Docr::Errors::DockerAPIError
-                         "Docker API error"
-                       when Socket::Error, IO::Error
-                         "Network error"
-                       else
-                         "Unexpected error"
-                       end
+                      when Docr::Errors::DockerAPIError
+                        "Docker API error"
+                      when Socket::Error, IO::Error
+                        "Network error"
+                      else
+                        "Unexpected error"
+                      end
       {error: error_message, message: "An error occurred"}.to_json
     else
       env.response.status_code = 500

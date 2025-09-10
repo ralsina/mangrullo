@@ -34,16 +34,21 @@ module Mangrullo
     property? dry_run : Bool
     property container_names : Array(String)
 
-    def initialize(@interval : Int32 = Mangrullo::Constants::Config::DEFAULT_INTERVAL, 
+    def initialize(@interval : Int32 = Mangrullo::Constants::Config::DEFAULT_INTERVAL,
                    @allow_major_upgrade : Bool = false,
                    @docker_socket_path : String = Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH,
-                   @log_level : String = Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL, 
+                   @log_level : String = Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL,
                    @run_once : Bool = false, @dry_run : Bool = false,
                    @container_names : Array(String) = [] of String)
     end
 
     def self.parse(args : Array(String)) : Config
-      docopt = Docopt.docopt(DOCOPT, argv: args, help: true, version: "Mangrullo #{::VERSION}")
+      version = begin
+        ::VERSION
+      rescue
+        "0.1.0"
+      end
+      docopt = Docopt.docopt(DOCOPT, argv: args, help: true, version: "Mangrullo #{version}")
 
       # Parse container names
       container_names = if docopt["<container-name>"]?

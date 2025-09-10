@@ -17,13 +17,13 @@ module Mangrullo
 
     def check_and_update_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?))
       unified_results = process_containers(allow_major_upgrade, container_names, dry_run: false)
-      
+
       # Convert back to the expected format
       unified_results.map do |result|
         {
           container: result[:container],
-          updated: result[:updated],
-          error: result[:error]
+          updated:   result[:updated],
+          error:     result[:error],
         }
       end
     end
@@ -40,7 +40,7 @@ module Mangrullo
       Log.debug { "Container state before update:" }
       Log.debug { "  Container image: #{container.image}" }
       Log.debug { "  Container image_id: #{container.image_id}" }
-      
+
       # Get current digest information for debugging
       local_digest_before = @image_checker.get_local_image_digest(container.image)
       remote_digest_before = @image_checker.get_remote_image_digest(container.image)
@@ -67,7 +67,7 @@ module Mangrullo
 
       # Recreate the container with the new image (like watchtower does)
       Log.info { "Recreating container: #{container.name} with new image" }
-      
+
       # Use the specific image digest to ensure we get the correct image
       image_to_use = if local_digest_after_pull && local_digest_after_pull == remote_digest_before
                        # Use the digest format: redis@sha256:...
@@ -75,7 +75,7 @@ module Mangrullo
                      else
                        container.image
                      end
-      
+
       Log.debug { "Using image: #{image_to_use}" }
       new_container_id = @docker_client.recreate_container_with_new_image(container.id, image_to_use)
       unless new_container_id
@@ -92,7 +92,7 @@ module Mangrullo
         Log.debug { "  New container ID: #{updated_container.id}" }
         Log.debug { "  New container image_id: #{updated_container.image_id}" }
         Log.debug { "  Image ID changed from original? #{updated_container.image_id != container.image_id}" }
-        
+
         # Verify the new container is actually using the new image
         local_digest_after = @image_checker.get_local_image_digest(container.image)
         remote_digest = @image_checker.get_remote_image_digest(container.image)
@@ -126,10 +126,10 @@ module Mangrullo
       unless container_names.empty?
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
         normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-        containers = containers.select { |container| 
+        containers = containers.select { |container|
           # Check both the actual container name and a version without leading slash
-          normalized_input_names.includes?(container.name) || 
-          normalized_input_names.includes?(container.name.lchop('/'))
+          normalized_input_names.includes?(container.name) ||
+            normalized_input_names.includes?(container.name.lchop('/'))
         }
       end
 
@@ -152,10 +152,10 @@ module Mangrullo
       unless container_names.empty?
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
         normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-        containers = containers.select { |container| 
+        containers = containers.select { |container|
           # Check both the actual container name and a version without leading slash
-          normalized_input_names.includes?(container.name) || 
-          normalized_input_names.includes?(container.name.lchop('/'))
+          normalized_input_names.includes?(container.name) ||
+            normalized_input_names.includes?(container.name.lchop('/'))
         }
       end
 
@@ -189,10 +189,10 @@ module Mangrullo
         unless container_names.empty?
           # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
           normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-          containers = containers.select { |container| 
+          containers = containers.select { |container|
             # Check both the actual container name and a version without leading slash
-            normalized_input_names.includes?(container.name) || 
-            normalized_input_names.includes?(container.name.lchop('/'))
+            normalized_input_names.includes?(container.name) ||
+              normalized_input_names.includes?(container.name.lchop('/'))
           }
           Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
         end
@@ -200,11 +200,11 @@ module Mangrullo
         Log.debug { "Processing #{containers.size} containers" }
 
         # Show progress bar only in interactive mode (TTY and not debug)
-        progress = unless @log_level == "debug" || !STDOUT.tty?
-          bar = ProgressBar.new(containers.size)
-          bar.width = 40
-          bar
-        end
+        progress = if @log_level != "debug" && STDOUT.tty?
+                     bar = ProgressBar.new(containers.size)
+                     bar.width = 40
+                     bar
+                   end
 
         containers.each do |container|
           # Update progress bar
@@ -218,34 +218,34 @@ module Mangrullo
                      else
                        nil
                      end
-            
+
             results << {
-              container: container,
-              updated: false,
-              error: nil,
+              container:    container,
+              updated:      false,
+              error:        nil,
               needs_update: needs_update,
-              reason: reason
+              reason:       reason,
             }
           else
             # For normal run, perform the actual update
             result = update_container(container, allow_major_upgrade)
             # Convert to unified format
             results << {
-              container: result[:container],
-              updated: result[:updated],
-              error: result[:error],
+              container:    result[:container],
+              updated:      result[:updated],
+              error:        result[:error],
               needs_update: nil,
-              reason: nil
+              reason:       nil,
             }
           end
         end
 
         # Show results table only in interactive mode (TTY and not debug)
-        unless @log_level == "debug" || !STDOUT.tty?
-          display_results_table(results, dry_run)
-        else
+        if @log_level == "debug" || !STDOUT.tty?
           # Add newline after progress bar if not showing table
           puts "" if progress
+        else
+          display_results_table(results, dry_run)
         end
 
         Log.debug { "#{dry_run ? "Dry run" : "Update"} check completed" }
@@ -265,13 +265,13 @@ module Mangrullo
 
     def dry_run(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
       unified_results = process_containers(allow_major_upgrade, container_names, dry_run: true)
-      
+
       # Convert back to the expected format
       unified_results.map do |result|
         {
-          container: result[:container],
+          container:    result[:container],
           needs_update: result[:needs_update] || false,
-          reason: result[:reason]
+          reason:       result[:reason],
         }
       end
     end
@@ -371,12 +371,12 @@ module Mangrullo
     end
 
     private def display_results_table(results : Array(NamedTuple(
-        container: ContainerInfo,
-        updated: Bool,
-        error: String?,
-        needs_update: Bool?,
-        reason: String?,
-      )), dry_run : Bool = false)
+                                        container: ContainerInfo,
+                                        updated: Bool,
+                                        error: String?,
+                                        needs_update: Bool?,
+                                        reason: String?,
+                                      )), dry_run : Bool = false)
       return if results.empty?
 
       puts "\n" + "=" * 80
@@ -386,20 +386,20 @@ module Mangrullo
       if dry_run
         # Dry run format
         # Calculate column widths with limits
-        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 25].min
-        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 40].min
-        reason_width = [results.map { |r| (r[:reason] || "").size }.max, 30].min
+        name_width = [results.map(&.[:container].name.lchop('/').size), 25].min
+        image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size }, 40].min
+        reason_width = [results.max_of { |result| (result[:reason] || "").size }, 30].min
 
         # Print header
-        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{reason_width}.#{reason_width}s\n", 
-               "Container", "Image", "Action"
+        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{reason_width}.#{reason_width}s\n",
+          "Container", "Image", "Action"
         puts "-" * (name_width + image_width + reason_width + 4)
 
         # Print rows
         results.each do |result|
           container_name = truncate_string(result[:container].name.lchop('/'), name_width)
           image_name = truncate_image_name(result[:container].image)
-          
+
           # Use the reason as the action since it's more descriptive
           action = truncate_string(result[:reason] || "Up to date", reason_width)
 
@@ -410,12 +410,12 @@ module Mangrullo
             action = action.colorize(:green)
           end
 
-          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{reason_width}.#{reason_width}s\n", 
-                 container_name, image_name, action
+          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{reason_width}.#{reason_width}s\n",
+            container_name, image_name, action
         end
 
         # Print summary
-        needing_update = results.count { |r| r[:needs_update] }
+        needing_update = results.count { |result| result[:needs_update] }
         up_to_date = results.size - needing_update
 
         puts "\nSummary:"
@@ -424,13 +424,13 @@ module Mangrullo
       else
         # Normal run format
         # Calculate column widths with limits
-        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 20].min
-        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 35].min
+        name_width = [results.map(&.[:container].name.lchop('/').size), 20].min
+        image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size }, 35].min
         status_width = 15
 
         # Print header
-        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}.#{status_width}s\n", 
-               "Container", "Image", "Status"
+        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}.#{status_width}s\n",
+          "Container", "Image", "Status"
         puts "-" * (name_width + image_width + status_width + 4)
 
         # Print rows
@@ -448,13 +448,13 @@ module Mangrullo
             status = status.colorize(:blue)
           end
 
-          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s\n", 
-                 container_name, image_name, status
+          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s\n",
+            container_name, image_name, status
         end
 
         # Print summary
-        updated = results.count { |r| r[:updated] }
-        errors = results.count { |r| r[:error] }
+        updated = results.count { |result| result[:updated] }
+        errors = results.count { |result| result[:error] }
         up_to_date = results.size - updated - errors
 
         puts "\nSummary:"
@@ -462,7 +462,7 @@ module Mangrullo
         puts "  ⚠️  Errors: #{errors}"
         puts "  ✨ Up to date: #{up_to_date}"
       end
-      
+
       puts "=" * 80 + "\n"
     end
 
@@ -475,7 +475,7 @@ module Mangrullo
           return "#{match[1]}#{match[2][0..sha_length]}..."
         end
       end
-      
+
       # For long image names, truncate to reasonable length
       max_width = Mangrullo::Constants::Table::MAX_COLUMN_WIDTH
       prefix_length = Mangrullo::Constants::Table::SHA256_PREFIX_TRUNCATE - 1
@@ -483,16 +483,16 @@ module Mangrullo
     end
 
     private def truncate_string(str : String, max_length : Int) : String
-      str.size > max_length ? "#{str[0..max_length-4]}..." : str
+      str.size > max_length ? "#{str[0..max_length - 4]}..." : str
     end
 
     private def get_status_string(result : NamedTuple(
-        container: ContainerInfo,
-        updated: Bool,
-        error: String?,
-        needs_update: Bool?,
-        reason: String?,
-      )) : String
+                                    container: ContainerInfo,
+                                    updated: Bool,
+                                    error: String?,
+                                    needs_update: Bool?,
+                                    reason: String?,
+                                  )) : String
       if result[:updated]
         "Updated"
       elsif result[:error]
