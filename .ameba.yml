@@ -25,3 +25,7 @@ Style/RedundantBegin:
 # Disabling this rule as exclusions don't work properly
 Lint/NotNil:
   Enabled: false
+
+# Property? syntax doesn't work well with Crystal's type system in this context
+Naming/QueryBoolMethods:
+  Enabled: false

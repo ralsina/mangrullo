@@ -1,6 +1,10 @@
 require "./types"
 require "./docker_client"
 require "./image_checker"
+require "./container_status"
+require "./container_filter"
+require "./result_processor"
+require "./display_formatter"
 require "progress"
 require "colorize"
 require "./constants"
@@ -125,7 +129,7 @@ module Mangrullo
       # Filter containers if specific names were provided
       unless container_names.empty?
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
-        normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+        normalized_input_names = container_names.map { |name| ContainerFilter.normalize_container_name(name) }
         containers = containers.select { |container|
           # Check both the actual container name and a version without leading slash
           normalized_input_names.includes?(container.name) ||
@@ -151,7 +155,7 @@ module Mangrullo
       # Filter containers if specific names were provided
       unless container_names.empty?
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
-        normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
+        normalized_input_names = container_names.map { |name| ContainerFilter.normalize_container_name(name) }
         containers = containers.select { |container|
           # Check both the actual container name and a version without leading slash
           normalized_input_names.includes?(container.name) ||
@@ -187,13 +191,7 @@ module Mangrullo
 
         # Filter containers if specific names were provided
         unless container_names.empty?
-          # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
-          normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-          containers = containers.select { |container|
-            # Check both the actual container name and a version without leading slash
-            normalized_input_names.includes?(container.name) ||
-              normalized_input_names.includes?(container.name.lchop('/'))
-          }
+          containers = ContainerFilter.filter_containers_by_name(containers, container_names)
           Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
         end
 
@@ -466,6 +464,7 @@ module Mangrullo
       puts "=" * 80 + "\n"
     end
 
+    # Keep original behavior for compatibility
     private def truncate_image_name(image : String) : String
       # Truncate SHA256 digests
       if image.includes?("sha256:")
@@ -483,9 +482,10 @@ module Mangrullo
     end
 
     private def truncate_string(str : String, max_length : Int) : String
-      str.size > max_length ? "#{str[0..max_length - 4]}..." : str
+      DisplayFormatter.truncate_string(str, max_length)
     end
 
+    # Use ContainerStatus instead
     private def get_status_string(result : NamedTuple(
                                     container: ContainerInfo,
                                     updated: Bool,
@@ -493,13 +493,7 @@ module Mangrullo
                                     needs_update: Bool?,
                                     reason: String?,
                                   )) : String
-      if result[:updated]
-        "Updated"
-      elsif result[:error]
-        "Error: #{result[:error]}"
-      else
-        "Up to date"
-      end
+      ContainerStatus.get_cli_status(result[:container], result[:needs_update], result[:error])
     end
   end
 end

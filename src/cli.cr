@@ -4,6 +4,8 @@ require "./docker_client"
 require "./image_checker"
 require "./update_manager"
 require "./config"
+require "./result_processor"
+require "./display_formatter"
 
 module Mangrullo
   class CLI
@@ -42,23 +44,15 @@ module Mangrullo
       begin
         results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
 
-        updated_count = results.count { |result| result[:updated] }
-        error_count = results.count { |result| result[:error] }
+        # Use ResultProcessor to generate summary
+        summary = ResultProcessor.generate_summary(results)
 
         # Only show summary logs in debug mode (table shows the same info)
         Log.debug { "Update check completed" }
-        Log.debug { "Containers checked: #{results.size}" }
-        Log.debug { "Containers updated: #{updated_count}" }
-        Log.debug { "Errors encountered: #{error_count}" }
+        Log.debug { ResultProcessor.format_summary_cli(summary) }
 
-        if error_count > 0
-          Log.error { "Some containers failed to update:" }
-          results.each do |result|
-            if result[:error]
-              Log.error { "  #{result[:container].name}: #{result[:error]}" }
-            end
-          end
-        end
+        # Log errors using ResultProcessor
+        ResultProcessor.log_errors(results)
       rescue ex : Exception
         Log.error { "Fatal error: #{ex.message}" }
         exit 1
@@ -74,22 +68,14 @@ module Mangrullo
           Log.info { "Starting update cycle" }
           results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
 
-          updated_count = results.count { |result| result[:updated] }
-          error_count = results.count { |result| result[:error] }
+          # Use ResultProcessor to generate summary
+          summary = ResultProcessor.generate_summary(results)
 
           Log.debug { "Update cycle completed" }
-          Log.debug { "Containers checked: #{results.size}" }
-          Log.debug { "Containers updated: #{updated_count}" }
-          Log.debug { "Errors encountered: #{error_count}" }
+          Log.debug { ResultProcessor.format_summary_cli(summary) }
 
-          if error_count > 0
-            Log.error { "Some containers failed to update:" }
-            results.each do |result|
-              if result[:error]
-                Log.error { "  #{result[:container].name}: #{result[:error]}" }
-              end
-            end
-          end
+          # Log errors using ResultProcessor
+          ResultProcessor.log_errors(results)
 
           # Wait for next cycle
           Log.info { "Next check in #{config.interval} seconds" }
@@ -111,12 +97,13 @@ module Mangrullo
       begin
         results = update_manager.dry_run(config.allow_major_upgrade?, config.container_names)
 
-        needing_update = results.select { |result| result[:needs_update] }
+        # Use ResultProcessor for unified results
+        summary = ResultProcessor.generate_unified_summary(results)
+        needing_update = ResultProcessor.filter_unified_by_status(results, :needs_update)
 
         # Only show detailed logs in debug mode (table shows the same info)
         Log.debug { "Dry run results:" }
-        Log.debug { "Containers checked: #{results.size}" }
-        Log.debug { "Containers needing updates: #{needing_update.size}" }
+        Log.debug { ResultProcessor.format_summary_cli(summary) }
 
         if needing_update.empty?
           Log.debug { "All containers are up to date" }

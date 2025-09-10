@@ -1,5 +1,8 @@
 require "kilt"
 require "ecr"
+require "./container_status"
+require "./container_filter"
+require "./display_formatter"
 
 class WebViews
   def dashboard(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo))
@@ -95,24 +98,15 @@ class WebViews
     HTML
 
     containers.each do |container|
-      status_class = "status-error"
-      status_text = "Unknown"
-
+      # Use ContainerStatus module
       begin
         docker_client = Mangrullo::DockerClient.new("/var/run/docker.sock")
         image_checker = Mangrullo::ImageChecker.new(docker_client)
         needs_update = image_checker.needs_update?(container, false)
 
-        if container.image.includes?("latest")
-          status_class = "status-latest"
-          status_text = "Latest Tag"
-        elsif needs_update
-          status_class = "status-update-available"
-          status_text = "Update Available"
-        else
-          status_class = "status-up-to-date"
-          status_text = "Up to Date"
-        end
+        status = Mangrullo::ContainerStatus.get_status(container, needs_update)
+        status_class = status.css_class || "status-unknown"
+        status_text = status.text
       rescue
         status_class = "status-error"
         status_text = "Error"
@@ -230,16 +224,10 @@ class WebViews
   def container_details(env : HTTP::Server::Context, container : Mangrullo::ContainerInfo, update_info)
     env.response.content_type = "text/html"
 
-    update_status = "Unknown"
-    status_class = "status-error"
-
-    if update_info[:has_update]
-      update_status = "Update Available"
-      status_class = "status-update-available"
-    else
-      update_status = "Up to Date"
-      status_class = "status-up-to-date"
-    end
+    # Use ContainerStatus module
+    status = Mangrullo::ContainerStatus.get_status(container, update_info[:has_update])
+    update_status = status.text
+    status_class = status.css_class || "status-unknown"
 
     html = <<-HTML
     <!DOCTYPE html>

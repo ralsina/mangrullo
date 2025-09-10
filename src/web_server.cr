@@ -8,6 +8,9 @@ require "./update_manager"
 require "./config"
 require "./web_views"
 require "./error_handling"
+require "./container_filter"
+require "./result_processor"
+require "./display_formatter"
 require "./constants"
 
 class WebServer
