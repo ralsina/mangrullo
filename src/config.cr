@@ -1,5 +1,6 @@
 require "docopt"
 require "./types"
+require "./constants"
 
 module Mangrullo
   class Config
@@ -12,10 +13,10 @@ module Mangrullo
                [--help] [--version]
 
     Options:
-      --interval=<seconds>   Check interval in seconds [default: 300]
+      --interval=<seconds>   Check interval in seconds [default: #{Constants::Config::DEFAULT_INTERVAL}]
       --allow-major          Allow major version upgrades
-      --socket=<path>        Docker socket path [default: /var/run/docker.sock]
-      --log-level=<level>    Log level (debug, info, warn, error) [default: info]
+      --socket=<path>        Docker socket path [default: #{Constants::Docker::DEFAULT_SOCKET_PATH}]
+      --log-level=<level>    Log level (debug, info, warn, error) [default: #{Constants::Config::DEFAULT_LOG_LEVEL}]
       --once                 Run once and exit
       --dry-run              Show what would be updated without actually updating
       --help                 Show this help message
@@ -33,9 +34,11 @@ module Mangrullo
     property? dry_run : Bool
     property container_names : Array(String)
 
-    def initialize(@interval : Int32 = 300, @allow_major_upgrade : Bool = false,
-                   @docker_socket_path : String = "/var/run/docker.sock",
-                   @log_level : String = "info", @run_once : Bool = false, @dry_run : Bool = false,
+    def initialize(@interval : Int32 = Constants::Config::DEFAULT_INTERVAL, 
+                   @allow_major_upgrade : Bool = false,
+                   @docker_socket_path : String = Constants::Docker::DEFAULT_SOCKET_PATH,
+                   @log_level : String = Constants::Config::DEFAULT_LOG_LEVEL, 
+                   @run_once : Bool = false, @dry_run : Bool = false,
                    @container_names : Array(String) = [] of String)
     end
 
@@ -65,10 +68,10 @@ module Mangrullo
 
     def self.from_env : Config
       Config.new(
-        interval: ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || 300,
+        interval: ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || Constants::Config::DEFAULT_INTERVAL,
         allow_major_upgrade: ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true",
-        docker_socket_path: ENV["MANGRULLO_DOCKER_SOCKET"]? || "/var/run/docker.sock",
-        log_level: ENV["MANGRULLO_LOG_LEVEL"]? || "info",
+        docker_socket_path: ENV["MANGRULLO_DOCKER_SOCKET"]? || Constants::Docker::DEFAULT_SOCKET_PATH,
+        log_level: ENV["MANGRULLO_LOG_LEVEL"]? || Constants::Config::DEFAULT_LOG_LEVEL,
         run_once: ENV["MANGRULLO_RUN_ONCE"]? == "true",
         dry_run: ENV["MANGRULLO_DRY_RUN"]? == "true",
         container_names: [] of String
@@ -82,8 +85,8 @@ module Mangrullo
       # Environment variables override command line arguments
       config.interval = ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || config.interval
       config.allow_major_upgrade = ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true" || config.allow_major_upgrade?
-      config.docker_socket_path = ENV["MANGRULLO_DOCKER_SOCKET"]? || config.docker_socket_path
-      config.log_level = ENV["MANGRULLO_LOG_LEVEL"]? || config.log_level
+      config.docker_socket_path = ENV["MANGRULLO_DOCKER_SOCKET"]? || Constants::Docker::DEFAULT_SOCKET_PATH
+      config.log_level = ENV["MANGRULLO_LOG_LEVEL"]? || Constants::Config::DEFAULT_LOG_LEVEL
       config.run_once = ENV["MANGRULLO_RUN_ONCE"]? == "true" || config.run_once?
       config.dry_run = ENV["MANGRULLO_DRY_RUN"]? == "true" || config.dry_run?
 
@@ -116,9 +119,8 @@ module Mangrullo
         errors << "Docker socket path cannot be empty"
       end
 
-      valid_log_levels = ["debug", "info", "warn", "error"]
-      unless valid_log_levels.includes?(log_level.downcase)
-        errors << "Log level must be one of: #{valid_log_levels.join(", ")}"
+      unless Constants::Config::VALID_LOG_LEVELS.includes?(log_level.downcase)
+        errors << "Log level must be one of: #{Constants::Config::VALID_LOG_LEVELS.join(", ")}"
       end
 
       unless errors.empty?

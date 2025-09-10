@@ -1,4 +1,5 @@
 require "json"
+require "./constants"
 
 module Mangrullo
   struct ContainerInfo
@@ -63,7 +64,7 @@ module Mangrullo
 
       # Parse semantic version
       parts = version_part.split('.')
-      return nil unless parts.size >= 2 && parts.size <= 3
+      return nil unless parts.size >= Constants::Version::SEMVER_MIN_PARTS && parts.size <= Constants::Version::SEMVER_MAX_PARTS
 
       major = parts[0].to_i?
       minor = parts[1].to_i?

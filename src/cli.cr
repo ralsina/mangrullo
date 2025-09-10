@@ -113,16 +113,17 @@ module Mangrullo
 
         needing_update = results.select { |result| result[:needs_update] }
 
-        Log.info { "Dry run results:" }
-        Log.info { "Containers checked: #{results.size}" }
-        Log.info { "Containers needing updates: #{needing_update.size}" }
+        # Only show detailed logs in debug mode (table shows the same info)
+        Log.debug { "Dry run results:" }
+        Log.debug { "Containers checked: #{results.size}" }
+        Log.debug { "Containers needing updates: #{needing_update.size}" }
 
         if needing_update.empty?
-          Log.info { "All containers are up to date" }
+          Log.debug { "All containers are up to date" }
         else
-          Log.info { "Containers needing updates:" }
+          Log.debug { "Containers needing updates:" }
           needing_update.each do |result|
-            Log.info { "  #{result[:container].name}: #{result[:reason]}" }
+            Log.debug { "  #{result[:container].name}: #{result[:reason]}" }
           end
         end
       rescue ex : Exception

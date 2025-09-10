@@ -3,6 +3,7 @@ require "./docker_client"
 require "./image_checker"
 require "progress"
 require "colorize"
+require "./constants"
 
 module Mangrullo
   class UpdateManager
@@ -470,12 +471,15 @@ module Mangrullo
       if image.includes?("sha256:")
         # Replace sha256:... with sha256:...
         if match = image.match(/^(.*?sha256:)([0-9a-f]{64})$/)
-          return "#{match[1]}#{match[2][0..11]}..."
+          sha_length = Constants::Version::SHA256_TRUNCATE_LENGTH - 1
+          return "#{match[1]}#{match[2][0..sha_length]}..."
         end
       end
       
       # For long image names, truncate to reasonable length
-      image.size > 50 ? "#{image[0..46]}..." : image
+      max_width = Constants::Table::MAX_COLUMN_WIDTH
+      prefix_length = Constants::Table::SHA256_PREFIX_TRUNCATE - 1
+      image.size > max_width ? "#{image[0..prefix_length]}..." : image
     end
 
     private def truncate_string(str : String, max_length : Int) : String
