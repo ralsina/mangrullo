@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ main ]
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -15,5 +15,9 @@ jobs:
         crystal: latest
     - name: Install dependencies
       run: shards install
+    - name: Check formatting
+      run: crystal tool format --check
     - name: Run tests
       run: crystal spec
+    - name: Run linter
+      run: ameba

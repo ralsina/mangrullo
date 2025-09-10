@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(crystal:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:containrrr.dev)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(shards install:*)",
+      "WebFetch(domain:crystal-lang.org)",
+      "Bash(./mangrullo:*)",
+      "Bash(./bin/mangrullo:*)",
+      "Bash(timeout:*)",
+      "Bash(git push:*)",
+      "Bash(shards build:*)",
+      "Bash(git show:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
