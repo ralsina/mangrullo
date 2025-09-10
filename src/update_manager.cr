@@ -196,7 +196,7 @@ module Mangrullo
           Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
         end
 
-        Log.info { "Processing #{containers.size} containers" }
+        Log.debug { "Processing #{containers.size} containers" }
 
         # Show progress bar only in interactive mode (TTY and not debug)
         progress = unless @log_level == "debug" || !STDOUT.tty?
@@ -247,7 +247,7 @@ module Mangrullo
           puts "" if progress
         end
 
-        Log.info { "#{dry_run ? "Dry run" : "Update"} check completed" }
+        Log.debug { "#{dry_run ? "Dry run" : "Update"} check completed" }
       rescue ex : Docr::Errors::DockerAPIError
         Log.error { "Docker API error during #{dry_run ? "dry run" : "container update"} check: #{ex.message}" }
         # Return empty results on critical failure
@@ -384,22 +384,23 @@ module Mangrullo
 
       if dry_run
         # Dry run format
-        # Calculate column widths
-        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, "Container".size].max
-        image_width = [results.map { |r| r[:container].image.size }.max, "Image".size].max
-        status_width = [results.map { |r| (r[:needs_update] ? "Needs update" : "Up to date").size }.max, "Status".size].max
-        reason_width = [results.map { |r| (r[:reason] || "").size }.max, "Reason".size].max
+        # Calculate column widths with limits
+        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 20].min
+        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 30].min
+        status_width = 12
+        reason_width = [results.map { |r| (r[:reason] || "").size }.max, 30].min
 
         # Print header
-        printf "%-#{name_width}s  %-#{image_width}s  %-#{status_width}s  %-#{reason_width}s\n", "Container", "Image", "Status", "Reason"
+        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s  %-#{reason_width}.#{reason_width}s\n", 
+               "Container", "Image", "Status", "Reason"
         puts "-" * (name_width + image_width + status_width + reason_width + 6)
 
         # Print rows
         results.each do |result|
-          container_name = result[:container].name.lchop('/')
-          image_name = result[:container].image
+          container_name = truncate_string(result[:container].name.lchop('/'), name_width)
+          image_name = truncate_image_name(result[:container].image)
           status = result[:needs_update] ? "Needs update" : "Up to date"
-          reason = result[:reason] || ""
+          reason = truncate_string(result[:reason] || "", reason_width)
 
           # Color the status
           if result[:needs_update]
@@ -408,7 +409,8 @@ module Mangrullo
             status = status.colorize(:green)
           end
 
-          printf "%-#{name_width}s  %-#{image_width}s  %-#{status_width}s  %-#{reason_width}s\n", container_name, image_name, status, reason
+          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s  %-#{reason_width}.#{reason_width}s\n", 
+                 container_name, image_name, status, reason
         end
 
         # Print summary
@@ -420,19 +422,20 @@ module Mangrullo
         puts "  ✅ Up to date: #{up_to_date}"
       else
         # Normal run format
-        # Calculate column widths
-        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, "Container".size].max
-        image_width = [results.map { |r| r[:container].image.size }.max, "Image".size].max
-        status_width = [results.map { |r| get_status_string(r).size }.max, "Status".size].max
+        # Calculate column widths with limits
+        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 25].min
+        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 40].min
+        status_width = 12
 
         # Print header
-        printf "%-#{name_width}s  %-#{image_width}s  %-#{status_width}s\n", "Container", "Image", "Status"
+        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s\n", 
+               "Container", "Image", "Status"
         puts "-" * (name_width + image_width + status_width + 4)
 
         # Print rows
         results.each do |result|
-          container_name = result[:container].name.lchop('/')
-          image_name = result[:container].image
+          container_name = truncate_string(result[:container].name.lchop('/'), name_width)
+          image_name = truncate_image_name(result[:container].image)
           status = get_status_string(result)
 
           # Color the status
@@ -444,7 +447,8 @@ module Mangrullo
             status = status.colorize(:blue)
           end
 
-          printf "%-#{name_width}s  %-#{image_width}s  %s\n", container_name, image_name, status
+          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s\n", 
+                 container_name, image_name, status
         end
 
         # Print summary
@@ -459,6 +463,23 @@ module Mangrullo
       end
       
       puts "=" * 80 + "\n"
+    end
+
+    private def truncate_image_name(image : String) : String
+      # Truncate SHA256 digests
+      if image.includes?("sha256:")
+        # Replace sha256:... with sha256:...
+        if match = image.match(/^(.*?sha256:)([0-9a-f]{64})$/)
+          return "#{match[1]}#{match[2][0..11]}..."
+        end
+      end
+      
+      # For long image names, truncate to reasonable length
+      image.size > 50 ? "#{image[0..46]}..." : image
+    end
+
+    private def truncate_string(str : String, max_length : Int) : String
+      str.size > max_length ? "#{str[0..max_length-4]}..." : str
     end
 
     private def get_status_string(result : NamedTuple(

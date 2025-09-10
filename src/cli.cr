@@ -45,10 +45,11 @@ module Mangrullo
         updated_count = results.count { |result| result[:updated] }
         error_count = results.count { |result| result[:error] }
 
-        Log.info { "Update check completed" }
-        Log.info { "Containers checked: #{results.size}" }
-        Log.info { "Containers updated: #{updated_count}" }
-        Log.info { "Errors encountered: #{error_count}" }
+        # Only show summary logs in debug mode (table shows the same info)
+        Log.debug { "Update check completed" }
+        Log.debug { "Containers checked: #{results.size}" }
+        Log.debug { "Containers updated: #{updated_count}" }
+        Log.debug { "Errors encountered: #{error_count}" }
 
         if error_count > 0
           Log.error { "Some containers failed to update:" }
@@ -76,10 +77,10 @@ module Mangrullo
           updated_count = results.count { |result| result[:updated] }
           error_count = results.count { |result| result[:error] }
 
-          Log.info { "Update cycle completed" }
-          Log.info { "Containers checked: #{results.size}" }
-          Log.info { "Containers updated: #{updated_count}" }
-          Log.info { "Errors encountered: #{error_count}" }
+          Log.debug { "Update cycle completed" }
+          Log.debug { "Containers checked: #{results.size}" }
+          Log.debug { "Containers updated: #{updated_count}" }
+          Log.debug { "Errors encountered: #{error_count}" }
 
           if error_count > 0
             Log.error { "Some containers failed to update:" }
