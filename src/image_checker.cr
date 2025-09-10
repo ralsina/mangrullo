@@ -364,8 +364,12 @@ module Mangrullo
         normalized_remote = normalize_digest(remote_digest)
         normalized_container = normalize_digest(container_digest)
 
+        # Step 1: Pull if local and remote images are different
         needs_pull = normalized_local != normalized_remote
-        needs_restart = normalized_container != normalized_local && !needs_pull
+        
+        # Step 2: Check if container will need restart after pull
+        # We restart if container != what will be latest after pull
+        needs_restart = normalized_container != normalized_remote
 
         Log.debug { "Update status for #{container.name}:" }
         Log.debug { "  Container digest: #{normalized_container}" }

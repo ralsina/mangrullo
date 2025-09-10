@@ -102,7 +102,17 @@ module Mangrullo
 
       # Recreate the container with the new image (like watchtower does)
       Log.info { "Recreating container: #{container.name} with new image" }
-      new_container_id = @docker_client.recreate_container_with_new_image(container.id, container.image)
+      
+      # Use the specific image digest to ensure we get the correct image
+      image_to_use = if local_digest_after_pull && local_digest_after_pull == remote_digest_before
+                       # Use the digest format: redis@sha256:...
+                       "#{container.image.split(':')[0]}@#{local_digest_after_pull}"
+                     else
+                       container.image
+                     end
+      
+      Log.debug { "Using image: #{image_to_use}" }
+      new_container_id = @docker_client.recreate_container_with_new_image(container.id, image_to_use)
       unless new_container_id
         return {container: container, updated: false, error: "Failed to recreate container with new image"}
       end

@@ -213,8 +213,7 @@ module Mangrullo
         Log.debug { "Creating container #{container_name} from inspect data with image #{image_name}" }
         
         # Parse the container inspection output
-        container_info = JSON.parse(inspect_data).as_a.first?
-        return nil unless container_info
+        container_info = JSON.parse(inspect_data)
         
         # Extract the container configuration
         config_data = container_info.as_h
@@ -258,8 +257,7 @@ module Mangrullo
         end
         
         # Parse the container inspection output
-        container_info = JSON.parse(inspect_data).as_a.first?
-        return nil unless container_info
+        container_info = JSON.parse(inspect_data)
         
         # Extract the container configuration
         config_data = container_info.as_h
