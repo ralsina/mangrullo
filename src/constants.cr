@@ -44,6 +44,14 @@ module Mangrullo
       SHA256_PREFIX_TRUNCATE = 47
     end
 
+    # Web UI constants
+    module Web
+      DEFAULT_PORT        = 3000
+      DEFAULT_HOST        = "0.0.0.0"
+      REFRESH_INTERVAL    = 30 # seconds
+      MAX_CONTAINER_CARDS = 50
+    end
+
     # Registry constants
     module Registry
       DEFAULT_REGISTRY = "docker.io"

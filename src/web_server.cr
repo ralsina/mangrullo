@@ -23,7 +23,7 @@ class WebServer
     @docker_client = Mangrullo::DockerClient.new(Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH)
     @image_checker = Mangrullo::ImageChecker.new(@docker_client)
     @update_manager = Mangrullo::UpdateManager.new(@docker_client)
-    @web_views = WebViews.new
+    @web_views = WebViews.new(@update_manager)
 
     setup_routes
   end
@@ -178,6 +178,25 @@ class WebServer
       end
     end
 
+    # Bulk operation status (for progress tracking)
+    get "/api/updates/status/:operation_id" do |env|
+      begin
+        operation_id = env.params.url["operation_id"]
+
+        # For now, return a simple status
+        # In a real implementation, this would track actual operation progress
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
+        {
+          operation_id: operation_id,
+          status:       "completed",
+          progress:     100,
+          message:      "Operation completed",
+        }.to_json
+      rescue ex
+        handle_web_error("getting operation status", env, ex)
+      end
+    end
+
     # Container logs
     get "/containers/:id/logs" do |env|
       begin
@@ -195,6 +214,22 @@ class WebServer
       rescue ex
         handle_web_error("getting container logs", env, ex, json_response: false)
       end
+    end
+
+    # Dry run results page
+    get "/api/dry-run" do |env|
+      begin
+        allow_major = env.params.query["allow_major"]?.try(&.downcase) == "true"
+        results = @update_manager.dry_run(allow_major)
+        @web_views.dry_run_results(env, results, allow_major)
+      rescue ex
+        handle_web_error("generating dry run results", env, ex, json_response: false)
+      end
+    end
+
+    # Bulk operations page
+    get "/bulk-operations" do |env|
+      @web_views.bulk_operations(env)
     end
 
     # Restart container

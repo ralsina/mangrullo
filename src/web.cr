@@ -11,14 +11,14 @@ module Mangrullo
   VERSION = "0.1.0"
 
   # Web server entry point
-  Kemal.config.port = 3000
-  Kemal.config.host_binding = "0.0.0.0"
-
-  puts "Starting Mangrullo Web UI on http://0.0.0.0:3000"
+  Kemal.config.port = Mangrullo::Constants::Web::DEFAULT_PORT
+  Kemal.config.host_binding = Mangrullo::Constants::Web::DEFAULT_HOST
 
   # Initialize the web server
   WebServer.new
 
   # Start Kemal
-  Kemal.run
+  Kemal.run do |_|
+    puts "Starting Mangrullo Web UI on http://#{Kemal.config.host_binding}:#{Kemal.config.port}"
+  end
 end

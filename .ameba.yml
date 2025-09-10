@@ -29,3 +29,9 @@ Lint/NotNil:
 # Property? syntax doesn't work well with Crystal's type system in this context
 Naming/QueryBoolMethods:
   Enabled: false
+
+# The formatter has issues with JavaScript regex literals in HTML strings
+Lint/Formatting:
+  Enabled: true
+  Excluded:
+  - src/web_views.cr

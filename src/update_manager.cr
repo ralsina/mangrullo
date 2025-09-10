@@ -19,6 +19,11 @@ module Mangrullo
       @image_checker = ImageChecker.new(@docker_client)
     end
 
+    # Expose image_checker for web interface efficiency
+    def image_checker : ImageChecker
+      @image_checker
+    end
+
     def check_and_update_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?))
       unified_results = process_containers(allow_major_upgrade, container_names, dry_run: false)
 
