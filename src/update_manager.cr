@@ -198,8 +198,8 @@ module Mangrullo
 
         Log.info { "Processing #{containers.size} containers" }
 
-        # Show progress bar unless in debug mode
-        progress = unless @log_level == "debug"
+        # Show progress bar only in interactive mode (TTY and not debug)
+        progress = unless @log_level == "debug" || !STDOUT.tty?
           bar = ProgressBar.new(containers.size)
           bar.width = 40
           bar
@@ -239,9 +239,12 @@ module Mangrullo
           end
         end
 
-        # Show results table unless in debug mode
-        unless @log_level == "debug"
+        # Show results table only in interactive mode (TTY and not debug)
+        unless @log_level == "debug" || !STDOUT.tty?
           display_results_table(results, dry_run)
+        else
+          # Add newline after progress bar if not showing table
+          puts "" if progress
         end
 
         Log.info { "#{dry_run ? "Dry run" : "Update"} check completed" }
