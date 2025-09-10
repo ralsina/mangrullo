@@ -6,8 +6,25 @@
 
 Mangrullo is a Docker container update automation tool written in Crystal.
 
+## Development Setup
+
+After cloning the repository, install the pre-commit hook to ensure code quality:
+
+```bash
+# Install dependencies
+shards install
+
+# Install pre-commit hook
+cp hooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+The pre-commit hook runs tests and linting before allowing commits.
+
 ## Documentation
 
 The full documentation for this project is available on our [GitHub Pages site](https://USER.github.io/mangrullo/).
 
 The documentation is automatically built from the files in the `docs` directory.
+
+See [Development Guidelines](.github/DEVELOPMENT.md) for more detailed development information.

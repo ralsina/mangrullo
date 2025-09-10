@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Pre-commit hook to run tests and linting
+echo "🔍 Running pre-commit checks..."
+
+# Save any uncommitted changes
+STASHED=$(git stash create -u)
+if [ $? -ne 0 ]; then
+    echo "⚠️  Warning: Failed to stash changes"
+    STASHED=""
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+if ! crystal spec; then
+    echo "❌ Tests failed. Please fix before committing."
+    [ -n "$STASHED" ] && git stash pop -q
+    exit 1
+fi
+
+# Run linter
+echo "🔍 Running linter..."
+if ! ameba; then
+    echo "❌ Linting issues found. Please fix before committing."
+    [ -n "$STASHED" ] && git stash pop -q
+    exit 1
+fi
+
+# Restore stashed changes
+[ -n "$STASHED" ] && git stash pop -q
+
+echo "✅ All checks passed!"
+exit 0

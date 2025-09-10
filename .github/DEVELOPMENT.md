@@ -9,6 +9,18 @@ This repository includes a pre-commit hook that runs automatically before each c
 
 If any check fails, the commit will be aborted.
 
+### Installation
+
+The pre-commit hook is not automatically installed when cloning the repository. To install it:
+
+```bash
+# Copy the pre-commit hook to your local .git/hooks directory
+cp hooks/pre-commit .git/hooks/pre-commit
+
+# Make it executable
+chmod +x .git/hooks/pre-commit
+```
+
 ### Bypassing the Hook
 
 If you absolutely need to bypass the pre-commit hook (not recommended), you can use:
