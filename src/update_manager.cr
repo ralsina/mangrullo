@@ -386,32 +386,32 @@ module Mangrullo
       if dry_run
         # Dry run format
         # Calculate column widths with limits
-        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 20].min
-        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 30].min
-        status_width = 12
+        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 25].min
+        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 40].min
         reason_width = [results.map { |r| (r[:reason] || "").size }.max, 30].min
 
         # Print header
-        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s  %-#{reason_width}.#{reason_width}s\n", 
-               "Container", "Image", "Status", "Reason"
-        puts "-" * (name_width + image_width + status_width + reason_width + 6)
+        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{reason_width}.#{reason_width}s\n", 
+               "Container", "Image", "Action"
+        puts "-" * (name_width + image_width + reason_width + 4)
 
         # Print rows
         results.each do |result|
           container_name = truncate_string(result[:container].name.lchop('/'), name_width)
           image_name = truncate_image_name(result[:container].image)
-          status = result[:needs_update] ? "Needs update" : "Up to date"
-          reason = truncate_string(result[:reason] || "", reason_width)
+          
+          # Use the reason as the action since it's more descriptive
+          action = truncate_string(result[:reason] || "Up to date", reason_width)
 
-          # Color the status
+          # Color based on update status
           if result[:needs_update]
-            status = status.colorize(:yellow)
+            action = action.colorize(:yellow)
           else
-            status = status.colorize(:green)
+            action = action.colorize(:green)
           end
 
-          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s  %-#{reason_width}.#{reason_width}s\n", 
-                 container_name, image_name, status, reason
+          printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{reason_width}.#{reason_width}s\n", 
+                 container_name, image_name, action
         end
 
         # Print summary
@@ -424,12 +424,12 @@ module Mangrullo
       else
         # Normal run format
         # Calculate column widths with limits
-        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 25].min
-        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 40].min
-        status_width = 12
+        name_width = [results.map { |r| r[:container].name.lchop('/').size }.max, 20].min
+        image_width = [results.map { |r| truncate_image_name(r[:container].image).size }.max, 35].min
+        status_width = 15
 
         # Print header
-        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}s\n", 
+        printf "%-#{name_width}.#{name_width}s  %-#{image_width}.#{image_width}s  %-#{status_width}.#{status_width}s\n", 
                "Container", "Image", "Status"
         puts "-" * (name_width + image_width + status_width + 4)
 
@@ -471,14 +471,14 @@ module Mangrullo
       if image.includes?("sha256:")
         # Replace sha256:... with sha256:...
         if match = image.match(/^(.*?sha256:)([0-9a-f]{64})$/)
-          sha_length = Constants::Version::SHA256_TRUNCATE_LENGTH - 1
+          sha_length = Mangrullo::Constants::Version::SHA256_TRUNCATE_LENGTH - 1
           return "#{match[1]}#{match[2][0..sha_length]}..."
         end
       end
       
       # For long image names, truncate to reasonable length
-      max_width = Constants::Table::MAX_COLUMN_WIDTH
-      prefix_length = Constants::Table::SHA256_PREFIX_TRUNCATE - 1
+      max_width = Mangrullo::Constants::Table::MAX_COLUMN_WIDTH
+      prefix_length = Mangrullo::Constants::Table::SHA256_PREFIX_TRUNCATE - 1
       image.size > max_width ? "#{image[0..prefix_length]}..." : image
     end
 

@@ -6,7 +6,7 @@ require "./constants"
 module Mangrullo
   # Custom Docker client that supports configurable socket paths
   class CustomDockerClient < Docr::Client
-    def initialize(socket_path : String = Constants::Docker::DEFAULT_SOCKET_PATH)
+    def initialize(socket_path : String = Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH)
       socket = UNIXSocket.new(socket_path)
       @client = HTTP::Client.new(socket)
     end
@@ -15,7 +15,7 @@ module Mangrullo
   class DockerClient
     @api : Docr::API
 
-    def initialize(socket_path : String = Constants::Docker::DEFAULT_SOCKET_PATH)
+    def initialize(socket_path : String = Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH)
       client = CustomDockerClient.new(socket_path)
       @api = Docr::API.new(client)
     end
@@ -134,7 +134,7 @@ module Mangrullo
       result.success? ? result.value : nil
     end
 
-    def pull_image(image_name : String, tag : String = Constants::Docker::DEFAULT_IMAGE_TAG) : Bool
+    def pull_image(image_name : String, tag : String = Mangrullo::Constants::Docker::DEFAULT_IMAGE_TAG) : Bool
       result = handle_docker_errors("pulling image", "image=#{image_name}:#{tag}") do
         @api.images.create("#{image_name}:#{tag}")
       end
@@ -292,7 +292,7 @@ module Mangrullo
       new_container_id
     end
 
-    def get_container_logs(container_id : String, tail : Int32 = Constants::Docker::DEFAULT_LOG_TAIL) : String
+    def get_container_logs(container_id : String, tail : Int32 = Mangrullo::Constants::Docker::DEFAULT_LOG_TAIL) : String
       handle_docker_errors_typed("getting container logs", "container_id=#{container_id}, tail=#{tail}") do
         @api.containers.logs(container_id, tail: tail.to_s).gets_to_end
       end.value || ""
@@ -313,8 +313,8 @@ module Mangrullo
       else
         # Fallback to truncated container ID
         container_id = container.id
-        if container_id.size > Constants::Docker::CONTAINER_ID_TRUNCATE_LENGTH
-          container_id[0..Constants::Docker::CONTAINER_ID_TRUNCATE_LENGTH]
+        if container_id.size > Mangrullo::Constants::Docker::CONTAINER_ID_TRUNCATE_LENGTH
+          container_id[0..Mangrullo::Constants::Docker::CONTAINER_ID_TRUNCATE_LENGTH]
         else
           container_id
         end

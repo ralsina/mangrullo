@@ -64,7 +64,7 @@ module Mangrullo
 
       # Parse semantic version
       parts = version_part.split('.')
-      return nil unless parts.size >= Constants::Version::SEMVER_MIN_PARTS && parts.size <= Constants::Version::SEMVER_MAX_PARTS
+      return nil unless parts.size >= Mangrullo::Constants::Version::SEMVER_MIN_PARTS && parts.size <= Mangrullo::Constants::Version::SEMVER_MAX_PARTS
 
       major = parts[0].to_i?
       minor = parts[1].to_i?

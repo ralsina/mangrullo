@@ -17,7 +17,7 @@ class WebServer
   @web_views : WebViews
 
   def initialize
-    @docker_client = Mangrullo::DockerClient.new(Constants::Docker::DEFAULT_SOCKET_PATH)
+    @docker_client = Mangrullo::DockerClient.new(Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH)
     @image_checker = Mangrullo::ImageChecker.new(@docker_client)
     @update_manager = Mangrullo::UpdateManager.new(@docker_client)
     @web_views = WebViews.new
@@ -26,7 +26,7 @@ class WebServer
   end
 
   private def handle_web_error(operation : String, env, error : Exception, json_response : Bool = true)
-    ErrorHandling.log_and_return_error(operation, error, Log::Severity::Error, "web_server")
+    Mangrullo::ErrorHandling.log_and_return_error(operation, error, Log::Severity::Error, "web_server")
     
     if json_response
       env.response.status_code = 500
@@ -149,7 +149,7 @@ class WebServer
           }
         end
 
-        env.response.content_type = Constants::HTTP::JSON_CONTENT_TYPE
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
         results.to_json
       rescue ex
         handle_web_error("checking all updates", env, ex)
@@ -168,7 +168,7 @@ class WebServer
           results = @update_manager.check_and_update_containers(allow_major)
         end
 
-        env.response.content_type = Constants::HTTP::JSON_CONTENT_TYPE
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
         results.to_json
       rescue ex
         handle_web_error("updating all containers", env, ex)
@@ -179,7 +179,7 @@ class WebServer
     get "/containers/:id/logs" do |env|
       begin
         container_id = env.params.url["id"]
-        tail = env.params.query["tail"]?.try(&.to_i) || Constants::Docker::DEFAULT_LOG_TAIL
+        tail = env.params.query["tail"]?.try(&.to_i) || Mangrullo::Constants::Docker::DEFAULT_LOG_TAIL
 
         if @docker_client.container_exists?(container_id)
           logs = @docker_client.get_container_logs(container_id, tail)
@@ -225,7 +225,7 @@ class WebServer
     # 500 handler
     error 500 do |env, exc|
       puts "Internal server error: #{exc.message}"
-      env.response.content_type = Constants::HTTP::JSON_CONTENT_TYPE
+      env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
       {error: "Internal server error", message: exc.message}.to_json
     end
   end

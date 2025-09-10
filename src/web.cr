@@ -5,6 +5,7 @@ require "./types"
 require "./docker_client"
 require "./image_checker"
 require "./update_manager"
+require "./constants"
 
 module Mangrullo
   VERSION = "0.1.0"
