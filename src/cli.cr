@@ -97,19 +97,20 @@ module Mangrullo
       begin
         results = update_manager.dry_run(config.allow_major_upgrade?, config.container_names)
 
-        # Use ResultProcessor for unified results
-        summary = ResultProcessor.generate_unified_summary(results)
-        needing_update = ResultProcessor.filter_unified_by_status(results, :needs_update)
+        # For dry run, manually count results
+        needing_update = results.count { |result| result[:needs_update] }
+        total = results.size
+        up_to_date = total - needing_update
 
         # Only show detailed logs in debug mode (table shows the same info)
         Log.debug { "Dry run results:" }
-        Log.debug { ResultProcessor.format_summary_cli(summary) }
+        Log.debug { "Total: #{total}, Needing update: #{needing_update}, Up to date: #{up_to_date}" }
 
-        if needing_update.empty?
+        if needing_update == 0
           Log.debug { "All containers are up to date" }
         else
           Log.debug { "Containers needing updates:" }
-          needing_update.each do |result|
+          results.select { |result| result[:needs_update] }.each do |result|
             Log.debug { "  #{result[:container].name}: #{result[:reason]}" }
           end
         end

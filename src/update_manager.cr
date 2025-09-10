@@ -384,7 +384,7 @@ module Mangrullo
       if dry_run
         # Dry run format
         # Calculate column widths with limits
-        name_width = [results.map(&.[:container].name.lchop('/').size), 25].min
+        name_width = [results.max_of?(&.[:container].name.lchop('/').size) || 0, 25].min
         image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size }, 40].min
         reason_width = [results.max_of { |result| (result[:reason] || "").size }, 30].min
 
@@ -422,7 +422,7 @@ module Mangrullo
       else
         # Normal run format
         # Calculate column widths with limits
-        name_width = [results.map(&.[:container].name.lchop('/').size), 20].min
+        name_width = [results.max_of?(&.[:container].name.lchop('/').size) || 0, 20].min
         image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size }, 35].min
         status_width = 15
 
