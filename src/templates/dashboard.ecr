@@ -280,22 +280,69 @@
             showNotification('Checking all containers for updates...', 'info');
             
             try {
-                const response = await fetch('/api/updates');
-                const data = await response.json();
-                
-                data.forEach(container => {
-                    if (container.needs_update) {
-                        updateContainerStatus(container.id, 'update-available', 
-                            container.update_info.local_version, 
-                            container.update_info.remote_version);
-                    } else {
-                        updateContainerStatus(container.id, 'up-to-date', 
-                            container.update_info.local_version, 
-                            container.update_info.remote_version);
+                // First, trigger a fresh check for all containers
+                const refreshResponse = await fetch('/api/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
                     }
                 });
                 
-                showNotification('Update check completed!', 'success');
+                const refreshData = await refreshResponse.json();
+                
+                if (!refreshData.success) {
+                    showNotification(refreshData.message || 'Refresh already in progress', 'warning');
+                    return;
+                }
+                
+                // Wait a bit for the checks to complete, then poll for results
+                showNotification('Refresh initiated, checking for updates...', 'info');
+                
+                // Poll every 2 seconds, up to 10 times (20 seconds total)
+                let attempts = 0;
+                const maxAttempts = 10;
+                
+                const pollUpdates = async () => {
+                    try {
+                        // Fetch both containers and status
+                        const [containersResponse, statusResponse] = await Promise.all([
+                            fetch('/api/containers'),
+                            fetch('/api/status')
+                        ]);
+                        
+                        const containers = await containersResponse.json();
+                        const status = await statusResponse.json();
+                        
+                        // Update the UI with fresh data
+                        updateHeaderStats(containers, status);
+                        updateContainerTable(containers);
+                        
+                        attempts++;
+                        
+                        // Check if updates are still in progress
+                        if (status.update_in_progress && attempts < maxAttempts) {
+                            // Still updating, continue polling
+                            setTimeout(pollUpdates, 2000);
+                        } else if (status.update_in_progress && attempts >= maxAttempts) {
+                            // Timeout but still updating
+                            showNotification('Update check is still in progress...', 'warning');
+                        } else {
+                            // Updates actually completed
+                            showNotification('Update check completed!', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error polling updates:', error);
+                        if (attempts < maxAttempts) {
+                            setTimeout(pollUpdates, 2000);
+                        } else {
+                            showNotification('Failed to check updates', 'error');
+                        }
+                    }
+                };
+                
+                // Start polling after a short delay
+                setTimeout(pollUpdates, 1000);
+                
             } catch (error) {
                 console.error('Error checking all updates:', error);
                 showNotification('Failed to check updates', 'error');
