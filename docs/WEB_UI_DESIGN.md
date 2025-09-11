@@ -27,10 +27,16 @@ The web interface is partially implemented with the following components complet
 - **Error Handling**: Graceful error handling and user-friendly messages
 
 ### 🚧 In Progress
-- **Real-time Updates**: WebSocket support for live status updates
+- **Real-time Updates**: Auto-refresh functionality for live status updates (every 30 seconds)
 - **Bulk Operations**: Multi-container update functionality
-- **Log Viewing**: Container log streaming and viewing
+- **Log Viewing**: Container log viewing
 - **Container Restart**: Direct container restart functionality
+
+### ✅ Recently Completed
+- **Embedded Static Assets**: All CSS, JavaScript, and images baked into binary
+- **Auto-refresh Dashboard**: Automatic status updates without manual refresh
+- **External JavaScript**: Extracted JavaScript to external files for better maintainability
+- **State Management**: Shared state between web requests and background operations
 
 ### 📋 Planned Features
 - **Authentication**: User authentication and access control
@@ -45,13 +51,16 @@ The web interface is partially implemented with the following components complet
 - **Kemal**: Fast, lightweight web framework for Crystal
 - **Kilt**: Template engine for HTML rendering
 - **Crystal**: High-performance programming language
+- **Baked File System**: Embedded static assets for easy deployment
+- **State Manager**: Shared state management for web operations
 - **Existing Mangrullo modules**: Docker client, image checker, update manager
 
 ### Frontend
 - **Pico.css**: Lightweight, semantic CSS framework
 - **Vanilla JavaScript**: No heavy framework dependencies
 - **HTML5**: Modern, semantic markup
-- **WebSocket**: Real-time communication (optional)
+- **Auto-refresh**: Periodic status updates (every 30 seconds)
+- **External JavaScript Files**: Modular and maintainable code structure
 
 ### Architecture
 ```
@@ -273,19 +282,19 @@ Using Pico.css default color scheme:
 
 ```
 src/
-├── web.cr                 # Web server entry point
-├── web_server.cr          # Main web server class
-├── web_views.cr           # View templates and rendering
-├── public/               # Static assets
-│   ├── css/
-│   ├── js/
-│   └── images/
-└── templates/            # HTML templates
-    ├── layout.ecr
-    ├── dashboard.ecr
-    ├── container_details.ecr
-    └── partials/
+├── web_baked.cr          # Web server entry point with baked assets
+├── web_server_baked.cr   # Main web server class with embedded static files
+├── web_views.cr          # View templates and rendering with auto-refresh
+├── static_assets.cr      # Embedded CSS, JavaScript, and images
+├── state_manager.cr      # Shared state management
+├── container_state.cr    # Container state data structures
+└── public/              # Source static assets (baked into binary)
+    ├── css/
+    ├── js/
+    └── images/
 ```
+
+**Note**: Static assets are now baked directly into the binary using the `baked_file_system` and `baked_file_handler` libraries, eliminating the need for separate static file deployment.
 
 ## Success Metrics
 

@@ -42,6 +42,17 @@ Mangrullo is a Docker container update automation tool written in Crystal. It mo
    cp bin/mangrullo /usr/local/bin/
    ```
 
+### Pre-built Binaries
+
+Pre-built static binaries are available for multiple architectures in the `bin/` directory:
+
+- `mangrullo-static-linux-amd64` - Linux x86_64
+- `mangrullo-static-linux-arm64` - Linux ARM64
+- `mangrullo-web-static-linux-amd64` - Web interface for Linux x86_64
+- `mangrullo-web-static-linux-arm64` - Web interface for Linux ARM64
+
+These binaries include all dependencies and don't require Crystal to be installed on the target system.
+
 ### Using Docker
 
 ```bash
@@ -61,8 +72,8 @@ Monitor running containers and update them when new images are available:
 # Run once and exit
 mangrullo --once
 
-# Run continuously with 5-minute intervals
-mangrullo --interval=300
+# Run continuously with default 6-hour intervals
+mangrullo
 
 # Allow major version upgrades
 mangrullo --allow-major
@@ -76,11 +87,10 @@ mangrullo --dry-run
 ```
 Usage:
   mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
-           [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
-           [--help] [--version]
+           [--log-level=<level>] [--once] [--dry-run] [--help] [--version]
 
 Options:
-  --interval=<seconds>   Check interval in seconds [default: 300]
+  --interval=<seconds>   Check interval in seconds [default: 21600]
   --allow-major          Allow major version upgrades
   --socket=<path>        Docker socket path [default: /var/run/docker.sock]
   --log-level=<level>    Log level (debug, info, warn, error) [default: info]
@@ -92,6 +102,8 @@ Options:
 Arguments:
   <container-name>       Specific container names to check (if not specified, checks all containers)
 ```
+
+**Note**: The default check interval is 21600 seconds (6 hours) to avoid Docker Hub registry rate limiting.
 
 ### Examples
 
@@ -124,6 +136,42 @@ mangrullo --once /flatnotes atuin /radicale
 ```bash
 mangrullo --socket=/path/to/docker.sock
 ```
+
+## Web Interface
+
+Mangrullo includes an optional web interface that provides a dashboard for monitoring and managing Docker container updates.
+
+### Starting the Web Interface
+
+```bash
+# Build and run the web interface
+shards build mangrullo-web
+./bin/mangrullo-web
+```
+
+The web interface starts on `http://localhost:3000` and provides:
+
+- **Dashboard**: Real-time overview of all containers and their update status
+- **Auto-refresh**: Automatic updates every 30 seconds
+- **Container Management**: Check for updates and update individual containers
+- **Detailed Views**: Container information, version comparison, and logs
+- **Bulk Operations**: Check all containers for updates at once
+
+### Features
+
+- **Auto-refresh Dashboard**: Container status automatically updates without manual refresh
+- **Embedded Static Assets**: All CSS, JavaScript, and images are baked into the binary for easy deployment
+- **Responsive Design**: Works on desktop and mobile devices
+- **Real-time Status**: Live indicators for update checks and container operations
+- **Clean Interface**: Simple, intuitive design using Pico.css
+
+### Web Interface Architecture
+
+The web interface uses:
+- **Kemal**: Fast web framework for Crystal
+- **Baked File System**: Static assets embedded in the binary
+- **State Manager**: Shared state between web requests and background operations
+- **Auto-refresh**: JavaScript-based periodic updates
 
 ## Configuration
 
@@ -230,8 +278,10 @@ Mangrullo is built with a modular architecture:
 - **Update Manager** (`src/update_manager.cr`): Coordinates the update process with container filtering
 - **Configuration** (`src/config.cr`): Command-line argument parsing
 - **CLI** (`src/cli.cr`): Main command-line interface
-- **Web Server** (`src/web_server.cr`): Web interface (optional)
-- **Web Views** (`src/web_views.cr`): Web interface templates
+- **Web Server** (`src/web_server_baked.cr`): Web interface with baked static assets (optional)
+- **Web Views** (`src/web_views.cr`): Web interface templates with auto-refresh
+- **Static Assets** (`src/static_assets.cr`): Embedded CSS, JavaScript, and images
+- **State Manager** (`src/state_manager.cr`): Shared state management for web interface
 - **Error Handling** (`src/error_handling.cr`): Centralized error management
 
 ## Contributing
@@ -282,3 +332,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Web interface framework (Kemal-based)
 - Flexible container name matching (handles both "name" and "/name")
 - Comprehensive error handling and logging
+
+### Recent Updates
+
+- **Embedded Static Assets**: All web interface assets (CSS, JS, images) baked into binary
+- **Auto-refresh Dashboard**: Web interface automatically updates every 30 seconds
+- **Rate Limiting Protection**: Default 6-hour check interval to avoid Docker Hub rate limits
+- **Multi-architecture Builds**: Static binaries available for Linux AMD64 and ARM64
+- **Improved Web UI**: Cleaner interface with real-time status indicators
+- **External JavaScript**: Extracted JavaScript to external files for better maintainability

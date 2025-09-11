@@ -10,10 +10,14 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 
 ### Building and Running
 - `crystal build src/mangrullo.cr` - Compile the CLI
-- `crystal build src/web.cr` - Compile the web interface
+- `crystal build src/web_baked.cr` - Compile the web interface
 - `crystal run src/mangrullo.cr` - Run the CLI
-- `crystal run src/web.cr` - Run the web interface
+- `crystal run src/web_baked.cr` - Run the web interface
+- `shards build` - Build all targets
+- `shards build mangrullo` - Build CLI target
+- `shards build mangrullo-web` - Build web interface target
 - `crystal tool format` - Format code according to Crystal style guidelines
+- `ameba --fix` - Fix linting issues automatically
 
 ### Testing
 - `crystal spec` - Run all tests (56 examples)
@@ -36,9 +40,12 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 - `src/docker_client.cr` - Docker API wrapper and container operations
 - `src/image_checker.cr` - Image update detection and registry access
 - `src/update_manager.cr` - Update coordination with container filtering
-- `src/web.cr` - Web interface entry point
-- `src/web_server.cr` - Kemal web server implementation
-- `src/web_views.cr` - Web interface templates
+- `src/web_baked.cr` - Web interface entry point with baked assets
+- `src/web_server_baked.cr` - Kemal web server with embedded static files
+- `src/web_views.cr` - Web interface templates with auto-refresh
+- `src/static_assets.cr` - Embedded CSS, JavaScript, and images
+- `src/state_manager.cr` - Shared state management for web interface
+- `src/container_state.cr` - Container state data structures
 - `src/error_handling.cr` - Centralized error management
 
 ### Configuration
@@ -55,7 +62,11 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 - **Multi-Registry Support**: Docker Hub, GHCR, lscr.io (with proper mapping)
 - **Semantic Versioning**: Intelligent version comparison with major upgrade control
 - **Dry Run Mode**: Test updates without making changes
-- **Web Interface**: Optional web-based monitoring and management
+- **Web Interface**: Optional web-based monitoring and management with auto-refresh
+- **Embedded Static Assets**: All web assets baked into binary for easy deployment
+- **Auto-refresh Dashboard**: Real-time container status updates every 30 seconds
+- **Rate Limiting Protection**: 6-hour default interval to avoid Docker Hub limits
+- **Multi-architecture Builds**: Static binaries for Linux AMD64 and ARM64
 - **Comprehensive Testing**: Unit tests for all major functionality
 
 ## Code Style
@@ -87,6 +98,9 @@ From `shard.yml`:
 - `docopt` - Command-line parsing
 - `kemal` - Web framework
 - `kilt` - Template engine
+- `baked_file_system` - Embedded file system for static assets
+- `baked_file_handler` - Handler for baked files in Kemal
+- `progress` - Progress bars for CLI operations
 
 ## Crystal Version
 
