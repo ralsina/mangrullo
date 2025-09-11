@@ -230,8 +230,6 @@ class WebServer
         handle_web_error("getting container logs", env, ex, json_response: false)
       end
     end
-
-    
     # Bulk operations page
     get "/bulk-operations" do |env|
       @web_views.bulk_operations(env)

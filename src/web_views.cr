@@ -14,16 +14,8 @@ class WebViews
     # Calculate summary statistics using UpdateManager for efficiency
     dashboard_stats = calculate_dashboard_stats(containers)
 
-    # Check view preference (default to cards)
-    view_mode = env.params.query["view"]? || "cards"
-
-    # Generate HTML based on view mode
-    case view_mode
-    when "table"
-      render_dashboard_table(env, containers, dashboard_stats)
-    else
-      render_dashboard_html(env, containers, dashboard_stats)
-    end
+    # Always show table view
+    render_dashboard_table(env, containers, dashboard_stats)
   end
 
   private def calculate_dashboard_stats(containers : Array(Mangrullo::ContainerInfo)) : NamedTuple(total_containers: Int32, updates_available: Int32)
@@ -40,238 +32,6 @@ class WebViews
     }
 
     {total_containers: total_containers, updates_available: updates_available}
-  end
-
-  private def render_dashboard_html(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo), stats : NamedTuple(total_containers: Int32, updates_available: Int32))
-    html = <<-HTML
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mangrullo - Docker Container Updates</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
-        <style>
-            .status-up-to-date { color: #28a745; }
-            .status-update-available { color: #ffc107; }
-            .status-error { color: #dc3545; }
-            .status-latest { color: #17a2b8; }
-            .container-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-            .status-badge {
-                padding: 0.25rem 0.5rem;
-                border-radius: 0.25rem;
-                font-size: 0.875rem;
-                font-weight: bold;
-            }
-            .status-up-to-date .status-badge { background-color: #d4edda; color: #155724; }
-            .status-update-available .status-badge { background-color: #fff3cd; color: #856404; }
-            .status-error .status-badge { background-color: #f8d7da; color: #721c24; }
-            .status-latest .status-badge { background-color: #d1ecf1; color: #0c5460; }
-            .header-stats { display: flex; gap: 2rem; margin-bottom: 2rem; }
-            .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
-            @media (max-width: 768px) {
-                .container-grid { grid-template-columns: 1fr; }
-                .header-stats { flex-direction: column; gap: 1rem; }
-            }
-        </style>
-    </head>
-    <body>
-        <nav class="container-fluid">
-            <ul>
-                <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
-            </ul>
-            <ul>
-                <li><a href="/" role="button" class="secondary">Dashboard</a></li>
-                <li><a href="?view=table" role="button" class="#{env.params.query["view"]? == "table" ? "primary" : "secondary"}">Table View</a></li>
-                <li><a href="?view=cards" role="button" class="#{env.params.query["view"]? != "table" ? "primary" : "secondary"}">Card View</a></li>
-                <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check All Updates</a></li>
-                <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
-            </ul>
-        </nav>
-
-        <main class="container">
-            <div class="header-stats">
-                <div class="stat-card">
-                    <h4>Total Containers</h4>
-                    <p style="font-size: 2rem; margin: 0; font-weight: bold;">#{stats[:total_containers]}</p>
-                </div>
-                <div class="stat-card">
-                    <h4>Updates Available</h4>
-                    <p style="font-size: 2rem; margin: 0; font-weight: bold; color: #ffc107;">#{stats[:updates_available]}</p>
-                </div>
-                <div class="stat-card">
-                    <h4>Last Updated</h4>
-                    <p style="margin: 0;">#{Time.utc}</p>
-                </div>
-            </div>
-
-            <h2>Running Containers</h2>
-
-            <div class="container-grid">
-    HTML
-
-    # Sort containers alphabetically by name (without leading slash)
-    sorted_containers = containers.sort_by(&.name.lchop('/'))
-
-    sorted_containers.each do |container|
-      # Get update status from cached state
-      container_state = Mangrullo::ContainerState.instance
-      data = container_state.get_container(container.id)
-      needs_update = data ? (data.update_info.try(&.[:needs_update]) == true) : false
-
-      status = Mangrullo::ContainerStatus.get_status(container, needs_update)
-      status_class = status.css_class || "status-unknown"
-      status_text = status.text
-
-      html += <<-HTML
-                <div class="card status-#{status_class.split('-').last}" data-container-id="#{container.id}">
-                    <article>
-                        <header>
-                            <h3>#{container.name.lchop('/')}</h3>
-                            <span class="status-badge">#{status_text}</span>
-                        </header>
-                        <p><strong>Image:</strong> #{container.image}</p>
-                        <p><strong>Status:</strong> #{container.status}</p>
-                        <p><strong>ID:</strong> <code>#{container.id[0..12]}</code></p>
-                        <footer>
-                            <button onclick="checkUpdate('#{container.id}')" class="secondary">Check Update</button>
-                            <button onclick="showUpdateModal('#{container.id}')" class="primary">Update</button>
-                            <a href="/containers/#{container.id}" class="button">Details</a>
-                        </footer>
-                    </article>
-                </div>
-      HTML
-    end
-
-    if sorted_containers.empty?
-      html += <<-HTML
-                <div class="card">
-                    <article>
-                        <h3>No Running Containers</h3>
-                        <p>No Docker containers are currently running. Start some containers to see them here.</p>
-                    </article>
-                </div>
-      HTML
-    end
-
-    html += <<-HTML
-            </div>
-        </main>
-
-        <footer class="container">
-            <hr>
-            <p>Mangrullo v0.1.0 - Docker Container Update Automation</p>
-        </footer>
-
-        <script>
-            function checkUpdate(containerId) {
-                fetch('/containers/' + containerId + '/check-update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    showNotification('Update check completed', 'success');
-                })
-                .catch(error => {
-                    showNotification('Error checking update', 'error');
-                });
-            }
-
-            function showUpdateModal(containerId) {
-                if (confirm('Are you sure you want to update this container?')) {
-                    fetch('/containers/' + containerId + '/update', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ allow_major: false })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        showNotification('Container updated successfully!');
-                        location.reload();
-                    })
-                    .catch(error => {
-                        showNotification('Error updating container');
-                    });
-                }
-            }
-
-            function checkAllUpdates() {
-                fetch('/api/updates')
-                    .then(response => response.json())
-                    .then(data => {
-                        showNotification('Update check completed for all containers');
-                    })
-                    .catch(error => {
-                        showNotification('Error checking updates');
-                    });
-            }
-
-            function updateAllContainers() {
-                if (confirm('Are you sure you want to update all containers?')) {
-                    fetch('/api/updates', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ allow_major: false, dry_run: false })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        showNotification('Bulk update completed', 'success');
-                        location.reload();
-                    })
-                    .catch(error => {
-                        showNotification('Error in bulk update', 'error');
-                    });
-                }
-            }
-
-            function showNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    padding: 1rem 1.5rem;
-                    border-radius: 0.5rem;
-                    color: white;
-                    font-weight: bold;
-                    z-index: 1000;
-                    animation: slideIn 0.3s ease-out;
-                `;
-
-                switch(type) {
-                    case 'success':
-                        notification.style.backgroundColor = '#28a745';
-                        break;
-                    case 'error':
-                        notification.style.backgroundColor = '#dc3545';
-                        break;
-                    case 'info':
-                        notification.style.backgroundColor = '#17a2b8';
-                        break;
-                }
-
-                notification.textContent = message;
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-        </script>
-        <style>
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        </style>
-    </body>
-    </html>
-    HTML
-
-    html
   end
 
   private def render_dashboard_table(env : HTTP::Server::Context, containers : Array(Mangrullo::ContainerInfo), stats : NamedTuple(total_containers: Int32, updates_available: Int32))
@@ -302,13 +62,12 @@ class WebViews
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mangrullo - Docker Container Updates</title>
+        <title>Mangrullo - Container Status</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
         <style>
             .header-stats { display: flex; gap: 2rem; margin-bottom: 2rem; }
             .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
-            .view-toggle { margin-bottom: 1rem; }
             @media (max-width: 768px) {
                 .header-stats { flex-direction: column; gap: 1rem; }
                 table { font-size: 0.875rem; }
@@ -321,9 +80,6 @@ class WebViews
                 <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
             </ul>
             <ul>
-                <li><a href="/" role="button" class="secondary">Dashboard</a></li>
-                <li><a href="?view=table" role="button" class="#{env.params.query["view"]? == "table" ? "primary" : "secondary"}">Table View</a></li>
-                <li><a href="?view=cards" role="button" class="#{env.params.query["view"]? != "table" ? "primary" : "secondary"}">Card View</a></li>
                 <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check All Updates</a></li>
                 <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
             </ul>
@@ -345,9 +101,7 @@ class WebViews
                 </div>
             </div>
 
-            <div class="view-toggle">
-                <h2>Container Status (Table View)</h2>
-            </div>
+            <h2>Container Status</h2>
     HTML
 
     # Generate custom HTML table with action buttons
@@ -557,7 +311,7 @@ class WebViews
                 <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
             </ul>
             <ul>
-                <li><a href="/" role="button" class="secondary">← Back to Dashboard</a></li>
+                <li><a href="/" role="button" class="secondary">← Back</a></li>
             </ul>
         </nav>
 
@@ -777,7 +531,7 @@ class WebViews
                     <p style="margin: 0; color: #666;">#{container.image}</p>
                 </div>
                 <div>
-                    <a href="/" class="button secondary">← Back to Dashboard</a>
+                    <a href="/" class="button secondary">← Back</a>
                 </div>
             </div>
 
