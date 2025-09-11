@@ -502,6 +502,7 @@ class WebViews
             }
             
             function refreshData() {
+                console.log('refreshData called');
                 // Show refreshing status
                 const statusElement = document.getElementById('autoRefreshStatus');
                 if (statusElement) {
@@ -515,6 +516,7 @@ class WebViews
                     fetch('/api/status').then(r => r.json())
                 ])
                 .then(([containers, status]) => {
+                    console.log('Got data:', { containers: containers.length, status: status });
                     updateHeaderStats(status);
                     updateContainerTable(containers);
 
@@ -535,15 +537,19 @@ class WebViews
             }
 
             function updateHeaderStats(status) {
+                console.log('Updating header stats:', status);
                 // Update the stats cards
                 const totalElement = document.querySelector('.header-stats .stat-card:first-child p');
                 const updatesElement = document.querySelector('.header-stats .stat-card:nth-child(2) p');
+                console.log('Found elements:', { totalElement: !!totalElement, updatesElement: !!updatesElement });
 
                 if (totalElement) {
                     totalElement.textContent = status.container_count;
+                    console.log('Updated total count to:', status.container_count);
                 }
                 if (updatesElement) {
                     updatesElement.textContent = status.needing_update;
+                    console.log('Updated updates count to:', status.needing_update);
                 }
             }
 
