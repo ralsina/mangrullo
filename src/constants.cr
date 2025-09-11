@@ -20,9 +20,10 @@ module Mangrullo
 
     # Configuration constants
     module Config
-      DEFAULT_INTERVAL  = 300
-      DEFAULT_LOG_LEVEL = "info"
-      VALID_LOG_LEVELS  = ["debug", "info", "warn", "error"]
+      DEFAULT_INTERVAL      =   300
+      UPDATE_CHECK_INTERVAL = 21600 # 6 hours in seconds
+      DEFAULT_LOG_LEVEL     = "info"
+      VALID_LOG_LEVELS      = ["debug", "info", "warn", "error"]
     end
 
     # Application constants

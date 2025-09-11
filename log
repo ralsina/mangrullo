@@ -1,0 +1,362 @@
+=== Mangrullo Debug CLI - Testing get_container_info ===
+
+1. Getting all running containers...
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=false&limit=&size=false&filters=%7B%7D ===
+[{"Id":"fbe9749905f59e2bc21ffc4cca6a0c472c3125222876448a1d4503f684f82256","Names":["/tocry"],"Image":"ghcr.io/ralsina/tocry-arm64@sha256:42d6aa0259676defeafff596512ca34dfc4e2c5996a79cc34b0215f672f7a668","ImageID":"sha256:6698a201784c7651a88fc82f8950780759f67f0dcb6494101f09cf87e3fcf2ce","Command":"/tocry -b 0.0.0.0","Created":1757521395,"Ports":[{"IP":"0.0.0.0","PrivatePort":3000,"PublicPort":8181,"Type":"tcp"},{"IP":"::","PrivatePort":3000,"PublicPort":8181,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"000a0b3be50c62f28ca8cd071b644f437cbba9af4093900ae6607d01613084c8","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:6698a201784c7651a88fc82f8950780759f67f0dcb6494101f09cf87e3fcf2ce","com.docker.compose.oneoff":"False","com.docker.compose.project":"tocry","com.docker.compose.project.config_files":"/data/stacks/tocry/compose.yml","com.docker.compose.project.working_dir":"/data/stacks/tocry","com.docker.compose.servic
+=== END DOCKER DEBUG ===
+Found 25 running containers:
+  - /tocry (fbe9749905f59) - ghcr.io/ralsina/tocry-arm64@sha256:42d6aa0259676defeafff596512ca34dfc4e2c5996a79cc34b0215f672f7a668
+  - /freshrss (5fdf3fa335709) - lscr.io/linuxserver/freshrss:latest
+  - /atuin (6e665d8ba0fb1) - ghcr.io/atuinsh/atuin@sha256:8a8a8ef4eb5865656072bace5cc49390b56caa81360f9f0869054777155b6ef1
+  - /redis (b0bda6f5fe15a) - redis@sha256:acb90ced0bd769b7c04cb4c32c4494ba7b3e0ee068bdbfff0eeb0d31c2a21078
+  - /web (dae1481ee866c) - joseluisq/static-web-server:2
+  - /postgresql (9e017c20ab7fa) - postgres:15
+  - /flatnotes (41cfa06eb1014) - dullage/flatnotes:latest
+  - /paperless (b62a8c26238cb) - ghcr.io/paperless-ngx/paperless-ngx:latest
+  - /home-assistant (771d99ad544db) - ghcr.io/home-assistant/home-assistant:latest
+  - /frigate (cbdac077f9168) - ghcr.io/blakeblackshear/frigate:stable-rk
+  - /tasks.md (ec603c9d433dd) - baldissaramatheus/tasks.md:latest
+  - /whoogle (5b8b812e181c1) - benbusby/whoogle-search:latest
+  - /watchtower (d77bd15b728ab) - containrrr/watchtower
+  - /uptime-kuma (c69a2a30b0bb9) - louislam/uptime-kuma:1
+  - /snips (c0b08eb6f95a8) - ghcr.io/robherley/snips.sh
+  - /postgres-pgbackups-1 (dbd1cffe893d7) - prodrigestivill/postgres-backup-local
+  - /nanomq (01c31e0ff3fb5) - emqx/nanomq:latest
+  - /mailcatcher (67a2f578b77cf) - dockage/mailcatcher:0.9.0
+  - /littlelink (8edfcf1b1782d) - ghcr.io/techno-tim/littlelink-server:latest
+  - /kavita (139f177715d3f) - jvmilazz0/kavita:latest
+  - /homepage (8f195b4a8c8e4) - ghcr.io/gethomepage/homepage:v1.2
+  - /gotify (5bfecb6fbb1a2) - ghcr.io/gotify/server-arm64:latest
+  - /gitea (3e0e7da04290c) - gitea/gitea
+  - /faaso-proxy-fadmin (e82fbaa38c74b) - ghcr.io/ralsina/faaso-arm64:latest
+  - /code-server (df5b442243f48) - lscr.io/linuxserver/code-server:latest
+
+2. Testing get_container_info for each container...
+
+--- Container 1/25 ---
+Testing container: /tocry
+Container ID: fbe9749905f59e2bc21ffc4cca6a0c472c3125222876448a1d4503f684f82256
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22fbe9749905f59e2bc21ffc4cca6a0c472c3125222876448a1d4503f684f82256%22%5D%7D ===
+[{"Id":"fbe9749905f59e2bc21ffc4cca6a0c472c3125222876448a1d4503f684f82256","Names":["/tocry"],"Image":"ghcr.io/ralsina/tocry-arm64@sha256:42d6aa0259676defeafff596512ca34dfc4e2c5996a79cc34b0215f672f7a668","ImageID":"sha256:6698a201784c7651a88fc82f8950780759f67f0dcb6494101f09cf87e3fcf2ce","Command":"/tocry -b 0.0.0.0","Created":1757521395,"Ports":[{"IP":"0.0.0.0","PrivatePort":3000,"PublicPort":8181,"Type":"tcp"},{"IP":"::","PrivatePort":3000,"PublicPort":8181,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"000a0b3be50c62f28ca8cd071b644f437cbba9af4093900ae6607d01613084c8","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:6698a201784c7651a88fc82f8950780759f67f0dcb6494101f09cf87e3fcf2ce","com.docker.compose.oneoff":"False","com.docker.compose.project":"tocry","com.docker.compose.project.config_files":"/data/stacks/tocry/compose.yml","com.docker.compose.project.working_dir":"/data/stacks/tocry","com.docker.compose.servic
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /tocry
+  Image: ghcr.io/ralsina/tocry-arm64@sha256:42d6aa0259676defeafff596512ca34dfc4e2c5996a79cc34b0215f672f7a668
+  Status: Up 20 hours
+  Created: 2025-09-10 16:23:15 UTC
+
+--- Container 2/25 ---
+Testing container: /freshrss
+Container ID: 5fdf3fa335709a9a9b4cbe9f52166b81367a9df2edfb26f1429dce845a1abc19
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%225fdf3fa335709a9a9b4cbe9f52166b81367a9df2edfb26f1429dce845a1abc19%22%5D%7D ===
+[{"Id":"5fdf3fa335709a9a9b4cbe9f52166b81367a9df2edfb26f1429dce845a1abc19","Names":["/freshrss"],"Image":"lscr.io/linuxserver/freshrss:latest","ImageID":"sha256:33a0b9b67a8e291f7cf2bf70a9171b1c79eae2bc5e48b73f9a47680c729a0951","Command":"/init","Created":1757509333,"Ports":[{"PrivatePort":443,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":80,"PublicPort":5000,"Type":"tcp"},{"IP":"::","PrivatePort":80,"PublicPort":5000,"Type":"tcp"}],"Labels":{"build_version":"Linuxserver.io version:- 1.27.0-ls279 Build-date:- 2025-08-24T13:17:26+00:00","com.docker.compose.config-hash":"572cedcdfdb0e69d275305bfa7dc57c2521666d889c5e7d35f84c4ff05685435","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:33a0b9b67a8e291f7cf2bf70a9171b1c79eae2bc5e48b73f9a47680c729a0951","com.docker.compose.oneoff":"False","com.docker.compose.project":"freshrss","com.docker.compose.project.config_files":"/data/stacks/freshrss/compose.yaml","com.docker.compose.project.wo
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /freshrss
+  Image: lscr.io/linuxserver/freshrss:latest
+  Status: Up 23 hours
+  Created: 2025-09-10 13:02:13 UTC
+
+--- Container 3/25 ---
+Testing container: /atuin
+Container ID: 6e665d8ba0fb152d1a6c0e12f805e0af65886684221c8fdeb161994ed0119eea
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%226e665d8ba0fb152d1a6c0e12f805e0af65886684221c8fdeb161994ed0119eea%22%5D%7D ===
+[{"Id":"6e665d8ba0fb152d1a6c0e12f805e0af65886684221c8fdeb161994ed0119eea","Names":["/atuin"],"Image":"ghcr.io/atuinsh/atuin@sha256:8a8a8ef4eb5865656072bace5cc49390b56caa81360f9f0869054777155b6ef1","ImageID":"sha256:308967aee65769c2138d75233f66baca12723846b41aff895a33544ffeda4a02","Command":"/usr/local/bin/atuin server start","Created":1757506398,"Ports":[],"Labels":{"com.docker.compose.config-hash":"da62ee3bace2ae69a3d2eb3862c8822d708416abb8f08bf0c50e3dbfe7a2eedc","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:308967aee65769c2138d75233f66baca12723846b41aff895a33544ffeda4a02","com.docker.compose.oneoff":"False","com.docker.compose.project":"atuin","com.docker.compose.project.config_files":"/data/stacks/atuin/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/atuin","com.docker.compose.service":"atuin","com.docker.compose.version":"2.39.1"},"State":"restarting","Status":"Restarting (1) 51 seconds ago","Host
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /atuin
+  Image: ghcr.io/atuinsh/atuin@sha256:8a8a8ef4eb5865656072bace5cc49390b56caa81360f9f0869054777155b6ef1
+  Status: Restarting (1) 51 seconds ago
+  Created: 2025-09-10 12:13:18 UTC
+
+--- Container 4/25 ---
+Testing container: /redis
+Container ID: b0bda6f5fe15a8f23b1c8bcbf77dd8bf8b22eb75c8d148e457116757de7942ee
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22b0bda6f5fe15a8f23b1c8bcbf77dd8bf8b22eb75c8d148e457116757de7942ee%22%5D%7D ===
+[{"Id":"b0bda6f5fe15a8f23b1c8bcbf77dd8bf8b22eb75c8d148e457116757de7942ee","Names":["/redis"],"Image":"redis@sha256:acb90ced0bd769b7c04cb4c32c4494ba7b3e0ee068bdbfff0eeb0d31c2a21078","ImageID":"sha256:3efd9f3f55ecafe51404dbc166883acb0ab448a63da0ebd7a77a071218dba6f4","Command":"docker-entrypoint.sh redis-server","Created":1757506260,"Ports":[{"IP":"0.0.0.0","PrivatePort":6379,"PublicPort":6379,"Type":"tcp"},{"IP":"::","PrivatePort":6379,"PublicPort":6379,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"b5aa79ecbbe8e59e32aea33eb7f992bfd75cd698186424e1bd03d17c2bec01d8","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:742fe6f4da2f9d27ef93e59754ed04b5e1e24a3cf4b5a6b715939e62baca9e03","com.docker.compose.oneoff":"False","com.docker.compose.project":"redis","com.docker.compose.project.config_files":"/data/stacks/redis/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/redis","com.docker.compose.service":"r
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /redis
+  Image: redis@sha256:acb90ced0bd769b7c04cb4c32c4494ba7b3e0ee068bdbfff0eeb0d31c2a21078
+  Status: Up 24 hours
+  Created: 2025-09-10 12:11:00 UTC
+
+--- Container 5/25 ---
+Testing container: /web
+Container ID: dae1481ee866cc180ead6e46a52f40ddc26ac0e6553169aae375bc06f857a2f8
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22dae1481ee866cc180ead6e46a52f40ddc26ac0e6553169aae375bc06f857a2f8%22%5D%7D ===
+[{"Id":"dae1481ee866cc180ead6e46a52f40ddc26ac0e6553169aae375bc06f857a2f8","Names":["/web"],"Image":"joseluisq/static-web-server:2","ImageID":"sha256:d8c9aa3bcea856aa618925208cfc0ef005ab18509ef6d87090cb4103dceb8701","Command":"/static-web-server --log-remote-address=true --log-x-real-ip --log-forwarded-for=true -w /websites/sws.toml","Created":1757423812,"Ports":[{"PrivatePort":80,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8080,"PublicPort":8080,"Type":"tcp"},{"IP":"::","PrivatePort":8080,"PublicPort":8080,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"641f5e48a928eeda52411ea2ffae1df712564211c1a9fc3d5f1531eef696fdcb","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:84962773e50752736222006493e67b3dbbc73a31d44ef8e799cf382a8a50f40f","com.docker.compose.oneoff":"False","com.docker.compose.project":"web","com.docker.compose.project.config_files":"/data/stacks/web/compose.yaml","com.docker.compose.project.working_dir":
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /web
+  Image: joseluisq/static-web-server:2
+  Status: Up 47 hours
+  Created: 2025-09-09 13:16:52 UTC
+
+--- Container 6/25 ---
+Testing container: /postgresql
+Container ID: 9e017c20ab7fa1913ae8d851b9882ae206d453af995ab50faba2571dbc717293
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%229e017c20ab7fa1913ae8d851b9882ae206d453af995ab50faba2571dbc717293%22%5D%7D ===
+[{"Id":"9e017c20ab7fa1913ae8d851b9882ae206d453af995ab50faba2571dbc717293","Names":["/postgresql"],"Image":"postgres:15","ImageID":"sha256:4c313505763e7ef5e2797d6db99a3e731820ff760127d97c0e532760fcf786db","Command":"docker-entrypoint.sh postgres","Created":1757423811,"Ports":[{"IP":"0.0.0.0","PrivatePort":5432,"PublicPort":5432,"Type":"tcp"},{"IP":"::","PrivatePort":5432,"PublicPort":5432,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"d3812f8cbed1125729c322063cee030a7d778f267b45fd099bfdd99622b97e1b","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:65e8e7578613732cb07166ea4f1f0bd2096679f5217b5ac23de619077ed684e7","com.docker.compose.oneoff":"False","com.docker.compose.project":"postgres","com.docker.compose.project.config_files":"/data/stacks/postgres/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/postgres","com.docker.compose.service":"postgres","com.docker.compose.version":"2.39.1"},"State":
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /postgresql
+  Image: postgres:15
+  Status: Up 47 hours
+  Created: 2025-09-09 13:16:51 UTC
+
+--- Container 7/25 ---
+Testing container: /flatnotes
+Container ID: 41cfa06eb101424aecce281194c07856f70e13d46e717e235cbaa97d46ef9688
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%2241cfa06eb101424aecce281194c07856f70e13d46e717e235cbaa97d46ef9688%22%5D%7D ===
+[{"Id":"41cfa06eb101424aecce281194c07856f70e13d46e717e235cbaa97d46ef9688","Names":["/flatnotes"],"Image":"dullage/flatnotes:latest","ImageID":"sha256:f9c638de42851827610a7766cee8bc3900cee3984f963ebda6ecd5e99dd25d79","Command":"/entrypoint.sh","Created":1757379830,"Ports":[{"IP":"0.0.0.0","PrivatePort":8080,"PublicPort":8095,"Type":"tcp"},{"IP":"::","PrivatePort":8080,"PublicPort":8095,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"b38d149ac6c65b59d8148a326cc425215279b1ac1626d14ab0dd6487961dfc1c","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:f9c638de42851827610a7766cee8bc3900cee3984f963ebda6ecd5e99dd25d79","com.docker.compose.oneoff":"False","com.docker.compose.project":"flatnotes","com.docker.compose.project.config_files":"/data/stacks/flatnotes/compose.yml","com.docker.compose.project.working_dir":"/data/stacks/flatnotes","com.docker.compose.service":"flatnotes","com.docker.compose.version":"2.39.1"},"State":
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /flatnotes
+  Image: dullage/flatnotes:latest
+  Status: Up 2 days (healthy)
+  Created: 2025-09-09 01:03:50 UTC
+
+--- Container 8/25 ---
+Testing container: /paperless
+Container ID: b62a8c26238cbd60d9f0308749f636cd2c8d1f3aa481b0e63a91f41c50542055
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22b62a8c26238cbd60d9f0308749f636cd2c8d1f3aa481b0e63a91f41c50542055%22%5D%7D ===
+[{"Id":"b62a8c26238cbd60d9f0308749f636cd2c8d1f3aa481b0e63a91f41c50542055","Names":["/paperless"],"Image":"ghcr.io/paperless-ngx/paperless-ngx:latest","ImageID":"sha256:3708d819eb8c49d23afbce0842e22b5af1016617955fe57ff021b6d60c120a42","Command":"/init","Created":1757337333,"Ports":[{"IP":"0.0.0.0","PrivatePort":8000,"PublicPort":9999,"Type":"tcp"},{"IP":"::","PrivatePort":8000,"PublicPort":9999,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"77debd615571325104b779211c522e8a40140ab617942294b23cef8a7d01c4a3","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:7f8f5d3e23247c0e87deac92ec0da4663eed455bf7fb2eb8042095386cb2fd33","com.docker.compose.oneoff":"False","com.docker.compose.project":"paperless","com.docker.compose.project.config_files":"/data/stacks/paperless/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/paperless","com.docker.compose.service":"paperless-ngx","com.docker.compose.version":"2.3
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /paperless
+  Image: ghcr.io/paperless-ngx/paperless-ngx:latest
+  Status: Up 2 days (healthy)
+  Created: 2025-09-08 13:15:33 UTC
+
+--- Container 9/25 ---
+Testing container: /home-assistant
+Container ID: 771d99ad544db26dd077da5f5a5df83c69a0c6a955a04e069dc05038e3103df8
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22771d99ad544db26dd077da5f5a5df83c69a0c6a955a04e069dc05038e3103df8%22%5D%7D ===
+[{"Id":"771d99ad544db26dd077da5f5a5df83c69a0c6a955a04e069dc05038e3103df8","Names":["/home-assistant"],"Image":"ghcr.io/home-assistant/home-assistant:latest","ImageID":"sha256:3375aad6cd7eb800a15aa88147c66fa571b4eb5a0da4d2305dafa0d683e6c644","Command":"/init","Created":1757164681,"Ports":[],"Labels":{"com.docker.compose.config-hash":"fd626aacb3f6d1350a4c07f9ef1333d4834e75b5107a8c63a085344eb25c7d09","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:76a2a3fd5357050d79cf9807d07f37f5370e4bbb6e74928a73f94c5a08909c2f","com.docker.compose.oneoff":"False","com.docker.compose.project":"home-assistant","com.docker.compose.project.config_files":"/data/stacks/home-assistant/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/home-assistant","com.docker.compose.service":"home-assistant","com.docker.compose.version":"2.39.1","io.hass.arch":"aarch64","io.hass.base.arch":"aarch64","io.hass.base.image":"ghcr.io/home-assistant/
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /home-assistant
+  Image: ghcr.io/home-assistant/home-assistant:latest
+  Status: Up 3 days
+  Created: 2025-09-06 13:18:01 UTC
+
+--- Container 10/25 ---
+Testing container: /frigate
+Container ID: cbdac077f91688b18137ee3b297b4261e72265e90f6c5741933c0c3feca38465
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22cbdac077f91688b18137ee3b297b4261e72265e90f6c5741933c0c3feca38465%22%5D%7D ===
+[{"Id":"cbdac077f91688b18137ee3b297b4261e72265e90f6c5741933c0c3feca38465","Names":["/frigate"],"Image":"ghcr.io/blakeblackshear/frigate:stable-rk","ImageID":"sha256:632e18450bff357c4899bb758100fd9e270700db12ddcd2aefe8595c55a8b38e","Command":"/init","Created":1757000542,"Ports":[{"IP":"0.0.0.0","PrivatePort":5000,"PublicPort":8972,"Type":"tcp"},{"IP":"::","PrivatePort":5000,"PublicPort":8972,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8554,"PublicPort":8554,"Type":"tcp"},{"IP":"::","PrivatePort":8554,"PublicPort":8554,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8555,"PublicPort":8555,"Type":"tcp"},{"IP":"::","PrivatePort":8555,"PublicPort":8555,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8555,"PublicPort":8555,"Type":"udp"},{"IP":"::","PrivatePort":8555,"PublicPort":8555,"Type":"udp"},{"IP":"0.0.0.0","PrivatePort":8971,"PublicPort":8971,"Type":"tcp"},{"IP":"::","PrivatePort":8971,"PublicPort":8971,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"259a82026221fa552ed7402bb96b4f34
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /frigate
+  Image: ghcr.io/blakeblackshear/frigate:stable-rk
+  Status: Up 5 days (healthy)
+  Created: 2025-09-04 15:42:22 UTC
+
+--- Container 11/25 ---
+Testing container: /tasks.md
+Container ID: ec603c9d433dde912946b2562b120593cfe9327facae84b9a35b2ef367ea7141
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22ec603c9d433dde912946b2562b120593cfe9327facae84b9a35b2ef367ea7141%22%5D%7D ===
+[{"Id":"ec603c9d433dde912946b2562b120593cfe9327facae84b9a35b2ef367ea7141","Names":["/tasks.md"],"Image":"baldissaramatheus/tasks.md:latest","ImageID":"sha256:fd5135ea6e34ff1bf161aa5d72946509c1c867a330623782fd8cde26be12641c","Command":"/bin/sh -c 'sh entrypoint.sh'","Created":1756913591,"Ports":[{"IP":"0.0.0.0","PrivatePort":8080,"PublicPort":8180,"Type":"tcp"},{"IP":"::","PrivatePort":8080,"PublicPort":8180,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"7d02969ea6e07ceb4f044b7fe64beb298fb4bc6a3d1cc314670af59d6140ca2c","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:d59ac7e5039a4ae6205e4e898c67801b4498adb49782da2797ce90bcc258c24a","com.docker.compose.oneoff":"False","com.docker.compose.project":"tasks","com.docker.compose.project.config_files":"/data/stacks/tasks.md/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/tasks.md","com.docker.compose.service":"tasks.md","com.docker.compose.version":"
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /tasks.md
+  Image: baldissaramatheus/tasks.md:latest
+  Status: Up 3 days
+  Created: 2025-09-03 15:33:11 UTC
+
+--- Container 12/25 ---
+Testing container: /whoogle
+Container ID: 5b8b812e181c17b864e0c8ffea67ae082d0382965f9cf2f8dfdf64cd7c5877fa
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%225b8b812e181c17b864e0c8ffea67ae082d0382965f9cf2f8dfdf64cd7c5877fa%22%5D%7D ===
+[{"Id":"5b8b812e181c17b864e0c8ffea67ae082d0382965f9cf2f8dfdf64cd7c5877fa","Names":["/whoogle"],"Image":"benbusby/whoogle-search:latest","ImageID":"sha256:5fd6470662b21bb1eed5f3fc76ca94c0a87f9c1a364cba123821c9c605d7d055","Command":"/bin/sh -c 'misc/tor/start-tor.sh & ./run'","Created":1756825960,"Ports":[{"IP":"0.0.0.0","PrivatePort":5000,"PublicPort":4999,"Type":"tcp"},{"IP":"::","PrivatePort":5000,"PublicPort":4999,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"de4db7192089135e5268c747259023ce030f0db165b6f74ddf5caa6c7f58cd3c","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:5fd6470662b21bb1eed5f3fc76ca94c0a87f9c1a364cba123821c9c605d7d055","com.docker.compose.oneoff":"False","com.docker.compose.project":"whoogle","com.docker.compose.project.config_files":"/data/stacks/whoogle/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/whoogle","com.docker.compose.service":"whoogle-search","com.docker.com
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /whoogle
+  Image: benbusby/whoogle-search:latest
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 15:12:40 UTC
+
+--- Container 13/25 ---
+Testing container: /watchtower
+Container ID: d77bd15b728abc594b279162a8dac6082f884d540752696c4d48abd2e9999fcc
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22d77bd15b728abc594b279162a8dac6082f884d540752696c4d48abd2e9999fcc%22%5D%7D ===
+[{"Id":"d77bd15b728abc594b279162a8dac6082f884d540752696c4d48abd2e9999fcc","Names":["/watchtower"],"Image":"containrrr/watchtower","ImageID":"sha256:c352868a1654eb354b87fccf33fe3f3e356b8822421f6095c81dd1e11cb86f2b","Command":"/watchtower -x dim,misskey,snips","Created":1756825922,"Ports":[{"PrivatePort":8080,"Type":"tcp"}],"Labels":{"com.centurylinklabs.watchtower":"true","com.docker.compose.config-hash":"45a9f281005c108e48d78ffa6f79ef49e42d52f4aba9384fff9925c6f1edcfd7","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:c352868a1654eb354b87fccf33fe3f3e356b8822421f6095c81dd1e11cb86f2b","com.docker.compose.oneoff":"False","com.docker.compose.project":"watchtower","com.docker.compose.project.config_files":"/data/stacks/watchtower/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/watchtower","com.docker.compose.service":"watchtower","com.docker.compose.version":"2.39.1"},"State":"running","Status":"Up 5 days (hea
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /watchtower
+  Image: containrrr/watchtower
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 15:12:02 UTC
+
+--- Container 14/25 ---
+Testing container: /uptime-kuma
+Container ID: c69a2a30b0bb91677d200a7be13ce44098f3ffb46acb5f34d66330436f2bb941
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22c69a2a30b0bb91677d200a7be13ce44098f3ffb46acb5f34d66330436f2bb941%22%5D%7D ===
+[{"Id":"c69a2a30b0bb91677d200a7be13ce44098f3ffb46acb5f34d66330436f2bb941","Names":["/uptime-kuma"],"Image":"louislam/uptime-kuma:1","ImageID":"sha256:48f7bc815abdc77610d3f45199d6975cedfd6e387029cc25501896956ce19d7f","Command":"/usr/bin/dumb-init -- extra/entrypoint.sh node server/server.js","Created":1756825911,"Ports":[{"IP":"0.0.0.0","PrivatePort":3001,"PublicPort":3001,"Type":"tcp"},{"IP":"::","PrivatePort":3001,"PublicPort":3001,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"db5b92b5a6b43900dda7e06c6f709a77b9dca741117ae33454e9f98caec0b4fa","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:48f7bc815abdc77610d3f45199d6975cedfd6e387029cc25501896956ce19d7f","com.docker.compose.oneoff":"False","com.docker.compose.project":"uptime-kuma","com.docker.compose.project.config_files":"/data/stacks/uptime-kuma/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/uptime-kuma","com.docker.compose.service":"up
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /uptime-kuma
+  Image: louislam/uptime-kuma:1
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 15:11:51 UTC
+
+--- Container 15/25 ---
+Testing container: /snips
+Container ID: c0b08eb6f95a837cf30122c6a3be17dc3ddc208667a8febca459fe57c353f62e
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22c0b08eb6f95a837cf30122c6a3be17dc3ddc208667a8febca459fe57c353f62e%22%5D%7D ===
+[{"Id":"c0b08eb6f95a837cf30122c6a3be17dc3ddc208667a8febca459fe57c353f62e","Names":["/snips"],"Image":"ghcr.io/robherley/snips.sh","ImageID":"sha256:192b97f49486570e57f9cd50db1f209ecf23043f9d587ac29eea1e005e748383","Command":"/usr/bin/snips.sh","Created":1756825779,"Ports":[{"IP":"0.0.0.0","PrivatePort":2222,"PublicPort":8092,"Type":"tcp"},{"IP":"::","PrivatePort":2222,"PublicPort":8092,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8080,"PublicPort":8091,"Type":"tcp"},{"IP":"::","PrivatePort":8080,"PublicPort":8091,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"f2f43f5eb7a609f738478ddf2c83538425ddf841f6de7a05b7cb23537c328439","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:192b97f49486570e57f9cd50db1f209ecf23043f9d587ac29eea1e005e748383","com.docker.compose.oneoff":"False","com.docker.compose.project":"snips","com.docker.compose.project.config_files":"/data/stacks/snips/compose.yaml","com.docker.compose.project.wor
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /snips
+  Image: ghcr.io/robherley/snips.sh
+  Status: Up 5 days
+  Created: 2025-09-02 15:09:39 UTC
+
+--- Container 16/25 ---
+Testing container: /postgres-pgbackups-1
+Container ID: dbd1cffe893d706785ddc0fbb02c2fd979a648445b836ff400fb54b710e25dc9
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22dbd1cffe893d706785ddc0fbb02c2fd979a648445b836ff400fb54b710e25dc9%22%5D%7D ===
+[{"Id":"dbd1cffe893d706785ddc0fbb02c2fd979a648445b836ff400fb54b710e25dc9","Names":["/postgres-pgbackups-1"],"Image":"prodrigestivill/postgres-backup-local","ImageID":"sha256:d40c2ad1196ffd47f2a8068d97b58ed11814ef00ef4673c2506ca98a63a24278","Command":"/init.sh","Created":1756825748,"Ports":[{"PrivatePort":5432,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"79a12804c411efe6e7fbb80a03da336928c791438ee49071348fa730cda64d7d","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"postgres:service_started:false","com.docker.compose.image":"sha256:d40c2ad1196ffd47f2a8068d97b58ed11814ef00ef4673c2506ca98a63a24278","com.docker.compose.oneoff":"False","com.docker.compose.project":"postgres","com.docker.compose.project.config_files":"/data/stacks/postgres/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/postgres","com.docker.compose.service":"pgbackups","com.docker.compose.version":"2.39.1"},"State":"running","Status":"Up 5 days (healthy)","HostCon
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /postgres-pgbackups-1
+  Image: prodrigestivill/postgres-backup-local
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 15:09:08 UTC
+
+--- Container 17/25 ---
+Testing container: /nanomq
+Container ID: 01c31e0ff3fb5060acb451c1760cfe15bed12e562abc29ff147a516e5a122e47
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%2201c31e0ff3fb5060acb451c1760cfe15bed12e562abc29ff147a516e5a122e47%22%5D%7D ===
+[{"Id":"01c31e0ff3fb5060acb451c1760cfe15bed12e562abc29ff147a516e5a122e47","Names":["/nanomq"],"Image":"emqx/nanomq:latest","ImageID":"sha256:a9cbfcab9fb874d38f0ddafcdf26b1b8bcb0b4ff70b737ad1d96c53dc8cbb8a0","Command":"/usr/bin/docker-entrypoint.sh","Created":1756824669,"Ports":[{"IP":"0.0.0.0","PrivatePort":8883,"PublicPort":8883,"Type":"tcp"},{"IP":"::","PrivatePort":8883,"PublicPort":8883,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":1883,"PublicPort":1883,"Type":"tcp"},{"IP":"::","PrivatePort":1883,"PublicPort":1883,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8083,"PublicPort":8083,"Type":"tcp"},{"IP":"::","PrivatePort":8083,"PublicPort":8083,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"ee4d49e0c401b37de891ad289129dc2f577598d292df4cb829b0e82c914d5501","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:a9cbfcab9fb874d38f0ddafcdf26b1b8bcb0b4ff70b737ad1d96c53dc8cbb8a0","com.docker.compose.oneoff":"False","com.docke
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /nanomq
+  Image: emqx/nanomq:latest
+  Status: Up 5 days
+  Created: 2025-09-02 14:51:09 UTC
+
+--- Container 18/25 ---
+Testing container: /mailcatcher
+Container ID: 67a2f578b77cf291335ce096337dd0c3604a428de441f295cc144467bc99f9c3
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%2267a2f578b77cf291335ce096337dd0c3604a428de441f295cc144467bc99f9c3%22%5D%7D ===
+[{"Id":"67a2f578b77cf291335ce096337dd0c3604a428de441f295cc144467bc99f9c3","Names":["/mailcatcher"],"Image":"dockage/mailcatcher:0.9.0","ImageID":"sha256:6f39bef527c043d9e7131a3d4fd05eab189fe0333c18f6785ebca9225e7bfa25","Command":"entrypoint mailcatcher -f --ip 0.0.0.0","Created":1756824659,"Ports":[{"IP":"0.0.0.0","PrivatePort":1080,"PublicPort":1080,"Type":"tcp"},{"IP":"::","PrivatePort":1080,"PublicPort":1080,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":1025,"PublicPort":25,"Type":"tcp"},{"IP":"::","PrivatePort":1025,"PublicPort":25,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"185cadb0ddfd94fa889f98bad11ae7c4c8d702b7beb7ca467ce3df954cec0598","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:6f39bef527c043d9e7131a3d4fd05eab189fe0333c18f6785ebca9225e7bfa25","com.docker.compose.oneoff":"False","com.docker.compose.project":"mailcatcher","com.docker.compose.project.config_files":"/data/stacks/mailcatcher/compose.yam
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /mailcatcher
+  Image: dockage/mailcatcher:0.9.0
+  Status: Up 5 days
+  Created: 2025-09-02 14:50:59 UTC
+
+--- Container 19/25 ---
+Testing container: /littlelink
+Container ID: 8edfcf1b1782de2e22f0de5684ad6c48fa0fa88f99422c739ede0bc09fcd84f9
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%228edfcf1b1782de2e22f0de5684ad6c48fa0fa88f99422c739ede0bc09fcd84f9%22%5D%7D ===
+[{"Id":"8edfcf1b1782de2e22f0de5684ad6c48fa0fa88f99422c739ede0bc09fcd84f9","Names":["/littlelink"],"Image":"ghcr.io/techno-tim/littlelink-server:latest","ImageID":"sha256:f3912455f438a4a8782147b7797cff4b15f2319b8e3f8fa629f7e4b88981b5dd","Command":"docker-entrypoint.sh node build/server.js","Created":1756824635,"Ports":[{"IP":"0.0.0.0","PrivatePort":3000,"PublicPort":8086,"Type":"tcp"},{"IP":"::","PrivatePort":3000,"PublicPort":8086,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"85ad9bc290494d587eaeceaf32f471bbebf1abfce2a6ce0610262e411738cee9","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:f3912455f438a4a8782147b7797cff4b15f2319b8e3f8fa629f7e4b88981b5dd","com.docker.compose.oneoff":"False","com.docker.compose.project":"littlelink","com.docker.compose.project.config_files":"/data/stacks/littlelink/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/littlelink","com.docker.compose.service":"little-
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /littlelink
+  Image: ghcr.io/techno-tim/littlelink-server:latest
+  Status: Up 5 days
+  Created: 2025-09-02 14:50:35 UTC
+
+--- Container 20/25 ---
+Testing container: /kavita
+Container ID: 139f177715d3f3ada6003198c78478d270cb97868ffe63591ae5fd6f9e6f39f2
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22139f177715d3f3ada6003198c78478d270cb97868ffe63591ae5fd6f9e6f39f2%22%5D%7D ===
+[{"Id":"139f177715d3f3ada6003198c78478d270cb97868ffe63591ae5fd6f9e6f39f2","Names":["/kavita"],"Image":"jvmilazz0/kavita:latest","ImageID":"sha256:479e476502774db8b08ed9a505829a9cedc55694d6acc980709679e7c0a9fef4","Command":"/bin/bash /entrypoint.sh","Created":1756824603,"Ports":[{"IP":"0.0.0.0","PrivatePort":5000,"PublicPort":5005,"Type":"tcp"},{"IP":"::","PrivatePort":5000,"PublicPort":5005,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"4f5527bf12774e35460a73f6ec97b3e80b4760e9c01dba9fa0edfa1e5bb3df7f","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:479e476502774db8b08ed9a505829a9cedc55694d6acc980709679e7c0a9fef4","com.docker.compose.oneoff":"False","com.docker.compose.project":"kavita","com.docker.compose.project.config_files":"/data/stacks/kavita/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/kavita","com.docker.compose.service":"kavita","com.docker.compose.version":"2.39.1","org.openconta
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /kavita
+  Image: jvmilazz0/kavita:latest
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 14:50:03 UTC
+
+--- Container 21/25 ---
+Testing container: /homepage
+Container ID: 8f195b4a8c8e40f26a27dc9fe2c983fe175341b02d741e8aa064f5178cb4d0ff
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%228f195b4a8c8e40f26a27dc9fe2c983fe175341b02d741e8aa064f5178cb4d0ff%22%5D%7D ===
+[{"Id":"8f195b4a8c8e40f26a27dc9fe2c983fe175341b02d741e8aa064f5178cb4d0ff","Names":["/homepage"],"Image":"ghcr.io/gethomepage/homepage:v1.2","ImageID":"sha256:dbd43d67373da6a0beca28276a6f4892b770cdd21b013c601a8718678340ddcf","Command":"docker-entrypoint.sh node server.js","Created":1756824510,"Ports":[{"IP":"0.0.0.0","PrivatePort":3000,"PublicPort":11000,"Type":"tcp"},{"IP":"::","PrivatePort":3000,"PublicPort":11000,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"aa77b08bb26b31decd651743d3f336bf8bf1dfc7001d734862c63a63ad93889c","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:dbd43d67373da6a0beca28276a6f4892b770cdd21b013c601a8718678340ddcf","com.docker.compose.oneoff":"False","com.docker.compose.project":"homepage","com.docker.compose.project.config_files":"/data/stacks/homepage/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/homepage","com.docker.compose.service":"homepage","com.docker.compose
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /homepage
+  Image: ghcr.io/gethomepage/homepage:v1.2
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 14:48:30 UTC
+
+--- Container 22/25 ---
+Testing container: /gotify
+Container ID: 5bfecb6fbb1a2874829b31fa797f0f70089ec00d060f83bf32c7473fc40452a3
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%225bfecb6fbb1a2874829b31fa797f0f70089ec00d060f83bf32c7473fc40452a3%22%5D%7D ===
+[{"Id":"5bfecb6fbb1a2874829b31fa797f0f70089ec00d060f83bf32c7473fc40452a3","Names":["/gotify"],"Image":"ghcr.io/gotify/server-arm64:latest","ImageID":"sha256:aedbb899df84648de6d3630814b5107edab4559a94736929b07413dfa03cdb0e","Command":"./gotify-app","Created":1756824243,"Ports":[{"IP":"0.0.0.0","PrivatePort":80,"PublicPort":7777,"Type":"tcp"},{"IP":"::","PrivatePort":80,"PublicPort":7777,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"c144098ef79483011a0a6b5c0056d03e98215a7a8e0dd67fdc111d427d0d321f","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:aedbb899df84648de6d3630814b5107edab4559a94736929b07413dfa03cdb0e","com.docker.compose.oneoff":"False","com.docker.compose.project":"gotify","com.docker.compose.project.config_files":"/data/stacks/gotify/compose.yaml","com.docker.compose.project.working_dir":"/data/stacks/gotify","com.docker.compose.service":"gotify","com.docker.compose.version":"2.39.1"},"State":"running",
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /gotify
+  Image: ghcr.io/gotify/server-arm64:latest
+  Status: Up 5 days (healthy)
+  Created: 2025-09-02 14:44:03 UTC
+
+--- Container 23/25 ---
+Testing container: /gitea
+Container ID: 3e0e7da04290cd96fca71d4425c2c6aaf1d932a3dad2d4b27da9190c9208b567
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%223e0e7da04290cd96fca71d4425c2c6aaf1d932a3dad2d4b27da9190c9208b567%22%5D%7D ===
+[{"Id":"3e0e7da04290cd96fca71d4425c2c6aaf1d932a3dad2d4b27da9190c9208b567","Names":["/gitea"],"Image":"gitea/gitea","ImageID":"sha256:9ad6f400b77a4eaac8b9e0c99febd0e8e831bacf15c08d2fd5915705c2772acf","Command":"/usr/bin/entrypoint /usr/bin/s6-svscan /etc/s6","Created":1756824212,"Ports":[{"IP":"0.0.0.0","PrivatePort":22,"PublicPort":222,"Type":"tcp"},{"IP":"::","PrivatePort":22,"PublicPort":222,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":3000,"PublicPort":3000,"Type":"tcp"},{"IP":"::","PrivatePort":3000,"PublicPort":3000,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"5939bb4214e59d2dfaab511033f2713ed0071fce10e26e35b33570c21ba28c78","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:9ad6f400b77a4eaac8b9e0c99febd0e8e831bacf15c08d2fd5915705c2772acf","com.docker.compose.oneoff":"False","com.docker.compose.project":"gitea","com.docker.compose.project.config_files":"/data/stacks/gitea/compose.yaml","com.docker.compose.pro
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /gitea
+  Image: gitea/gitea
+  Status: Up 5 days
+  Created: 2025-09-02 14:43:32 UTC
+
+--- Container 24/25 ---
+Testing container: /faaso-proxy-fadmin
+Container ID: e82fbaa38c74bf86fdbea070922200683b15e0bdbf4c438c756b5feb83a79a47
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22e82fbaa38c74bf86fdbea070922200683b15e0bdbf4c438c756b5feb83a79a47%22%5D%7D ===
+[{"Id":"e82fbaa38c74bf86fdbea070922200683b15e0bdbf4c438c756b5feb83a79a47","Names":["/faaso-proxy-fadmin"],"Image":"ghcr.io/ralsina/faaso-arm64:latest","ImageID":"sha256:ce5882d99c05d31f6e355af4335ffe72e6399ecb589d08a0c62ade525454b901","Command":"/usr/bin/multirun -v faaso-daemon 'caddy run --config config/Caddyfile'","Created":1756823853,"Ports":[{"IP":"0.0.0.0","PrivatePort":8887,"PublicPort":8887,"Type":"tcp"},{"IP":"::","PrivatePort":8887,"PublicPort":8887,"Type":"tcp"},{"IP":"0.0.0.0","PrivatePort":8888,"PublicPort":8888,"Type":"tcp"},{"IP":"::","PrivatePort":8888,"PublicPort":8888,"Type":"tcp"}],"Labels":{"com.docker.compose.config-hash":"64fcbdc2591750bad365e29d344552e120a10552c9ba6535dffc0c2785b323a6","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:ce5882d99c05d31f6e355af4335ffe72e6399ecb589d08a0c62ade525454b901","com.docker.compose.oneoff":"False","com.docker.compose.project":"faaso","com.docker.compose.project.conf
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /faaso-proxy-fadmin
+  Image: ghcr.io/ralsina/faaso-arm64:latest
+  Status: Up 5 days
+  Created: 2025-09-02 14:37:33 UTC
+
+--- Container 25/25 ---
+Testing container: /code-server
+Container ID: df5b442243f48a9b18bb51135868be527ecb8b40726d857412d9b2cedde97208
+=== DOCKER DEBUG: Raw response from containers/list ===
+=== DOCKER DEBUG: Query params: all=true&limit=&size=false&filters=%7B%22id%22%3A%5B%22df5b442243f48a9b18bb51135868be527ecb8b40726d857412d9b2cedde97208%22%5D%7D ===
+[{"Id":"df5b442243f48a9b18bb51135868be527ecb8b40726d857412d9b2cedde97208","Names":["/code-server"],"Image":"lscr.io/linuxserver/code-server:latest","ImageID":"sha256:e105ede2d43675c73aa96353a0b757c7eb7b93d00d517eec78efa308997ef673","Command":"/init","Created":1756823818,"Ports":[{"IP":"0.0.0.0","PrivatePort":8443,"PublicPort":8443,"Type":"tcp"},{"IP":"::","PrivatePort":8443,"PublicPort":8443,"Type":"tcp"}],"Labels":{"build_version":"Linuxserver.io version:- 4.103.2-ls294 Build-date:- 2025-08-25T23:45:45+00:00","com.docker.compose.config-hash":"96921db0b699c0bcefe393c24dc4b5d771ccbca3d1575215d10df2c9f203d3da","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:e105ede2d43675c73aa96353a0b757c7eb7b93d00d517eec78efa308997ef673","com.docker.compose.oneoff":"False","com.docker.compose.project":"code-server","com.docker.compose.project.config_files":"/data/stacks/code-server/compose.yml","com.docker.compose.project.working_dir":"/data
+=== END DOCKER DEBUG ===
+✅ SUCCESS: get_container_info returned:
+  Name: /code-server
+  Image: lscr.io/linuxserver/code-server:latest
+  Status: Up 5 days
+  Created: 2025-09-02 14:36:58 UTC
+
+=== Debug complete ===

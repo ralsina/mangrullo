@@ -27,7 +27,7 @@ module Mangrullo
 
     private def initialize(
       socket_path : String = Constants::Docker::DEFAULT_SOCKET_PATH,
-      update_interval : Int32 = Constants::Web::REFRESH_INTERVAL,
+      update_interval : Int32 = Constants::Config::UPDATE_CHECK_INTERVAL,
     )
       @docker_client = DockerClient.new(socket_path)
       @image_checker = ImageChecker.new(@docker_client)
