@@ -140,7 +140,7 @@ module Mangrullo
       end
 
       Log.info { "StateManager: Completed update for #{containers.size} containers" }
-      ContainerState.instance.set_update_in_progress(false)
+      ContainerState.instance.update_in_progress = false
     end
 
     private def update_single_container(container_id : String)

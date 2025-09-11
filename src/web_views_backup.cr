@@ -81,7 +81,7 @@ class WebViews
                 <li><small style="color: #666;" id="autoRefreshStatus">Auto-refresh: ON</small></li>
             </ul>
             <ul>
-                <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check All Updates</a></li>
+                <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check for Updates</a></li>
                 <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
             </ul>
         </nav>
@@ -320,11 +320,11 @@ class WebViews
             <h2>Bulk Operations</h2>
             <p>Perform bulk operations on all containers with real-time progress tracking.</p>
 
-            <!-- Check All Updates -->
+            <!-- Check for Updates -->
             <div class="operation-panel">
                 <h3>🔍 Check All Containers for Updates</h3>
                 <p>This will check all running containers to see if updates are available.</p>
-                <button onclick="startBulkCheck()" class="primary" id="checkButton">Check All Updates</button>
+                <button onclick="startBulkCheck()" class="primary" id="checkButton">Check for Updates</button>
 
                 <div id="checkProgress" class="hidden">
                     <h4>Progress</h4>

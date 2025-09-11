@@ -74,7 +74,7 @@ class WebViews
                 <li><small style="color: #666;" id="autoRefreshStatus">Auto-refresh: ON</small></li>
             </ul>
             <ul>
-                <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check All Updates</a></li>
+                <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check for Updates</a></li>
                 <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
             </ul>
         </nav>
@@ -371,9 +371,9 @@ class WebViews
 
             <div class="grid">
                 <div>
-                    <h3>Check All Updates</h3>
+                    <h3>Check for Updates</h3>
                     <p>Check all containers for available updates without installing them.</p>
-                    <button id="checkButton" onclick="startBulkCheck()" class="secondary">Check All Updates</button>
+                    <button id="checkButton" onclick="startBulkCheck()" class="secondary">Check for Updates</button>
 
                     <div id="checkProgress" class="hidden">
                         <h4>Progress</h4>

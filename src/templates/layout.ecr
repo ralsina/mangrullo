@@ -22,13 +22,13 @@
         .status-update-available .status-badge { background-color: #fff3cd; color: #856404; }
         .status-error .status-badge { background-color: #f8d7da; color: #721c24; }
         .status-latest .status-badge { background-color: #d1ecf1; color: #0c5460; }
-        .header-stats { display: flex; gap: 2rem; margin-bottom: 2rem; }
+        .header-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
         .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
         .loading { opacity: 0.6; pointer-events: none; }
         .hidden { display: none; }
         @media (max-width: 768px) {
             .container-grid { grid-template-columns: 1fr; }
-            .header-stats { flex-direction: column; gap: 1rem; }
+            .header-stats { grid-template-columns: 1fr; gap: 1rem; }
         }
     </style>
 </head>
@@ -39,7 +39,7 @@
         </ul>
         <ul>
             <li><a href="/" role="button" class="secondary">Dashboard</a></li>
-            <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check All Updates</a></li>
+            <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check for Updates</a></li>
             <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
         </ul>
     </nav>
