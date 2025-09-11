@@ -145,8 +145,7 @@ class WebViews
                         <td>#{status}</td>
                         <td>
                             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <button onclick="checkUpdate('#{container.id}')" class="secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;">Check</button>
-                                #{data[:needs_update] ? "<button onclick=\"updateContainer('#{container.id}')\" class=\"primary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;\">📥 Update</button>" : ""}
+                                #{data[:needs_update] ? "<button onclick=\"showUpdateModal('#{container.id}')\" class=\"primary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;\">Update</button>" : "<button onclick=\"checkUpdate('#{container.id}')\" class=\"secondary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;\">Check</button>"}
                             </div>
                         </td>
                     </tr>
@@ -555,8 +554,7 @@ class WebViews
                         #{update_info && update_info[:local_version] ? "<p><strong>Current Version:</strong> #{update_info[:local_version]}</p>" : ""}
                         #{update_info && update_info[:remote_version] ? "<p><strong>Available Version:</strong> #{update_info[:remote_version]}</p>" : ""}
                         <footer>
-                            <button onclick="showUpdateModal('#{container.id}')" class="primary">Update Container</button>
-                            <button onclick="checkUpdate('#{container.id}')" class="secondary">Check Again</button>
+                            #{needs_update ? "<button onclick=\"showUpdateModal('#{container.id}')\" class=\"primary\">Update Container</button>" : "<button onclick=\"checkUpdate('#{container.id}')\" class=\"secondary\">Check Again</button>"}
                         </footer>
                     </article>
                 </div>
@@ -568,10 +566,10 @@ class WebViews
                         <h3>Actions</h3>
                     </header>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <button onclick="showUpdateModal('#{container.id}')" class="primary">🔄 Update Container</button>
-                        <button onclick="restartContainer('#{container.id}')" class="secondary">🔄 Restart Container</button>
-                        <button onclick="checkUpdate('#{container.id}')" class="secondary">🔍 Check for Updates</button>
-                        <a href="/containers/#{container.id}/logs" class="button secondary">📋 View Logs</a>
+                        #{needs_update ? "<button onclick=\"showUpdateModal('#{container.id}')\" class=\"primary\">Update Container</button>" : ""}
+                        <button onclick="restartContainer('#{container.id}')" class="secondary">Restart Container</button>
+                        #{!needs_update ? "<button onclick=\"checkUpdate('#{container.id}')\" class=\"secondary\">Check for Updates</button>" : ""}
+                        <a href="/containers/#{container.id}/logs" class="button secondary">View Logs</a>
                     </div>
                 </article>
             </div>
