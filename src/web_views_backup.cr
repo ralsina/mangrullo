@@ -278,6 +278,7 @@ class WebViews
 
     html
   end
+
   def bulk_operations(env : HTTP::Server::Context)
     env.response.content_type = "text/html"
 
@@ -491,7 +492,7 @@ class WebViews
             alert('Auto-refresh script is loading!');
             console.log('Auto-refresh script loaded');
             let refreshInterval;
-            
+
             function startAutoRefresh() {
                 console.log('startAutoRefresh called');
                 // Refresh every 30 seconds
@@ -503,7 +504,7 @@ class WebViews
                     clearInterval(refreshInterval);
                 }
             }
-            
+
             function refreshData() {
                 console.log('refreshData called');
                 // Show refreshing status
@@ -576,7 +577,7 @@ class WebViews
                     row.classList.add('status-running');
                 }
 
-                const name = container.name.replace(/^\//, '');
+                const name = container.name.replace(/^//, '');
                 const image = container.image.length > 50 ?
                     container.image.substring(0, 47) + '...' :
                     container.image;

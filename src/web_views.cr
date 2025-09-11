@@ -140,12 +140,12 @@ class WebViews
 
   def container_details(env : HTTP::Server::Context, container : Mangrullo::ContainerInfo, update_info)
     env.response.content_type = "text/html"
-    
+
     name = container.name.lchop('/')
     image = container.image
     status = container.status
     created = container.created.to_s("%Y-%m-%d %H:%M:%S")
-    
+
     html = <<-HTML
     <!DOCTYPE html>
     <html lang="en">
@@ -178,7 +178,7 @@ class WebViews
         </nav>
         <main class="container">
             <h2>#{name}</h2>
-            
+
             <div class="grid">
                 <div>
                     <h3>Details</h3>
@@ -201,7 +201,7 @@ class WebViews
                         </tr>
                     </table>
                 </div>
-                
+
                 <div>
                     <h3>Actions</h3>
                     <button onclick="checkUpdate('#{container.id}')" class="secondary">Check for Updates</button>
@@ -210,16 +210,16 @@ class WebViews
                     <a href="/" role="button" class="secondary">Back to Dashboard</a>
                 </div>
             </div>
-            
+
             #{update_info ? update_info_html(update_info) : "<p>No update information available</p>"}
-            
+
             <h3>Logs</h3>
             <div>
                 <button onclick="loadLogs()" class="secondary">Refresh Logs</button>
                 <pre id="containerLogs" style="background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; max-height: 400px; overflow-y: scroll;">Loading logs...</pre>
             </div>
         </main>
-        
+
         <script>
             function checkUpdate(containerId) {
                 fetch('/containers/' + containerId + '/check-update', {
@@ -235,7 +235,7 @@ class WebViews
                     alert('Error checking update');
                 });
             }
-            
+
             function showUpdateModal(containerId) {
                 if (confirm('Are you sure you want to update this container?')) {
                     fetch('/containers/' + containerId + '/update', {
@@ -253,7 +253,7 @@ class WebViews
                     });
                 }
             }
-            
+
             function restartContainer(containerId) {
                 if (confirm('Are you sure you want to restart this container?')) {
                     fetch('/containers/' + containerId + '/restart', {
@@ -269,7 +269,7 @@ class WebViews
                     });
                 }
             }
-            
+
             function loadLogs() {
                 fetch('/containers/#{container.id}/logs?tail=100')
                     .then(response => response.text())
@@ -280,38 +280,38 @@ class WebViews
                         document.getElementById('containerLogs').textContent = 'Error loading logs';
                     });
             }
-            
+
             // Load logs when page loads
             loadLogs();
         </script>
     </body>
     </html>
     HTML
-    
+
     html
   end
-  
+
   private def update_info_html(update_info)
     html = <<-HTML
     <div>
         <h3>Update Information</h3>
-        #{update_info[:needs_update] ? 
+        #{update_info[:needs_update] ?
             "<p><strong>Update Available!</strong></p>
              <p>#{update_info[:reason]}</p>
-             #{update_info[:local_version] && update_info[:remote_version] ? 
-                 "<p>Current: #{update_info[:local_version]}<br>Available: #{update_info[:remote_version]}</p>" : 
-                 ""}" : 
+             #{update_info[:local_version] && update_info[:remote_version] ?
+                 "<p>Current: #{update_info[:local_version]}<br>Available: #{update_info[:remote_version]}</p>" :
+                 ""}" :
             "<p>Container is up to date</p>"}
         <p><small>Last checked: #{update_info[:last_checked]}</small></p>
     </div>
     HTML
-    
+
     html
   end
 
   def bulk_operations(env : HTTP::Server::Context)
     env.response.content_type = "text/html"
-    
+
     html = <<-HTML
     <!DOCTYPE html>
     <html lang="en">
@@ -368,48 +368,48 @@ class WebViews
         </nav>
         <main class="container">
             <h2>Bulk Operations</h2>
-            
+
             <div class="grid">
                 <div>
                     <h3>Check All Updates</h3>
                     <p>Check all containers for available updates without installing them.</p>
                     <button id="checkButton" onclick="startBulkCheck()" class="secondary">Check All Updates</button>
-                    
+
                     <div id="checkProgress" class="hidden">
                         <h4>Progress</h4>
                         <div class="progress-bar">
                             <div id="checkProgressBar" style="width: 0%"></div>
                         </div>
                         <p id="checkStatus">Initializing...</p>
-                        
+
                         <h4>Details</h4>
                         <div id="updateLog" class="operation-log"></div>
                     </div>
                 </div>
-                
+
                 <div>
                     <h3>Update All Containers</h3>
                     <p>Update all containers that have available updates.</p>
                     <button onclick="updateAllContainers()" class="primary">Update All Containers</button>
-                    
+
                     <div id="updateProgress" class="hidden">
                         <h4>Progress</h4>
                         <div class="progress-bar">
                             <div id="updateProgressBar" style="width: 0%"></div>
                         </div>
                         <p id="updateStatus">Initializing...</p>
-                        
+
                         <h4>Details</h4>
                         <div id="updateLog" class="operation-log"></div>
                     </div>
                 </div>
             </div>
-            
+
             <div style="margin-top: 2rem;">
                 <a href="/" role="button" class="secondary">Back to Dashboard</a>
             </div>
         </main>
-        
+
         <script>
             function startBulkCheck() {
                 const button = document.getElementById('checkButton');
@@ -417,13 +417,13 @@ class WebViews
                 const progressBar = document.getElementById('checkProgressBar');
                 const status = document.getElementById('checkStatus');
                 const log = document.getElementById('checkLog');
-                
+
                 button.disabled = true;
                 progress.classList.remove('hidden');
                 log.innerHTML = '';
-                
+
                 addLogEntry(log, 'Starting bulk update check...', 'info');
-                
+
                 fetch('/api/updates')
                     .then(response => response.json())
                     .then(data => {
@@ -432,13 +432,13 @@ class WebViews
                             addLogEntry(log, 'Update check completed successfully!', 'success');
                             status.textContent = 'Completed';
                             progressBar.classList.add('success');
-                            
+
                             // Show summary
                             const updatesAvailable = data.filter(c => c.needs_update).length;
                             addLogEntry(log, `Found ${updatesAvailable} containers needing updates`, 'info');
-                            
+
                             button.disabled = false;
-                            
+
                             // Refresh data and navigate back after a delay
                             setTimeout(() => {
                                 window.location.href = '/';
@@ -452,7 +452,7 @@ class WebViews
                         button.disabled = false;
                     });
             }
-            
+
             function simulateProgress(progressBar, callback) {
                 let progress = 0;
                 const interval = setInterval(() => {
@@ -465,7 +465,7 @@ class WebViews
                     progressBar.style.width = progress + '%';
                 }, 500);
             }
-            
+
             function addLogEntry(logElement, message, type) {
                 const entry = document.createElement('div');
                 entry.className = `log-entry ${type}`;
@@ -473,7 +473,7 @@ class WebViews
                 logElement.appendChild(entry);
                 logElement.scrollTop = logElement.scrollHeight;
             }
-            
+
             function updateAllContainers() {
                 if (confirm('Are you sure you want to update all containers?')) {
                     window.location.href = '/api/updates';
@@ -483,7 +483,7 @@ class WebViews
     </body>
     </html>
     HTML
-    
+
     html
   end
 end

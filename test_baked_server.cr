@@ -42,7 +42,6 @@ begin
   puts "Contains 'Auto-refresh: ON': #{response.body.includes?("Auto-refresh: ON")}"
   puts "Contains '/js/dashboard.js': #{response.body.includes?("/js/dashboard.js")}"
   puts "Contains '/js/auto-refresh.js': #{response.body.includes?("/js/auto-refresh.js")}"
-
 rescue ex
   puts "Error: #{ex.message}"
 ensure
