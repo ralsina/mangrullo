@@ -352,13 +352,29 @@ class WebViews
 
     # Generate custom HTML table with action buttons
     html += <<-HTML
+            <style>
+                .container-table th:nth-child(3),
+                .container-table td:nth-child(3) {
+                    min-width: 150px;
+                    width: 150px;
+                }
+                .container-table th:nth-child(1),
+                .container-table td:nth-child(1) {
+                    min-width: 120px;
+                    width: 120px;
+                }
+                .container-table th:nth-child(4),
+                .container-table td:nth-child(4) {
+                    min-width: 160px;
+                    width: 160px;
+                }
+            </style>
             <table class="container-table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Container</th>
                         <th>Image</th>
                         <th>Status</th>
-                        <th>Needs Update</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -378,11 +394,10 @@ class WebViews
                         <td><code>#{image}</code></td>
                         <td>#{status}</td>
                         <td>
-                            #{data[:needs_update] ? "<span class=\"badge bg-warning\">Yes</span>" : "<span class=\"badge bg-success\">No</span>"}
-                        </td>
-                        <td>
-                            <button onclick="checkUpdate('#{container.id}')" class="secondary" style="margin-right: 0.5rem;">🔍 Check</button>
-                            <button onclick="updateContainer('#{container.id}')" class="primary">🔄 Update</button>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button onclick="checkUpdate('#{container.id}')" class="secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;">Check</button>
+                                #{data[:needs_update] ? "<button onclick=\"updateContainer('#{container.id}')\" class=\"primary\" style=\"padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;\">📥 Update</button>" : ""}
+                            </div>
                         </td>
                     </tr>
       HTML
