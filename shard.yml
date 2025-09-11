@@ -8,13 +8,17 @@ targets:
   mangrullo:
     main: src/mangrullo.cr
   mangrullo-web:
-    main: src/web.cr
+    main: src/web_baked.cr
 
 crystal: '>= 1.16.3'
 
 license: MIT
 
 dependencies:
+  baked_file_system:
+    github: schovi/baked_file_system
+  baked_file_handler:
+    github: ralsina/baked_file_handler
   docr:
     github: marghidanu/docr
   docopt:
