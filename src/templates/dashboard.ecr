@@ -8,27 +8,35 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
     <style>
         .status-up-to-date { color: #28a745; }
-        .status-update-available { color: #ffc107; }
+        .status-update-available { color: #856404; }
         .status-error { color: #dc3545; }
         .status-latest { color: #17a2b8; }
-        .container-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-        .status-badge { 
-            padding: 0.25rem 0.5rem; 
-            border-radius: 0.25rem; 
-            font-size: 0.875rem;
-            font-weight: bold;
-        }
-        .status-up-to-date .status-badge { background-color: #d4edda; color: #155724; }
-        .status-update-available .status-badge { background-color: #fff3cd; color: #856404; }
-        .status-error .status-badge { background-color: #f8d7da; color: #721c24; }
-        .status-latest .status-badge { background-color: #d1ecf1; color: #0c5460; }
-        .header-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+        .header-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
         .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
+        .container-table th:nth-child(1),
+        .container-table td:nth-child(1) {
+            min-width: 120px;
+            max-width: 250px;
+            width: 30%;
+        }
+        .container-table th:nth-child(2),
+        .container-table td:nth-child(2) {
+            min-width: 150px;
+            width: 45%;
+        }
+        .container-table th:nth-child(3),
+        .container-table td:nth-child(3) {
+            min-width: 150px;
+            width: 25%;
+        }
+        .container-table td {
+            vertical-align: middle;
+        }
         .loading { opacity: 0.6; pointer-events: none; }
         .hidden { display: none; }
         @media (max-width: 768px) {
-            .container-grid { grid-template-columns: 1fr; }
             .header-stats { flex-direction: column; gap: 1rem; }
+            table { font-size: 0.875rem; }
         }
     </style>
 </head>
@@ -36,9 +44,9 @@
     <nav class="container-fluid">
         <ul>
             <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
+            <li><small style="color: #666;" id="autoRefreshStatus">Auto-refresh: ON</small></li>
         </ul>
         <ul>
-            <li><a href="/" role="button" class="secondary">Dashboard</a></li>
             <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check for Updates</a></li>
             <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
         </ul>
@@ -54,60 +62,58 @@
                 <h4>Updates Available</h4>
                 <p style="font-size: 2rem; margin: 0; font-weight: bold; color: #ffc107;"><%= updates_available %></p>
             </div>
-            <div class="stat-card">
-                <h4>Last Updated</h4>
-                <p style="margin: 0;"><%= Time.utc %></p>
-            </div>
         </div>
 
-        <h2>Running Containers</h2>
-
-        <div class="container-grid">
-            <% containers.each do |container| %>
-                <%
-                  # Determine container status
-                  status_class = "status-error"
-                  status_text = "Unknown"
-                  
-                  begin
-                    image_checker = Mangrullo::ImageChecker.new(Mangrullo::DockerClient.new)
-                    needs_update = image_checker.needs_update?(container, false)
-                    
-                    if container.image.includes?("latest")
-                      status_class = "status-latest"
-                      status_text = "Latest Tag"
-                    elsif needs_update
-                      status_class = "status-update-available"
-                      status_text = "Update Available"
-                    else
-                      status_class = "status-up-to-date"
-                      status_text = "Up to Date"
-                    end
-                  rescue
-                    status_class = "status-error"
-                    status_text = "Error"
-                  end
-                %>
-                
-                <div class="card status-<%= status_class.split('-').last %>" data-container-id="<%= container.id %>">
-                    <article>
-                        <header>
-                            <h3><%= container.name %></h3>
-                            <span class="status-badge"><%= status_text %></span>
-                        </header>
-                        <p><strong>Image:</strong> <%= container.image %></p>
-                        <p><strong>Status:</strong> <%= container.status %></p>
-                        <p><strong>ID:</strong> <code><%= container.id[0..12] %></code></p>
-                        <div class="version-info"></div>
-                        <footer>
-                            <button onclick="checkUpdate('<%= container.id %>')" class="check-update-btn secondary">Check Update</button>
-                            <button onclick="showUpdateModal('<%= container.id %>')" class="update-btn primary">Update</button>
-                            <a href="/containers/<%= container.id %>" class="button">Details</a>
-                        </footer>
-                    </article>
-                </div>
-            <% end %>
-        </div>
+        <table class="container-table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Container</th>
+                    <th>Image</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% containers.sort_by(&.name.lchop('/')).each do |container| %>
+                    <%
+                      # Get container status from cached state
+                      container_state = Mangrullo::ContainerState.instance
+                      data = container_state.container(container.id)
+                      needs_update = data ? data.update_info.try(&.[:needs_update]) == true : false
+                      
+                      if container.image.includes?("latest")
+                        status_class = "status-latest"
+                        status_text = "Latest Tag"
+                      elsif needs_update
+                        status_class = "status-update-available"
+                        status_text = "Update Available"
+                      else
+                        status_class = "status-up-to-date"
+                        status_text = "Up to Date"
+                      end
+                      
+                      # If no data or error, show as error
+                      if data.nil?
+                        status_class = "status-error"
+                        status_text = "No Data"
+                      end
+                    %>
+                    <tr class="<%= status_class %>" data-container-id="<%= container.id %>">
+                        <td title="<%= container.name.lchop('/') %>"><%= container.name.lchop('/').size > 30 ? container.name.lchop('/')[0..27] + "..." : container.name.lchop('/') %></td>
+                        <td title="<%= container.image %>"><code><%= container.image.size > 50 ? container.image[0..47] + "..." : container.image %></code></td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; height: 100%;">
+                                <% if !needs_update %>
+                                <button onclick="checkUpdate('<%= container.id %>')" class="secondary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Check</button>
+                                <% end %>
+                                <% if needs_update %>
+                                <button onclick="showUpdateModal('<%= container.id %>')" class="primary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Update</button>
+                                <% end %>
+                            </div>
+                        </td>
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
 
         <% if containers.empty? %>
             <div class="card">
@@ -168,7 +174,8 @@
 
     <script>
         let currentContainerId = null;
-        let currentAction = null;
+        // Reserved for future action tracking
+        // let currentAction = null;
 
         function showUpdateModal(containerId) {
             currentContainerId = containerId;
@@ -189,8 +196,10 @@
         }
 
         async function checkUpdate(containerId) {
-            const card = document.querySelector(`[data-container-id="${containerId}"]`);
-            const button = card.querySelector('.check-update-btn');
+            const row = findContainerRow(containerId);
+            if (!row) return;
+            
+            const button = row.querySelector('button[onclick*="checkUpdate"]');
             const originalText = button.textContent;
             
             button.textContent = 'Checking...';
@@ -211,21 +220,26 @@
                 } else {
                     updateContainerStatus(containerId, 'up-to-date', data.local_version, data.remote_version);
                 }
+                
+                showNotification('Update check completed', 'success');
             } catch (error) {
                 console.error('Error checking update:', error);
                 updateContainerStatus(containerId, 'error', null, null);
+                showNotification('Failed to check update', 'error');
             } finally {
                 button.textContent = originalText;
                 button.disabled = false;
             }
         }
 
-        async function updateContainer() {
+        async function confirmUpdate() {
             if (!currentContainerId) return;
             
             const allowMajor = document.getElementById('allowMajor').checked;
-            const card = document.querySelector(`[data-container-id="${currentContainerId}"]`);
-            const button = card.querySelector('.update-btn');
+            const row = findContainerRow(currentContainerId);
+            if (!row) return;
+            
+            const button = row.querySelector('button[onclick*="showUpdateModal"]');
             const originalText = button.textContent;
             
             button.textContent = 'Updating...';
@@ -246,6 +260,8 @@
                 if (data.updated) {
                     updateContainerStatus(currentContainerId, 'up-to-date', null, null);
                     showNotification('Container updated successfully!', 'success');
+                    // Reload after a short delay to show the update
+                    setTimeout(() => location.reload(), 1500);
                 } else {
                     showNotification(`Update failed: ${data.error}`, 'error');
                     updateContainerStatus(currentContainerId, 'error', null, null);
@@ -261,11 +277,7 @@
         }
 
         async function checkAllUpdates() {
-            const buttons = document.querySelectorAll('.check-update-btn');
-            buttons.forEach(btn => {
-                btn.textContent = 'Checking...';
-                btn.disabled = true;
-            });
+            showNotification('Checking all containers for updates...', 'info');
             
             try {
                 const response = await fetch('/api/updates');
@@ -287,11 +299,6 @@
             } catch (error) {
                 console.error('Error checking all updates:', error);
                 showNotification('Failed to check updates', 'error');
-            } finally {
-                buttons.forEach(btn => {
-                    btn.textContent = 'Check Update';
-                    btn.disabled = false;
-                });
             }
         }
 
@@ -334,36 +341,57 @@
                     `Update completed: ${successCount} successful, ${failureCount} failed`;
                 
                 showNotification(message, successCount > 0 ? 'success' : 'info');
+                
+                // Reload after a short delay to show updates
+                if (!dryRun && successCount > 0) {
+                    setTimeout(() => location.reload(), 1500);
+                }
             } catch (error) {
                 console.error('Error in bulk update:', error);
                 showNotification('Bulk update failed', 'error');
             }
         }
 
-        function updateContainerStatus(containerId, status, localVersion, remoteVersion) {
-            const card = document.querySelector(`[data-container-id="${containerId}"]`);
-            if (!card) return;
+        function findContainerRow(containerId) {
+            // Find the row that contains a button with this containerId
+            const buttons = document.querySelectorAll(`button[onclick*="${containerId}"]`);
+            for (let button of buttons) {
+                let row = button.closest('tr');
+                if (row) return row;
+            }
+            return null;
+        }
+
+        function updateContainerStatus(containerId, status, _localVersion, _remoteVersion) {
+            const row = findContainerRow(containerId);
+            if (!row) return;
             
             // Remove all status classes
-            card.classList.remove('status-up-to-date', 'status-update-available', 'status-error', 'status-latest');
-            card.classList.add(`status-${status}`);
+            row.classList.remove('status-up-to-date', 'status-update-available', 'status-error', 'status-latest');
+            row.classList.add(`status-${status}`);
             
-            // Update status badge
-            const badge = card.querySelector('.status-badge');
-            if (badge) {
-                const statusTexts = {
-                    'up-to-date': 'Up to Date',
-                    'update-available': 'Update Available',
-                    'error': 'Error',
-                    'latest': 'Latest Tag'
-                };
-                badge.textContent = statusTexts[status] || 'Unknown';
-            }
-            
-            // Update version info
-            const versionInfo = card.querySelector('.version-info');
-            if (versionInfo && localVersion && remoteVersion) {
-                versionInfo.innerHTML = `<strong>Versions:</strong> ${localVersion} → ${remoteVersion}`;
+            // Update actions cell to show/hide update button
+            const actionsCell = row.cells[2];
+            if (actionsCell && status === 'update-available') {
+                // Check if update button already exists
+                let updateBtn = actionsCell.querySelector('button[onclick*="showUpdateModal"]');
+                if (!updateBtn) {
+                    const checkBtn = actionsCell.querySelector('button[onclick*="checkUpdate"]');
+                    if (checkBtn) {
+                        updateBtn = document.createElement('button');
+                        updateBtn.textContent = '📥 Update';
+                        updateBtn.className = 'primary';
+                        updateBtn.style.cssText = 'padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;';
+                        updateBtn.setAttribute('onclick', `showUpdateModal(\"${containerId}\")`);
+                        checkBtn.insertAdjacentElement('afterend', updateBtn);
+                    }
+                }
+            } else if (actionsCell && (status === 'up-to-date' || status === 'latest')) {
+                // Remove update button if it exists
+                const updateBtn = actionsCell.querySelector('button[onclick*="showUpdateModal"]');
+                if (updateBtn) {
+                    updateBtn.remove();
+                }
             }
         }
 
@@ -405,6 +433,204 @@
             }
         `;
         document.head.appendChild(style);
+    </script>
+
+    <script>
+        // Auto-refresh functionality
+        let refreshInterval;
+        
+        function startAutoRefresh() {
+            // Refresh every 30 seconds
+            refreshInterval = setInterval(refreshData, 30000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+        
+        function refreshData() {
+            // Show refreshing status
+            const statusElement = document.getElementById('autoRefreshStatus');
+            if (statusElement) {
+                statusElement.textContent = 'Auto-refresh: UPDATING...';
+                statusElement.style.color = '#007bff';
+            }
+
+            // Fetch updated container data
+            Promise.all([
+                fetch('/api/containers').then(r => r.json()),
+                fetch('/api/status').then(r => r.json())
+            ])
+            .then(([containers, status]) => {
+                updateHeaderStats(containers, status);
+                updateContainerTable(containers);
+
+                // Reset status
+                if (statusElement) {
+                    statusElement.textContent = 'Auto-refresh: ON';
+                    statusElement.style.color = '#666';
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing data:', error);
+                // Show error status
+                if (statusElement) {
+                    statusElement.textContent = 'Auto-refresh: ERROR';
+                    statusElement.style.color = '#dc3545';
+                }
+            });
+        }
+
+        function updateHeaderStats(containers, status) {
+            // Update the stats cards
+            const totalElement = document.querySelector('.header-stats .stat-card:first-child p');
+            const updatesElement = document.querySelector('.header-stats .stat-card:nth-child(2) p');
+
+            if (totalElement) {
+                totalElement.textContent = containers.length || 0;
+            }
+            if (updatesElement) {
+                // Count containers needing updates
+                const updatesAvailable = containers.filter(container => 
+                    container.update_info && container.update_info.needs_update
+                ).length;
+                updatesElement.textContent = updatesAvailable;
+            }
+        }
+
+        function updateContainerTable(containers) {
+            const tbody = document.querySelector('.container-table tbody');
+            if (!tbody) return;
+
+            // Get current rows for reference
+            const currentRows = {};
+            tbody.querySelectorAll('tr').forEach(row => {
+                const containerId = row.getAttribute('data-container-id');
+                if (containerId) {
+                    currentRows[containerId] = row;
+                }
+            });
+
+            // Update or create rows for each container
+            containers.forEach(container => {
+                let row = currentRows[container.id];
+                const needsUpdate = container.update_info ? container.update_info.needs_update : false;
+                const statusClass = getStatusClass(container, needsUpdate);
+                
+                if (row) {
+                    // Update existing row
+                    // Remove all status classes first
+                    row.classList.remove('status-up-to-date', 'status-update-available', 'status-error', 'status-latest');
+                    row.classList.add(statusClass);
+                    
+                    // Update cells
+                    const nameCell = row.cells[0];
+                    const imageCell = row.cells[1];
+                    
+                    if (nameCell) {
+                        const name = container.name.startsWith('/') ? container.name.substring(1) : container.name;
+                        nameCell.textContent = name.length > 30 ? name.substring(0, 27) + '...' : name;
+                        nameCell.setAttribute('title', name);
+                    }
+                    
+                    if (imageCell) {
+                        const image = container.image;
+                        imageCell.innerHTML = `<code>${image.length > 50 ? image.substring(0, 47) + '...' : image}</code>`;
+                        imageCell.setAttribute('title', container.image);
+                    }
+                    
+                    // Update action buttons
+                    updateContainerButtons(row, container.id, needsUpdate);
+                } else {
+                    // Create new row
+                    row = createContainerRow(container, statusClass, needsUpdate);
+                    tbody.appendChild(row);
+                }
+            });
+
+            // Remove rows for containers that no longer exist
+            Object.keys(currentRows).forEach(containerId => {
+                if (!containers.find(c => c.id === containerId)) {
+                    currentRows[containerId].remove();
+                }
+            });
+        }
+
+        function getStatusClass(container, needsUpdate) {
+            if (container.image.includes('latest')) {
+                return 'status-latest';
+            } else if (needsUpdate) {
+                return 'status-update-available';
+            } else {
+                return 'status-up-to-date';
+            }
+        }
+
+        function createContainerRow(container, statusClass, needsUpdate) {
+            const row = document.createElement('tr');
+            row.className = statusClass;
+            row.setAttribute('data-container-id', container.id);
+            
+            const name = container.name.startsWith('/') ? container.name.substring(1) : container.name;
+            const image = container.image;
+            
+            row.innerHTML = `
+                <td title="${name}">${name.length > 30 ? name.substring(0, 27) + '...' : name}</td>
+                <td title="${image}"><code>${image.length > 50 ? image.substring(0, 47) + '...' : image}</code></td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; height: 100%;">
+                        ${!needsUpdate ? `<button onclick="checkUpdate(\"${container.id}\")" class="secondary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Check</button>` : ''}
+                        ${needsUpdate ? `<button onclick="showUpdateModal(\"${container.id}\")" class="primary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Update</button>` : ''}
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        function updateContainerButtons(row, containerId, needsUpdate) {
+            const actionsCell = row.cells[2];
+            if (!actionsCell) return;
+            
+            // Clear all buttons first
+            actionsCell.innerHTML = '';
+            
+            if (needsUpdate) {
+                // Show only update button
+                const updateBtn = document.createElement('button');
+                updateBtn.textContent = 'Update';
+                updateBtn.className = 'primary';
+                updateBtn.style.cssText = 'padding: 0.375rem 0.75rem; font-size: 0.875rem;';
+                updateBtn.setAttribute('onclick', `showUpdateModal(\"${containerId}\")`);
+                actionsCell.appendChild(updateBtn);
+            } else {
+                // Show only check button
+                const checkBtn = document.createElement('button');
+                checkBtn.textContent = 'Check';
+                checkBtn.className = 'secondary';
+                checkBtn.style.cssText = 'padding: 0.375rem 0.75rem; font-size: 0.875rem;';
+                checkBtn.setAttribute('onclick', `checkUpdate(\"${containerId}\")`);
+                actionsCell.appendChild(checkBtn);
+            }
+        }
+
+        // Start auto-refresh when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startAutoRefresh();
+        });
+
+        // Stop auto-refresh when page is not visible
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+                // Refresh immediately when page becomes visible again
+                refreshData();
+            }
+        });
     </script>
 </body>
 </html>

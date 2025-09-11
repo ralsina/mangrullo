@@ -70,28 +70,6 @@ class WebServer
         handle_web_error("loading dashboard", env, ex, json_response: false)
       end
     end
-
-    # Container details
-    get "/containers/:id" do |env|
-      begin
-        container_id = env.params.url["id"]
-        container_data = Mangrullo::ContainerState.instance.container(container_id)
-
-        if container_data
-          @web_views.container_details(env, container_data.container, container_data.update_info)
-        else
-          env.response.status_code = 404
-          "Container not found"
-        end
-      rescue ex
-        handle_web_error("getting container details", env, ex, json_response: false)
-      end
-    end
-
-    # Bulk operations page
-    get "/bulk-operations" do |env|
-      @web_views.bulk_operations(env)
-    end
   end
 
   private def setup_container_routes
@@ -142,28 +120,6 @@ class WebServer
         end
       rescue ex
         handle_web_error("updating container", env, ex)
-      end
-    end
-
-    # Container logs
-    get "/containers/:id/logs" do |env|
-      begin
-        container_id = env.params.url["id"]
-        tail = env.params.query["tail"]?.try(&.to_i) || Mangrullo::Constants::Docker::DEFAULT_LOG_TAIL
-
-        # Use the StateManager's docker client
-        docker_client = Mangrullo::StateManager.instance.docker_client
-
-        if docker_client.container_exists?(container_id)
-          logs = docker_client.get_container_logs(container_id, tail)
-          env.response.content_type = "text/plain"
-          logs
-        else
-          env.response.status_code = 404
-          "Container not found"
-        end
-      rescue ex
-        handle_web_error("getting container logs", env, ex, json_response: false)
       end
     end
 
