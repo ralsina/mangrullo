@@ -95,10 +95,6 @@ class WebViews
                     <h4>Updates Available</h4>
                     <p style="font-size: 2rem; margin: 0; font-weight: bold; color: #ffc107;">#{stats[:updates_available]}</p>
                 </div>
-                <div class="stat-card">
-                    <h4>Last Updated</h4>
-                    <p style="margin: 0;">#{Time.utc}</p>
-                </div>
             </div>
 
             <h2>Container Status</h2>
