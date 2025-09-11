@@ -28,10 +28,13 @@ class WebViews
 
   private def calculate_dashboard_stats(containers : Array(Mangrullo::ContainerInfo)) : NamedTuple(total_containers: Int32, updates_available: Int32)
     total_containers = containers.size
+
+    # Get update info from cached state instead of making API calls
+    container_state = Mangrullo::ContainerState.instance
     updates_available = containers.count { |container|
-      begin
-        @update_manager.image_checker.needs_update?(container, false)
-      rescue
+      if data = container_state.get_container(container.id)
+        data.update_info.try(&.[:needs_update]) == true
+      else
         false
       end
     }
@@ -112,17 +115,14 @@ class WebViews
     sorted_containers = containers.sort_by(&.name.lchop('/'))
 
     sorted_containers.each do |container|
-      # Use ContainerStatus module with shared ImageChecker
-      begin
-        needs_update = @update_manager.image_checker.needs_update?(container, false)
+      # Get update status from cached state
+      container_state = Mangrullo::ContainerState.instance
+      data = container_state.get_container(container.id)
+      needs_update = data ? (data.update_info.try(&.[:needs_update]) == true) : false
 
-        status = Mangrullo::ContainerStatus.get_status(container, needs_update)
-        status_class = status.css_class || "status-unknown"
-        status_text = status.text
-      rescue
-        status_class = "status-error"
-        status_text = "Error"
-      end
+      status = Mangrullo::ContainerStatus.get_status(container, needs_update)
+      status_class = status.css_class || "status-unknown"
+      status_text = status.text
 
       html += <<-HTML
                 <div class="card status-#{status_class.split('-').last}" data-container-id="#{container.id}">
@@ -280,24 +280,19 @@ class WebViews
 
     # Prepare container data for table display
     container_data = sorted_containers.map do |container|
-      begin
-        needs_update = @update_manager.image_checker.needs_update?(container, false)
-        {
-          container:    container,
-          updated:      false,
-          error:        nil,
-          needs_update: needs_update,
-          reason:       needs_update ? "Update available" : nil,
-        }
-      rescue
-        {
-          container:    container,
-          updated:      false,
-          error:        "Error checking status",
-          needs_update: nil,
-          reason:       nil,
-        }
-      end
+      # Get update status from cached state
+      container_state = Mangrullo::ContainerState.instance
+      data = container_state.get_container(container.id)
+      needs_update = data ? (data.update_info.try(&.[:needs_update]) == true) : false
+      reason = data ? data.update_info.try(&.[:reason]) : nil
+
+      {
+        container:    container,
+        updated:      false,
+        error:        nil,
+        needs_update: needs_update,
+        reason:       reason,
+      }
     end
 
     # Generate HTML with embedded table
@@ -898,7 +893,7 @@ class WebViews
 
                         if (errors > 0) {
                             data.filter(r => r.error).forEach(r => {
-                                addLogEntry(log, `${r.container.name.replace(/^\//, '')}: ${r.error}`, 'error');
+                                addLogEntry(log, `${r.container.name.replace(/^//, '')}: ${r.error}`, 'error');
                             });
                         }
 
@@ -947,7 +942,8 @@ class WebViews
     env.response.content_type = "text/html"
 
     # Use ContainerStatus module
-    status = Mangrullo::ContainerStatus.get_status(container, update_info[:has_update])
+    needs_update = update_info ? update_info[:needs_update] : false
+    status = Mangrullo::ContainerStatus.get_status(container, needs_update)
     update_status = status.text
     status_class = status.css_class || "status-unknown"
 
@@ -1014,8 +1010,8 @@ class WebViews
                             <h3>Update Status</h3>
                         </header>
                         <p><strong>Status:</strong> <span class="status-badge #{status_class}">#{update_status}</span></p>
-                        #{update_info[:local_version] ? "<p><strong>Current Version:</strong> #{update_info[:local_version]}</p>" : ""}
-                        #{update_info[:remote_version] ? "<p><strong>Available Version:</strong> #{update_info[:remote_version]}</p>" : ""}
+                        #{update_info && update_info[:local_version] ? "<p><strong>Current Version:</strong> #{update_info[:local_version]}</p>" : ""}
+                        #{update_info && update_info[:remote_version] ? "<p><strong>Available Version:</strong> #{update_info[:remote_version]}</p>" : ""}
                         <footer>
                             <button onclick="showUpdateModal('#{container.id}')" class="primary">Update Container</button>
                             <button onclick="checkUpdate('#{container.id}')" class="secondary">Check Again</button>

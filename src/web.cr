@@ -21,4 +21,10 @@ module Mangrullo
   Kemal.run do |_|
     puts "Starting Mangrullo Web UI on http://#{Kemal.config.host_binding}:#{Kemal.config.port}"
   end
+
+  # Cleanup on shutdown
+  at_exit do
+    puts "Shutting down StateManager..."
+    Mangrullo::StateManager.instance.stop
+  end
 end
