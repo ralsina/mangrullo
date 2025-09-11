@@ -14,7 +14,8 @@
       "Bash(git push:*)",
       "Bash(shards build:*)",
       "Bash(git show:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

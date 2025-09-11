@@ -65,14 +65,7 @@ class WebViews
         <title>Mangrullo - Container Status</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
-        <style>
-            .header-stats { display: flex; gap: 2rem; margin-bottom: 2rem; }
-            .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
-            @media (max-width: 768px) {
-                .header-stats { flex-direction: column; gap: 1rem; }
-                table { font-size: 0.875rem; }
-            }
-        </style>
+        <link rel="stylesheet" href="/css/dashboard.css">
     </head>
     <body>
         <nav class="container-fluid">
@@ -85,7 +78,6 @@ class WebViews
                 <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
             </ul>
         </nav>
-
         <main class="container">
             <div class="header-stats">
                 <div class="stat-card">
@@ -99,27 +91,6 @@ class WebViews
             </div>
 
             <h2>Container Status</h2>
-    HTML
-
-    # Generate custom HTML table with action buttons
-    html += <<-HTML
-            <style>
-                .container-table th:nth-child(3),
-                .container-table td:nth-child(3) {
-                    min-width: 150px;
-                    width: 150px;
-                }
-                .container-table th:nth-child(1),
-                .container-table td:nth-child(1) {
-                    min-width: 120px;
-                    width: 120px;
-                }
-                .container-table th:nth-child(4),
-                .container-table td:nth-child(4) {
-                    min-width: 160px;
-                    width: 160px;
-                }
-            </style>
             <table class="container-table table-striped table-hover">
                 <thead>
                     <tr>
@@ -156,467 +127,10 @@ class WebViews
     html += <<-HTML
                 </tbody>
             </table>
-    HTML
-
-    html += <<-HTML
         </main>
 
-        <script>
-            function checkUpdate(containerId) {
-                fetch('/containers/' + containerId + '/check-update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    showNotification('Update check completed', 'success');
-                    // Refresh data instead of reloading page
-                    refreshData();
-                })
-                .catch(error => {
-                    showNotification('Error checking update', 'error');
-                });
-            }
-
-            function showUpdateModal(containerId) {
-                if (confirm('Are you sure you want to update this container?')) {
-                    fetch('/containers/' + containerId + '/update', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ allow_major: false })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        showNotification('Container updated successfully!', 'success');
-                        // Refresh data instead of reloading page
-                        refreshData();
-                    })
-                    .catch(error => {
-                        showNotification('Error updating container', 'error');
-                    });
-                }
-            }
-
-            function checkAllUpdates() {
-                showNotification('Checking all containers for updates...', 'info');
-                fetch('/api/updates')
-                    .then(response => response.json())
-                    .then(data => {
-                        showNotification('Update check completed for all containers', 'success');
-                        // Refresh data instead of reloading page
-                        refreshData();
-                    })
-                    .catch(error => {
-                        showNotification('Error checking updates', 'error');
-                    });
-            }
-
-            function updateAllContainers() {
-                if (confirm('Are you sure you want to update all containers?')) {
-                    showNotification('Starting bulk update...', 'info');
-                    fetch('/api/updates', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ allow_major: false, dry_run: false })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        showNotification('Bulk update completed', 'success');
-                        // Refresh data instead of reloading page
-                        refreshData();
-                    })
-                    .catch(error => {
-                        showNotification('Error in bulk update', 'error');
-                    });
-                }
-            }
-
-            function showNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    padding: 1rem 1.5rem;
-                    border-radius: 0.5rem;
-                    color: white;
-                    font-weight: bold;
-                    z-index: 1000;
-                    animation: slideIn 0.3s ease-out;
-                `;
-
-                switch(type) {
-                    case 'success':
-                        notification.style.backgroundColor = '#28a745';
-                        break;
-                    case 'error':
-                        notification.style.backgroundColor = '#dc3545';
-                        break;
-                    case 'info':
-                        notification.style.backgroundColor = '#17a2b8';
-                        break;
-                }
-
-                notification.textContent = message;
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-        </script>
-        <style>
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        </style>
-    </body>
-    </html>
-    HTML
-
-    html
-  end
-  def bulk_operations(env : HTTP::Server::Context)
-    env.response.content_type = "text/html"
-
-    html = <<-HTML
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mangrullo - Bulk Operations</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
-        <style>
-            .operation-panel { margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.5rem; background: var(--card-background-color); border: 1px solid var(--card-border-color); }
-            .progress-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 0.25rem; overflow: hidden; margin: 1rem 0; }
-            .progress-fill { height: 100%; background: #007bff; transition: width 0.3s ease; }
-            .progress-fill.success { background: #28a745; }
-            .progress-fill.error { background: #dc3545; }
-            .operation-log { max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875rem; }
-            .log-entry { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #dee2e6; }
-            .log-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-            .log-entry.success { color: #28a745; }
-            .log-entry.error { color: #dc3545; }
-            .log-entry.info { color: #17a2b8; }
-            .hidden { display: none; }
-        </style>
-    </head>
-    <body>
-        <nav class="container-fluid">
-            <ul>
-                <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
-            </ul>
-            <ul>
-                <li><a href="/" role="button" class="secondary">← Back</a></li>
-            </ul>
-        </nav>
-
-        <main class="container">
-            <h2>Bulk Operations</h2>
-            <p>Perform bulk operations on all containers with real-time progress tracking.</p>
-
-            <!-- Check All Updates -->
-            <div class="operation-panel">
-                <h3>🔍 Check All Containers for Updates</h3>
-                <p>This will check all running containers to see if updates are available.</p>
-                <button onclick="startBulkCheck()" class="primary" id="checkButton">Check All Updates</button>
-
-                <div id="checkProgress" class="hidden">
-                    <h4>Progress</h4>
-                    <div class="progress-bar">
-                        <div id="checkProgressBar" class="progress-fill" style="width: 0%"></div>
-                    </div>
-                    <p id="checkStatus">Initializing...</p>
-
-                    <h4>Details</h4>
-                    <div id="checkLog" class="operation-log"></div>
-                </div>
-            </div>
-
-            <!-- Update All Containers -->
-            <div class="operation-panel">
-                <h3>🔄 Update All Containers</h3>
-                <p>This will update all containers that have available updates. Use with caution!</p>
-
-                <div style="margin-bottom: 1rem;">
-                    <label>
-                        <input type="checkbox" id="allowMajor" name="allow_major">
-                        Allow major version updates
-                    </label>
-                </div>
-
-                <button onclick="startBulkUpdate()" class="primary" id="updateButton">Update All Containers</button>
-
-                <div id="updateProgress" class="hidden">
-                    <h4>Progress</h4>
-                    <div class="progress-bar">
-                        <div id="updateProgressBar" class="progress-fill" style="width: 0%"></div>
-                    </div>
-                    <p id="updateStatus">Initializing...</p>
-
-                    <h4>Details</h4>
-                    <div id="updateLog" class="operation-log"></div>
-                </div>
-            </div>
-        </main>
-
-        <script>
-            function startBulkCheck() {
-                const button = document.getElementById('checkButton');
-                const progress = document.getElementById('checkProgress');
-                const progressBar = document.getElementById('checkProgressBar');
-                const status = document.getElementById('checkStatus');
-                const log = document.getElementById('checkLog');
-
-                button.disabled = true;
-                progress.classList.remove('hidden');
-                log.innerHTML = '';
-
-                addLogEntry(log, 'Starting bulk update check...', 'info');
-
-                fetch('/api/updates')
-                    .then(response => response.json())
-                    .then(data => {
-                        // Simulate progress
-                        simulateProgress(progressBar, () => {
-                            addLogEntry(log, 'Update check completed successfully!', 'success');
-                            status.textContent = 'Completed';
-                            progressBar.classList.add('success');
-
-                            // Show summary
-                            const updatesAvailable = data.filter(c => c.needs_update).length;
-                            addLogEntry(log, `Found ${updatesAvailable} containers needing updates`, 'info');
-
-                            button.disabled = false;
-
-                            // Refresh data and navigate back after a delay
-                            setTimeout(() => {
-                                window.location.href = '/';
-                            }, 2000);
-                        });
-                    })
-                    .catch(error => {
-                        addLogEntry(log, 'Error: ' + error.message, 'error');
-                        status.textContent = 'Error';
-                        progressBar.classList.add('error');
-                        button.disabled = false;
-                    });
-            }
-
-            function startBulkUpdate() {
-                const button = document.getElementById('updateButton');
-                const progress = document.getElementById('updateProgress');
-                const progressBar = document.getElementById('updateProgressBar');
-                const status = document.getElementById('updateStatus');
-                const log = document.getElementById('updateLog');
-                const allowMajor = document.getElementById('allowMajor').checked;
-
-                if (!confirm('Are you sure you want to update ALL containers? This action cannot be undone.')) {
-                    return;
-                }
-
-                button.disabled = true;
-                progress.classList.remove('hidden');
-                log.innerHTML = '';
-
-                addLogEntry(log, 'Starting bulk update operation...', 'info');
-                addLogEntry(log, `Allow major updates: ${allowMajor}`, 'info');
-
-                fetch('/api/updates', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ allow_major: allow_major, dry_run: false })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Simulate progress
-                    simulateProgress(progressBar, () => {
-                        const updated = data.filter(r => r.updated).length;
-                        const errors = data.filter(r => r.error).length;
-
-                        addLogEntry(log, 'Bulk update completed!', 'success');
-                        addLogEntry(log, `Updated: ${updated} containers`, 'info');
-                        addLogEntry(log, `Errors: ${errors} containers`, errors > 0 ? 'error' : 'info');
-
-                        if (errors > 0) {
-                            data.filter(r => r.error).forEach(r => {
-                                addLogEntry(log, `${r.container.name.replace(/^//, '')}: ${r.error}`, 'error');
-                            });
-                        }
-
-                        status.textContent = 'Completed';
-                        progressBar.classList.add('success');
-                        button.disabled = false;
-
-                        // Refresh data and navigate back after a delay
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 2000);
-                    });
-                })
-                .catch(error => {
-                    addLogEntry(log, 'Error: ' + error.message, 'error');
-                    status.textContent = 'Error';
-                    progressBar.classList.add('error');
-                    button.disabled = false;
-                });
-            }
-
-            function simulateProgress(progressBar, callback) {
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.random() * 30;
-                    if (progress >= 100) {
-                        progress = 100;
-                        clearInterval(interval);
-                        callback();
-                    }
-                    progressBar.style.width = progress + '%';
-                }, 500);
-            }
-
-            function addLogEntry(logElement, message, type) {
-                const entry = document.createElement('div');
-                entry.className = `log-entry ${type}`;
-                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-                logElement.appendChild(entry);
-                logElement.scrollTop = logElement.scrollHeight;
-            }
-
-            // Auto-refresh functionality
-            console.log('Auto-refresh script loaded');
-            let refreshInterval;
-            
-            function startAutoRefresh() {
-                console.log('startAutoRefresh called');
-                // Refresh every 30 seconds
-                refreshInterval = setInterval(refreshData, 30000);
-            }
-
-            function stopAutoRefresh() {
-                if (refreshInterval) {
-                    clearInterval(refreshInterval);
-                }
-            }
-            
-            function refreshData() {
-                console.log('refreshData called');
-                // Show refreshing status
-                const statusElement = document.getElementById('autoRefreshStatus');
-                if (statusElement) {
-                    statusElement.textContent = 'Auto-refresh: UPDATING...';
-                    statusElement.style.color = '#007bff';
-                }
-
-                // Fetch updated container data
-                Promise.all([
-                    fetch('/api/containers').then(r => r.json()),
-                    fetch('/api/status').then(r => r.json())
-                ])
-                .then(([containers, status]) => {
-                    console.log('Got data:', { containers: containers.length, status: status });
-                    updateHeaderStats(status);
-                    updateContainerTable(containers);
-
-                    // Reset status
-                    if (statusElement) {
-                        statusElement.textContent = 'Auto-refresh: ON';
-                        statusElement.style.color = '#666';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error refreshing data:', error);
-                    // Show error status
-                    if (statusElement) {
-                        statusElement.textContent = 'Auto-refresh: ERROR';
-                        statusElement.style.color = '#dc3545';
-                    }
-                });
-            }
-
-            function updateHeaderStats(status) {
-                console.log('Updating header stats:', status);
-                // Update the stats cards
-                const totalElement = document.querySelector('.header-stats .stat-card:first-child p');
-                const updatesElement = document.querySelector('.header-stats .stat-card:nth-child(2) p');
-                console.log('Found elements:', { totalElement: !!totalElement, updatesElement: !!updatesElement });
-
-                if (totalElement) {
-                    totalElement.textContent = status.container_count;
-                    console.log('Updated total count to:', status.container_count);
-                }
-                if (updatesElement) {
-                    updatesElement.textContent = status.needing_update;
-                    console.log('Updated updates count to:', status.needing_update);
-                }
-            }
-
-            function updateContainerTable(containers) {
-                const tbody = document.querySelector('.container-table tbody');
-                if (!tbody) return;
-
-                // Clear existing rows
-                tbody.innerHTML = '';
-
-                // Add updated rows
-                containers.forEach(container => {
-                    const row = createContainerRow(container);
-                    tbody.appendChild(row);
-                });
-            }
-
-            function createContainerRow(container) {
-                const row = document.createElement('tr');
-                if (container.status === 'running') {
-                    row.classList.add('status-running');
-                }
-
-                const name = container.name.replace(/^\//, '');
-                const image = container.image.length > 50 ?
-                    container.image.substring(0, 47) + '...' :
-                    container.image;
-
-                const needsUpdate = container.update_info && container.update_info.needs_update;
-                const status = needsUpdate ? 'Update available' : 'Up to date';
-
-                row.innerHTML = `
-                    <td>${name}</td>
-                    <td><code>${image}</code></td>
-                    <td>${status}</td>
-                    <td>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            ${needsUpdate ?
-                                `<button onclick="showUpdateModal('${container.id}')" class="primary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;">Update</button>` :
-                                `<button onclick="checkUpdate('${container.id}')" class="secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;">Check</button>`
-                            }
-                        </div>
-                    </td>
-                `;
-
-                return row;
-            }
-
-            // Start auto-refresh when page loads
-            console.log('Setting up auto-refresh');
-            try {
-                if (document.readyState === 'loading') {
-                    console.log('Document still loading, adding DOMContentLoaded listener');
-                    document.addEventListener('DOMContentLoaded', function() {
-                        console.log('DOMContentLoaded fired, starting auto-refresh');
-                        startAutoRefresh();
-                    });
-                } else {
-                    console.log('Document already loaded, starting auto-refresh immediately');
-                    startAutoRefresh();
-                }
-            } catch (e) {
-                console.error('Error setting up auto-refresh:', e);
-            }
-        </script>
+        <script src="/js/dashboard.js"></script>
+        <script src="/js/auto-refresh.js"></script>
     </body>
     </html>
     HTML
@@ -626,20 +140,19 @@ class WebViews
 
   def container_details(env : HTTP::Server::Context, container : Mangrullo::ContainerInfo, update_info)
     env.response.content_type = "text/html"
-
-    # Use ContainerStatus module
-    needs_update = update_info ? update_info[:needs_update] : false
-    status = Mangrullo::ContainerStatus.get_status(container, needs_update)
-    update_status = status.text
-    status_class = status.css_class || "status-unknown"
-
+    
+    name = container.name.lchop('/')
+    image = container.image
+    status = container.status
+    created = container.created.to_s("%Y-%m-%d %H:%M:%S")
+    
     html = <<-HTML
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mangrullo - #{container.name}</title>
+        <title>Mangrullo - #{name}</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
         <style>
@@ -663,75 +176,66 @@ class WebViews
                 <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
             </ul>
         </nav>
-
         <main class="container">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2>#{name}</h2>
+            
+            <div class="grid">
                 <div>
-                    <h2>#{container.name.lchop('/')}</h2>
-                    <p style="margin: 0; color: #666;">#{container.image}</p>
+                    <h3>Details</h3>
+                    <table>
+                        <tr>
+                            <th>Image</th>
+                            <td><code>#{image}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>#{status}</td>
+                        </tr>
+                        <tr>
+                            <th>Created</th>
+                            <td>#{created}</td>
+                        </tr>
+                        <tr>
+                            <th>Container ID</th>
+                            <td><code>#{container.id[0..11]}</code></td>
+                        </tr>
+                    </table>
                 </div>
+                
                 <div>
-                    <a href="/" class="button secondary">← Back</a>
+                    <h3>Actions</h3>
+                    <button onclick="checkUpdate('#{container.id}')" class="secondary">Check for Updates</button>
+                    #{update_info && update_info[:needs_update] ? "<button onclick=\"showUpdateModal('#{container.id}')\" class=\"primary\">Update Container</button>" : ""}
+                    <button onclick="restartContainer('#{container.id}')" class="contrast">Restart Container</button>
+                    <a href="/" role="button" class="secondary">Back to Dashboard</a>
                 </div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                <div class="card">
-                    <article>
-                        <header>
-                            <h3>Container Information</h3>
-                        </header>
-                        <p><strong>ID:</strong> <code>#{container.id}</code></p>
-                        <p><strong>Name:</strong> #{container.name.lchop('/')}</p>
-                        <p><strong>Image:</strong> #{container.image}</p>
-                        <p><strong>Image ID:</strong> <code>#{container.image_id[0..12]}</code></p>
-                        <p><strong>Status:</strong> #{container.status}</p>
-                        <p><strong>Created:</strong> #{container.created}</p>
-                    </article>
-                </div>
-
-                <div class="card">
-                    <article>
-                        <header>
-                            <h3>Update Status</h3>
-                        </header>
-                        <p><strong>Status:</strong> <span class="status-badge #{status_class}">#{update_status}</span></p>
-                        #{update_info && update_info[:local_version] ? "<p><strong>Current Version:</strong> #{update_info[:local_version]}</p>" : ""}
-                        #{update_info && update_info[:remote_version] ? "<p><strong>Available Version:</strong> #{update_info[:remote_version]}</p>" : ""}
-                        <footer>
-                            #{needs_update ? "<button onclick=\"showUpdateModal('#{container.id}')\" class=\"primary\">Update Container</button>" : "<button onclick=\"checkUpdate('#{container.id}')\" class=\"secondary\">Check Again</button>"}
-                        </footer>
-                    </article>
-                </div>
-            </div>
-
-            <div class="card">
-                <article>
-                    <header>
-                        <h3>Actions</h3>
-                    </header>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        #{needs_update ? "<button onclick=\"showUpdateModal('#{container.id}')\" class=\"primary\">Update Container</button>" : ""}
-                        <button onclick="restartContainer('#{container.id}')" class="secondary">Restart Container</button>
-                        #{!needs_update ? "<button onclick=\"checkUpdate('#{container.id}')\" class=\"secondary\">Check for Updates</button>" : ""}
-                        <a href="/containers/#{container.id}/logs" class="button secondary">View Logs</a>
-                    </div>
-                </article>
-            </div>
-
-            <div class="card" style="margin-top: 2rem;">
-                <article>
-                    <header>
-                        <h3>Container Labels</h3>
-                    </header>
-                    #{container.labels.empty? ? "<p>No labels found for this container.</p>" : "<table><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody>" +
-                                                                                               container.labels.map { |k, v| "<tr><td><code>#{k}</code></td><td>#{v}</td></tr>" }.join("") +
-                                                                                               "</tbody></table>"}
-                </article>
+            
+            #{update_info ? update_info_html(update_info) : "<p>No update information available</p>"}
+            
+            <h3>Logs</h3>
+            <div>
+                <button onclick="loadLogs()" class="secondary">Refresh Logs</button>
+                <pre id="containerLogs" style="background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; max-height: 400px; overflow-y: scroll;">Loading logs...</pre>
             </div>
         </main>
-
+        
         <script>
+            function checkUpdate(containerId) {
+                fetch('/containers/' + containerId + '/check-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Update check completed');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert('Error checking update');
+                });
+            }
+            
             function showUpdateModal(containerId) {
                 if (confirm('Are you sure you want to update this container?')) {
                     fetch('/containers/' + containerId + '/update', {
@@ -741,53 +245,245 @@ class WebViews
                     })
                     .then(response => response.json())
                     .then(data => {
-                        showNotification('Container updated successfully!');
+                        alert('Container updated successfully!');
                         location.reload();
                     })
                     .catch(error => {
-                        showNotification('Error updating container');
+                        alert('Error updating container');
                     });
                 }
             }
-
-            function checkUpdate(containerId) {
-                fetch('/containers/' + containerId + '/check-update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    showNotification('Update check completed');
-                    // For container details page, we still reload to go back to the main view
-                    location.reload();
-                })
-                .catch(error => {
-                    showNotification('Error checking update');
-                });
-            }
-
+            
             function restartContainer(containerId) {
                 if (confirm('Are you sure you want to restart this container?')) {
                     fetch('/containers/' + containerId + '/restart', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
+                        method: 'POST'
                     })
                     .then(response => response.json())
                     .then(data => {
-                        showNotification('Container restarted successfully!');
-                        // For container details page, we still reload to refresh status
+                        alert('Container restarted successfully!');
                         location.reload();
                     })
                     .catch(error => {
-                        showNotification('Error restarting container');
+                        alert('Error restarting container');
                     });
+                }
+            }
+            
+            function loadLogs() {
+                fetch('/containers/#{container.id}/logs?tail=100')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('containerLogs').textContent = data;
+                    })
+                    .catch(error => {
+                        document.getElementById('containerLogs').textContent = 'Error loading logs';
+                    });
+            }
+            
+            // Load logs when page loads
+            loadLogs();
+        </script>
+    </body>
+    </html>
+    HTML
+    
+    html
+  end
+  
+  private def update_info_html(update_info)
+    html = <<-HTML
+    <div>
+        <h3>Update Information</h3>
+        #{update_info[:needs_update] ? 
+            "<p><strong>Update Available!</strong></p>
+             <p>#{update_info[:reason]}</p>
+             #{update_info[:local_version] && update_info[:remote_version] ? 
+                 "<p>Current: #{update_info[:local_version]}<br>Available: #{update_info[:remote_version]}</p>" : 
+                 ""}" : 
+            "<p>Container is up to date</p>"}
+        <p><small>Last checked: #{update_info[:last_checked]}</small></p>
+    </div>
+    HTML
+    
+    html
+  end
+
+  def bulk_operations(env : HTTP::Server::Context)
+    env.response.content_type = "text/html"
+    
+    html = <<-HTML
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mangrullo - Bulk Operations</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
+        <style>
+            .operation-log {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 0.25rem;
+                padding: 1rem;
+                max-height: 300px;
+                overflow-y: auto;
+                font-family: monospace;
+                font-size: 0.875rem;
+            }
+            .log-entry {
+                margin: 0.25rem 0;
+                padding: 0.25rem;
+                border-radius: 0.125rem;
+            }
+            .log-entry.info { background: #e7f3ff; }
+            .log-entry.success { background: #d4edda; }
+            .log-entry.error { background: #f8d7da; }
+            .hidden { display: none; }
+            .progress-bar {
+                height: 0.5rem;
+                background: #e9ecef;
+                border-radius: 0.25rem;
+                overflow: hidden;
+            }
+            .progress-bar div {
+                height: 100%;
+                background: #007bff;
+                transition: width 0.3s ease;
+            }
+            .progress-bar.success div {
+                background: #28a745;
+            }
+            .progress-bar.error div {
+                background: #dc3545;
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="container-fluid">
+            <ul>
+                <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
+            </ul>
+        </nav>
+        <main class="container">
+            <h2>Bulk Operations</h2>
+            
+            <div class="grid">
+                <div>
+                    <h3>Check All Updates</h3>
+                    <p>Check all containers for available updates without installing them.</p>
+                    <button id="checkButton" onclick="startBulkCheck()" class="secondary">Check All Updates</button>
+                    
+                    <div id="checkProgress" class="hidden">
+                        <h4>Progress</h4>
+                        <div class="progress-bar">
+                            <div id="checkProgressBar" style="width: 0%"></div>
+                        </div>
+                        <p id="checkStatus">Initializing...</p>
+                        
+                        <h4>Details</h4>
+                        <div id="updateLog" class="operation-log"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Update All Containers</h3>
+                    <p>Update all containers that have available updates.</p>
+                    <button onclick="updateAllContainers()" class="primary">Update All Containers</button>
+                    
+                    <div id="updateProgress" class="hidden">
+                        <h4>Progress</h4>
+                        <div class="progress-bar">
+                            <div id="updateProgressBar" style="width: 0%"></div>
+                        </div>
+                        <p id="updateStatus">Initializing...</p>
+                        
+                        <h4>Details</h4>
+                        <div id="updateLog" class="operation-log"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <a href="/" role="button" class="secondary">Back to Dashboard</a>
+            </div>
+        </main>
+        
+        <script>
+            function startBulkCheck() {
+                const button = document.getElementById('checkButton');
+                const progress = document.getElementById('checkProgress');
+                const progressBar = document.getElementById('checkProgressBar');
+                const status = document.getElementById('checkStatus');
+                const log = document.getElementById('checkLog');
+                
+                button.disabled = true;
+                progress.classList.remove('hidden');
+                log.innerHTML = '';
+                
+                addLogEntry(log, 'Starting bulk update check...', 'info');
+                
+                fetch('/api/updates')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Simulate progress
+                        simulateProgress(progressBar, () => {
+                            addLogEntry(log, 'Update check completed successfully!', 'success');
+                            status.textContent = 'Completed';
+                            progressBar.classList.add('success');
+                            
+                            // Show summary
+                            const updatesAvailable = data.filter(c => c.needs_update).length;
+                            addLogEntry(log, `Found ${updatesAvailable} containers needing updates`, 'info');
+                            
+                            button.disabled = false;
+                            
+                            // Refresh data and navigate back after a delay
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 2000);
+                        });
+                    })
+                    .catch(error => {
+                        addLogEntry(log, 'Error: ' + error.message, 'error');
+                        status.textContent = 'Error';
+                        progressBar.classList.add('error');
+                        button.disabled = false;
+                    });
+            }
+            
+            function simulateProgress(progressBar, callback) {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        callback();
+                    }
+                    progressBar.style.width = progress + '%';
+                }, 500);
+            }
+            
+            function addLogEntry(logElement, message, type) {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logElement.appendChild(entry);
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+            
+            function updateAllContainers() {
+                if (confirm('Are you sure you want to update all containers?')) {
+                    window.location.href = '/api/updates';
                 }
             }
         </script>
     </body>
     </html>
     HTML
-
+    
     html
   end
 end
