@@ -231,17 +231,7 @@ class WebServer
       end
     end
 
-    # Dry run results page
-    get "/api/dry-run" do |env|
-      begin
-        allow_major = env.params.query["allow_major"]?.try(&.downcase) == "true"
-        results = @update_manager.dry_run(allow_major)
-        @web_views.dry_run_results(env, results, allow_major)
-      rescue ex
-        handle_web_error("generating dry run results", env, ex, json_response: false)
-      end
-    end
-
+    
     # Bulk operations page
     get "/bulk-operations" do |env|
       @web_views.bulk_operations(env)
