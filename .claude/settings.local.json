@@ -16,7 +16,8 @@
       "Bash(git show:*)",
       "Bash(sed:*)",
       "Bash(grep:*)",
-      "Bash(shards check:*)"
+      "Bash(shards check:*)",
+      "Bash(ameba:*)"
     ],
     "deny": [],
     "ask": []

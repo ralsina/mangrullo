@@ -48,7 +48,7 @@ module Mangrullo
             update_all_containers
           rescue ex
             Log.error { "StateManager: Error in background update: #{ex.message}" }
-            ContainerState.instance.set_last_error("Background update failed: #{ex.message}")
+            ContainerState.instance.last_error = "Background update failed: #{ex.message}"
           end
 
           sleep @update_interval
@@ -101,7 +101,7 @@ module Mangrullo
 
     private def update_all_containers
       Log.info { "StateManager: Starting full container update" }
-      ContainerState.instance.set_update_in_progress(true)
+      ContainerState.instance.update_in_progress = true
 
       # Get all running containers
       containers = @docker_client.running_containers
@@ -109,7 +109,7 @@ module Mangrullo
       if containers.empty?
         Log.info { "StateManager: No running containers found" }
         ContainerState.instance.update_containers([] of ContainerInfo)
-        ContainerState.instance.set_update_in_progress(false)
+        ContainerState.instance.update_in_progress = false
         return
       end
 
@@ -154,8 +154,8 @@ module Mangrullo
       end
 
       # Update the container in state
-      containers = ContainerState.instance.get_containers.map(&.container)
-      unless containers.any? { |c| c.id == container_id }
+      containers = ContainerState.instance.containers.map(&.container)
+      unless containers.any? { |cont| cont.id == container_id }
         # This container is new, refresh the whole list
         update_all_containers
         return
@@ -223,7 +223,7 @@ module Mangrullo
     end
 
     # Get current status information
-    def get_status : NamedTuple(
+    def status : NamedTuple(
       running: Bool,
       last_update: Time?,
       container_count: Int32,
@@ -233,11 +233,11 @@ module Mangrullo
       state = ContainerState.instance
       {
         running:            @running,
-        last_update:        state.get_last_update,
+        last_update:        state.last_update,
         container_count:    state.container_count,
-        needing_update:     state.get_containers_needing_update.size,
+        needing_update:     state.containers_needing_update.size,
         update_in_progress: state.update_in_progress?,
-        last_error:         state.get_last_error,
+        last_error:         state.last_error,
       }
     end
 

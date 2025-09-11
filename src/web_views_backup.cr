@@ -24,7 +24,7 @@ class WebViews
     # Get update info from cached state instead of making API calls
     container_state = Mangrullo::ContainerState.instance
     updates_available = containers.count { |container|
-      if data = container_state.get_container(container.id)
+      if data = container_state.container(container.id)
         data.update_info.try(&.[:needs_update]) == true
       else
         false
@@ -42,7 +42,7 @@ class WebViews
     container_data = sorted_containers.map do |container|
       # Get update status from cached state
       container_state = Mangrullo::ContainerState.instance
-      data = container_state.get_container(container.id)
+      data = container_state.container(container.id)
       needs_update = data ? (data.update_info.try(&.[:needs_update]) == true) : false
       reason = data ? data.update_info.try(&.[:reason]) : nil
 

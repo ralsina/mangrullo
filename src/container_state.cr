@@ -48,14 +48,14 @@ module Mangrullo
     end
 
     # Get all containers thread-safely
-    def get_containers : Array(ContainerData)
+    def containers : Array(ContainerData)
       @mutex.synchronize do
         @containers.values
       end
     end
 
     # Get a specific container by ID
-    def get_container(container_id : String) : ContainerData?
+    def container(container_id : String) : ContainerData?
       @mutex.synchronize do
         @containers[container_id]?
       end
@@ -118,7 +118,7 @@ module Mangrullo
     end
 
     # Get last full update time
-    def get_last_update : Time?
+    def last_update : Time?
       @mutex.synchronize do
         @last_full_update
       end
@@ -132,7 +132,7 @@ module Mangrullo
     end
 
     # Set update in progress status
-    def set_update_in_progress(in_progress : Bool)
+    def update_in_progress=(in_progress : Bool)
       @mutex.synchronize do
         @update_in_progress = in_progress
         @last_error = nil unless in_progress
@@ -140,7 +140,7 @@ module Mangrullo
     end
 
     # Set last error
-    def set_last_error(error : String)
+    def last_error=(error : String)
       @mutex.synchronize do
         @last_error = error
         @update_in_progress = false
@@ -148,7 +148,7 @@ module Mangrullo
     end
 
     # Get last error
-    def get_last_error : String?
+    def last_error : String?
       @mutex.synchronize do
         @last_error
       end
@@ -162,7 +162,7 @@ module Mangrullo
     end
 
     # Get containers needing updates
-    def get_containers_needing_update : Array(ContainerData)
+    def containers_needing_update : Array(ContainerData)
       @mutex.synchronize do
         @containers.values.select do |data|
           data.update_info.try(&.[:needs_update]) == true
