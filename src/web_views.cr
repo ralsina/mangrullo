@@ -488,9 +488,11 @@ class WebViews
             }
 
             // Auto-refresh functionality
+            console.log('Auto-refresh script loaded');
             let refreshInterval;
             
             function startAutoRefresh() {
+                console.log('startAutoRefresh called');
                 // Refresh every 30 seconds
                 refreshInterval = setInterval(refreshData, 30000);
             }
@@ -599,9 +601,21 @@ class WebViews
             }
 
             // Start auto-refresh when page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                startAutoRefresh();
-            });
+            console.log('Setting up auto-refresh');
+            try {
+                if (document.readyState === 'loading') {
+                    console.log('Document still loading, adding DOMContentLoaded listener');
+                    document.addEventListener('DOMContentLoaded', function() {
+                        console.log('DOMContentLoaded fired, starting auto-refresh');
+                        startAutoRefresh();
+                    });
+                } else {
+                    console.log('Document already loaded, starting auto-refresh immediately');
+                    startAutoRefresh();
+                }
+            } catch (e) {
+                console.error('Error setting up auto-refresh:', e);
+            }
         </script>
     </body>
     </html>
