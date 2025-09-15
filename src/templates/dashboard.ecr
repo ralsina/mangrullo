@@ -199,9 +199,11 @@
             
             const button = row.querySelector('button[onclick*="checkUpdate"]');
             const originalText = button.textContent;
+            const originalOnclick = button.getAttribute('onclick');
             
             button.textContent = 'Checking...';
             button.disabled = true;
+            button.removeAttribute('onclick'); // Remove onclick to prevent accidental clicks
             
             try {
                 const response = await fetch(`/containers/${containerId}/check-update`, {
@@ -227,6 +229,7 @@
             } finally {
                 button.textContent = originalText;
                 button.disabled = false;
+                button.setAttribute('onclick', originalOnclick); // Restore onclick
             }
         }
 
@@ -243,9 +246,11 @@
             
             const button = row.querySelector('button[onclick*="showUpdateModal"]');
             const originalText = button.textContent;
+            const originalOnclick = button.getAttribute('onclick');
             
             button.textContent = 'Updating...';
             button.disabled = true;
+            button.removeAttribute('onclick'); // Remove onclick to prevent accidental clicks
             
             // Close modal AFTER saving the ID
             const savedContainerId = currentContainerId;
@@ -276,14 +281,17 @@
                 } else {
                     showNotification(`Update failed: ${data.error}`, 'error');
                     updateContainerStatus(savedContainerId, 'error', null, null);
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.setAttribute('onclick', originalOnclick); // Restore onclick
                 }
             } catch (error) {
                 console.error('Error updating container:', error);
                 showNotification('Update failed', 'error');
                 updateContainerStatus(savedContainerId, 'error', null, null);
-            } finally {
                 button.textContent = originalText;
                 button.disabled = false;
+                button.setAttribute('onclick', originalOnclick); // Restore onclick
             }
         }
         
@@ -291,6 +299,7 @@
         async function pollJobStatus(containerId, jobId, button, originalButtonText) {
             const maxPolls = 60; // Poll for up to 5 minutes (60 * 5 seconds)
             let pollCount = 0;
+            const originalOnclick = `showUpdateModal('${containerId}')`;
             
             const pollInterval = setInterval(async () => {
                 try {
@@ -309,6 +318,7 @@
                             clearInterval(pollInterval);
                             button.textContent = originalButtonText;
                             button.disabled = false;
+                            button.setAttribute('onclick', originalOnclick);
                             
                             if (job.result && job.result.updated) {
                                 updateContainerStatus(containerId, 'up-to-date', null, null);
@@ -329,6 +339,7 @@
                             clearInterval(pollInterval);
                             button.textContent = originalButtonText;
                             button.disabled = false;
+                            button.setAttribute('onclick', originalOnclick);
                             updateContainerStatus(containerId, 'error', null, null);
                             showNotification(`Update failed: ${job.error || 'Unknown error'}`, 'error');
                             break;
@@ -339,6 +350,7 @@
                         clearInterval(pollInterval);
                         button.textContent = originalButtonText;
                         button.disabled = false;
+                        button.setAttribute('onclick', originalOnclick);
                         showNotification('Update timed out', 'error');
                     }
                 } catch (error) {
@@ -346,6 +358,7 @@
                     clearInterval(pollInterval);
                     button.textContent = originalButtonText;
                     button.disabled = false;
+                    button.setAttribute('onclick', originalOnclick);
                     showNotification('Error checking update status', 'error');
                 }
             }, 5000); // Poll every 5 seconds
