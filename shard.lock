@@ -32,10 +32,6 @@ shards:
     git: https://github.com/kemalcr/kemal.git
     version: 1.7.2
 
-  kilt:
-    git: https://github.com/jeromegn/kilt.git
-    version: 0.6.1
-
   progress:
     git: https://github.com/askn/progress.git
     version: 0.2.0
