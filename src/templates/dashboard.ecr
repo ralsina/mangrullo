@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         /* Override Pico.css fonts with Chivo */
         :root {
@@ -64,6 +65,20 @@
             background-color: var(--secondary-hover);
         }
         
+        /* Brand styling with cell tower icon and larger text */
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        
+        .brand-link .material-icons {
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+        
         .status-up-to-date { color: #28a745; }
         .status-update-available { color: #856404; }
         .status-error { color: #dc3545; }
@@ -100,7 +115,7 @@
 <body>
     <nav class="container-fluid">
         <ul>
-            <li><strong><a href="/">🐳 Mangrullo</a></strong></li>
+            <li><strong><a href="/" class="brand-link"><span class="material-icons">cell_tower</span> Mangrullo</a></strong></li>
             <li><small style="color: #666;" id="autoRefreshStatus">Auto-refresh: ON</small></li>
         </ul>
         <ul>
