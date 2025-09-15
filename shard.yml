@@ -25,7 +25,5 @@ dependencies:
     github: ralsina/docopt.cr
   kemal:
     github: kemalcr/kemal
-  kilt:
-    github: jeromegn/kilt
   progress:
     github: askn/progress

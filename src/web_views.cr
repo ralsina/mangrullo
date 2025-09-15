@@ -1,4 +1,3 @@
-require "kilt"
 require "ecr"
 require "./container_status"
 require "./container_filter"

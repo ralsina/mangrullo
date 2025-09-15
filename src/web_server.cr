@@ -1,5 +1,4 @@
 require "kemal"
-require "kilt"
 require "baked_file_handler"
 require "./types"
 require "./container_state"
@@ -114,10 +113,10 @@ class WebServer
 
           env.response.content_type = "application/json"
           {
-            job_id:           job_id,
-            container_id:     container_id,
-            status:           "queued",
-            message:          "Update job queued successfully",
+            job_id:       job_id,
+            container_id: container_id,
+            status:       "queued",
+            message:      "Update job queued successfully",
           }.to_json
         else
           env.response.status_code = 404

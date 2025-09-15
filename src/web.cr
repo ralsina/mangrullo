@@ -1,5 +1,4 @@
 require "kemal"
-require "kilt"
 require "baked_file_handler"
 require "./static_assets"
 require "./web_server"
