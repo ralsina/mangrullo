@@ -2,6 +2,8 @@ require "./container_state"
 require "./docker_client"
 require "./image_checker"
 require "./constants"
+require "./container_state_helper"
+require "./version_utils"
 
 module Mangrullo
   # Manages background updates of container state
@@ -154,8 +156,7 @@ module Mangrullo
       end
 
       # Update the container in state
-      containers = ContainerState.instance.containers.map(&.container)
-      unless containers.any? { |cont| cont.id == container_id }
+      unless ContainerStateHelper.container_exists?(container_id)
         # This container is new, refresh the whole list
         update_all_containers
         return

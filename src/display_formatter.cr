@@ -2,6 +2,9 @@ require "./types"
 require "./container_status"
 require "./result_processor"
 require "./constants"
+require "./container_name_utils"
+require "./image_name_parser"
+require "./string_display_utils"
 
 module Mangrullo
   # Display formatting utilities for CLI and web interfaces
@@ -46,64 +49,14 @@ module Mangrullo
       end
     end
 
-    # Truncate image name for display
+    # Truncate image name for display - delegate to ImageNameParser
     def self.truncate_image_name(image : String, max_length : Int32 = Constants::Table::MAX_COLUMN_WIDTH) : String
-      # Truncate SHA256 digests
-      if image.includes?("sha256:")
-        # Replace sha256:... with sha256:...
-        if match = image.match(/^(.*?sha256:)([0-9a-f]{64})$/)
-          sha_length = Constants::Version::SHA256_TRUNCATE_LENGTH - 1
-          return "#{match[1]}#{match[2][0..sha_length]}..."
-        end
-      end
-
-      if image.size <= max_length
-        image
-      else
-        # Try to keep registry and repo name
-        parts = image.split('/')
-        if parts.size >= 3 && parts[0].includes?('.')
-          # Has registry: registry/namespace/repo:tag
-          registry = parts[0]
-          repo = parts[-1]
-          tag = repo.includes?(':') ? repo.split(':').last : nil
-          repo_name = repo.split(':').first
-
-          base = "#{registry}/.../#{repo_name}"
-          if tag
-            truncated = "#{base}:#{tag}"
-            truncate_string(truncated, max_length)
-          else
-            truncate_string(base, max_length)
-          end
-        elsif parts.size == 2
-          # namespace/repo:tag
-          namespace = parts[0]
-          repo = parts[1]
-          tag = repo.includes?(':') ? repo.split(':').last : nil
-          repo_name = repo.split(':').first
-
-          base = "#{namespace}/#{repo_name}"
-          if tag
-            truncated = "#{base}:#{tag}"
-            truncate_string(truncated, max_length)
-          else
-            truncate_string(base, max_length)
-          end
-        else
-          # Simple image name or deep path
-          truncate_string(image, max_length)
-        end
-      end
+      ImageNameParser.display_name(image, max_length)
     end
 
-    # Truncate string with ellipsis
+    # Truncate string with ellipsis - delegate to StringDisplayUtils
     def self.truncate_string(str : String, max_length : Int32) : String
-      if str.size <= max_length
-        str
-      else
-        "#{str[0, max_length - 3]}..."
-      end
+      StringDisplayUtils.truncate(str, max_length)
     end
 
     # Format container status with color
@@ -134,7 +87,7 @@ module Mangrullo
       lines = [] of String
 
       # Calculate column widths
-      name_width = [results.max_of(&.[:container].name.lchop('/').size) || 0, "Container".size].max.clamp(0, options.max_name_width)
+      name_width = [results.max_of { |result| ContainerNameUtils.normalize_name_string(result[:container].name).size } || 0, "Container".size].max.clamp(0, options.max_name_width)
       image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size } || 0, "Image".size].max.clamp(0, options.max_image_width)
       status_width = [results.max_of { |result| (result[:updated] ? "Updated" : ContainerStatus.get_cli_status(result[:container], nil, result[:error])).size } || 0, "Status".size].max.clamp(0, options.max_status_width)
 
@@ -149,7 +102,7 @@ module Mangrullo
       # Add rows
       results.each do |result|
         container = result[:container]
-        name = container.name.lchop('/')
+        name = ContainerNameUtils.normalize_name_string(container.name)
         image = truncate_image_name(container.image)
         status = result[:updated] ? "Updated" : ContainerStatus.get_cli_status(container, nil, result[:error])
 
@@ -178,7 +131,7 @@ module Mangrullo
       lines = [] of String
 
       # Calculate column widths
-      name_width = [results.max_of(&.[:container].name.lchop('/').size) || 0, "Container".size].max.clamp(0, options.max_name_width)
+      name_width = [results.max_of { |result| ContainerNameUtils.normalize_name_string(result[:container].name).size } || 0, "Container".size].max.clamp(0, options.max_name_width)
       image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size } || 0, "Image".size].max.clamp(0, options.max_image_width)
       status_width = [results.max_of { |result| ContainerStatus.get_cli_status(result[:container], result[:needs_update], result[:error]).size } || 0, "Status".size].max.clamp(0, options.max_status_width)
       reason_width = [results.max_of { |result| (result[:reason] || "").size } || 0, "Action".size].max.clamp(0, options.max_reason_width) unless options.compact
@@ -202,7 +155,7 @@ module Mangrullo
       # Add rows
       results.each do |result|
         container = result[:container]
-        name = container.name.lchop('/')
+        name = ContainerNameUtils.normalize_name_string(container.name)
         image = truncate_image_name(container.image)
         status = ContainerStatus.get_cli_status(container, result[:needs_update], result[:error])
         reason = result[:reason] || ""
@@ -263,7 +216,7 @@ module Mangrullo
         io << "  <tbody>\n"
         results.each do |result|
           container = result[:container]
-          name = container.name.lchop('/')
+          name = ContainerNameUtils.normalize_name_string(container.name)
           image = truncate_image_name(container.image, 50)
           status = result[:updated] ? "Updated" : ContainerStatus.get_cli_status(container, nil, result[:error])
           css_class = ContainerStatus.get_css_class(container, nil, result[:error])
@@ -330,7 +283,7 @@ module Mangrullo
         io << "  <tbody>\n"
         results.each do |result|
           container = result[:container]
-          name = container.name.lchop('/')
+          name = ContainerNameUtils.normalize_name_string(container.name)
           image = truncate_image_name(container.image, 50)
           status = ContainerStatus.get_cli_status(container, result[:needs_update], result[:error])
           css_class = ContainerStatus.get_css_class(container, result[:needs_update], result[:error])
@@ -386,7 +339,7 @@ module Mangrullo
 
     # Format container info for logging
     def self.format_container_for_log(container : ContainerInfo) : String
-      "#{container.name.lchop('/')} (#{truncate_image_name(container.image, 30)})"
+      "#{ContainerNameUtils.normalize_name_string(container.name)} (#{truncate_image_name(container.image, 30)})"
     end
 
     # Format error message with context

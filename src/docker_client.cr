@@ -2,6 +2,7 @@ require "docr"
 require "./types"
 require "./error_handling"
 require "./constants"
+require "./container_name_utils"
 
 module Mangrullo
   # Custom Docker client that supports configurable socket paths
@@ -121,17 +122,7 @@ module Mangrullo
 
         containers.map do |container|
           # Defensive handling of container names
-          container_name = if container.names && !container.names.empty?
-                             container.names.first
-                           else
-                             # Fallback to first 12 chars of container ID, or full ID if shorter
-                             container_id = container.id
-                             if container_id.size > 12
-                               container_id[0..12]
-                             else
-                               container_id
-                             end
-                           end
+          container_name = Mangrullo::ContainerNameUtils.normalize_name(container)
 
           ContainerInfo.new(
             id: container.id,
@@ -159,16 +150,7 @@ module Mangrullo
               containers = @api.containers.list(all: all)
               containers.map do |container|
                 # Same mapping logic as above
-                container_name = if container.names && !container.names.empty?
-                                   container.names.first
-                                 else
-                                   container_id = container.id
-                                   if container_id.size > 12
-                                     container_id[0..12]
-                                   else
-                                     container_id
-                                   end
-                                 end
+                container_name = Mangrullo::ContainerNameUtils.normalize_name(container)
                 ContainerInfo.new(
                   id: container.id,
                   name: container_name,
@@ -447,19 +429,7 @@ module Mangrullo
     end
 
     private def normalize_container_name(container) : String
-      if container.responds_to?(:names) && container.names && !container.names.empty?
-        container.names.first
-      elsif container.responds_to?(:name) && container.name && !container.name.empty?
-        container.name
-      else
-        # Fallback to truncated container ID
-        container_id = container.id
-        if container_id.size > Mangrullo::Constants::Docker::CONTAINER_ID_TRUNCATE_LENGTH
-          container_id[0..Mangrullo::Constants::Docker::CONTAINER_ID_TRUNCATE_LENGTH]
-        else
-          container_id
-        end
-      end
+      Mangrullo::ContainerNameUtils.normalize_name(container)
     end
 
     def running_containers : Array(ContainerInfo)

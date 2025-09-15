@@ -5,6 +5,9 @@ require "./container_status"
 require "./container_filter"
 require "./result_processor"
 require "./display_formatter"
+require "./container_name_utils"
+require "./image_name_parser"
+require "./string_display_utils"
 require "progress"
 require "colorize"
 require "./constants"
@@ -57,9 +60,9 @@ module Mangrullo
       Log.debug { "  Remote digest before: #{remote_digest_before}" }
 
       # Extract image name and tag
-      image_parts = container.image.split(":")
-      image_name = image_parts[0]
-      image_tag = image_parts.size > 1 ? image_parts[1] : "latest"
+      parsed_image = ImageNameParser.parse(container.image)
+      image_name = parsed_image[:repository]
+      image_tag = parsed_image[:tag]
 
       # Pull the new image
       Log.info { "Pulling new image: #{container.image}" }
@@ -136,9 +139,7 @@ module Mangrullo
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
         normalized_input_names = container_names.map { |name| ContainerFilter.normalize_container_name(name) }
         containers = containers.select { |container|
-          # Check both the actual container name and a version without leading slash
-          normalized_input_names.includes?(container.name) ||
-            normalized_input_names.includes?(container.name.lchop('/'))
+          normalized_input_names.includes?(ContainerNameUtils.normalize_name_string(container.name))
         }
       end
 
@@ -162,9 +163,7 @@ module Mangrullo
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
         normalized_input_names = container_names.map { |name| ContainerFilter.normalize_container_name(name) }
         containers = containers.select { |container|
-          # Check both the actual container name and a version without leading slash
-          normalized_input_names.includes?(container.name) ||
-            normalized_input_names.includes?(container.name.lchop('/'))
+          normalized_input_names.includes?(ContainerNameUtils.normalize_name_string(container.name))
         }
       end
 
@@ -389,8 +388,8 @@ module Mangrullo
       if dry_run
         # Dry run format
         # Calculate column widths with limits
-        name_width = [results.max_of?(&.[:container].name.lchop('/').size) || 0, 25].min
-        image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size }, 40].min
+        name_width = [results.max_of? { |result| ContainerNameUtils.normalize_name_string(result[:container].name).size } || 0, 25].min
+        image_width = [results.max_of { |result| ImageNameParser.display_name(result[:container].image).size }, 40].min
         reason_width = [results.max_of { |result| (result[:reason] || "").size }, 30].min
 
         # Print header
@@ -400,11 +399,11 @@ module Mangrullo
 
         # Print rows
         results.each do |result|
-          container_name = truncate_string(result[:container].name.lchop('/'), name_width)
-          image_name = truncate_image_name(result[:container].image)
+          container_name = StringDisplayUtils.truncate(ContainerNameUtils.normalize_name_string(result[:container].name), name_width)
+          image_name = ImageNameParser.display_name(result[:container].image)
 
           # Use the reason as the action since it's more descriptive
-          action = truncate_string(result[:reason] || "Up to date", reason_width)
+          action = StringDisplayUtils.truncate(result[:reason] || "Up to date", reason_width)
 
           # Color based on update status
           if result[:needs_update]
@@ -427,8 +426,8 @@ module Mangrullo
       else
         # Normal run format
         # Calculate column widths with limits
-        name_width = [results.max_of?(&.[:container].name.lchop('/').size) || 0, 20].min
-        image_width = [results.max_of { |result| truncate_image_name(result[:container].image).size }, 35].min
+        name_width = [results.max_of? { |result| ContainerNameUtils.normalize_name_string(result[:container].name).size } || 0, 20].min
+        image_width = [results.max_of { |result| ImageNameParser.display_name(result[:container].image).size }, 35].min
         status_width = 15
 
         # Print header
@@ -438,8 +437,8 @@ module Mangrullo
 
         # Print rows
         results.each do |result|
-          container_name = truncate_string(result[:container].name.lchop('/'), name_width)
-          image_name = truncate_image_name(result[:container].image)
+          container_name = StringDisplayUtils.truncate(ContainerNameUtils.normalize_name_string(result[:container].name), name_width)
+          image_name = ImageNameParser.display_name(result[:container].image)
           status = get_status_string(result)
 
           # Color the status
@@ -469,25 +468,13 @@ module Mangrullo
       puts "=" * 80 + "\n"
     end
 
-    # Keep original behavior for compatibility
+    # Keep original behavior for compatibility - delegate to ImageNameParser
     private def truncate_image_name(image : String) : String
-      # Truncate SHA256 digests
-      if image.includes?("sha256:")
-        # Replace sha256:... with sha256:...
-        if match = image.match(/^(.*?sha256:)([0-9a-f]{64})$/)
-          sha_length = Mangrullo::Constants::Version::SHA256_TRUNCATE_LENGTH - 1
-          return "#{match[1]}#{match[2][0..sha_length]}..."
-        end
-      end
-
-      # For long image names, truncate to reasonable length
-      max_width = Mangrullo::Constants::Table::MAX_COLUMN_WIDTH
-      prefix_length = Mangrullo::Constants::Table::SHA256_PREFIX_TRUNCATE - 1
-      image.size > max_width ? "#{image[0..prefix_length]}..." : image
+      ImageNameParser.display_name(image, Mangrullo::Constants::Table::MAX_COLUMN_WIDTH)
     end
 
     private def truncate_string(str : String, max_length : Int) : String
-      DisplayFormatter.truncate_string(str, max_length)
+      StringDisplayUtils.truncate(str, max_length)
     end
 
     # Use ContainerStatus instead

@@ -20,7 +20,7 @@ describe "DockerClient private methods" do
       container.names = ["/test-container", "/container-alias"]
 
       result = client.expose_normalize_container_name(container)
-      result.should eq("/test-container")
+      result.should eq("test-container")
     end
 
     it "uses container name when names array is empty" do
@@ -31,7 +31,7 @@ describe "DockerClient private methods" do
       container.name = "/container-name"
 
       result = client.expose_normalize_container_name(container)
-      result.should eq("/container-name")
+      result.should eq("container-name")
     end
 
     it "truncates long container IDs as fallback" do
@@ -43,7 +43,7 @@ describe "DockerClient private methods" do
       container.id = "abcd1234567890abcd1234567890abcd12345678"
 
       result = client.expose_normalize_container_name(container)
-      result.should eq("abcd123456789")
+      result.should eq("abcd12345678")
     end
 
     it "returns short container IDs as-is" do

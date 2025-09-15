@@ -2,6 +2,7 @@ require "ecr"
 require "./container_status"
 require "./container_filter"
 require "./display_formatter"
+require "./container_state_helper"
 
 class WebViews
   def initialize(@update_manager : Mangrullo::UpdateManager)
@@ -16,12 +17,7 @@ class WebViews
     total_containers = containers.size
     # ameba:disable Lint/UselessAssign
     updates_available = containers.count do |container|
-      container_state = Mangrullo::ContainerState.instance
-      if data = container_state.container(container.id)
-        data.update_info.try(&.[:needs_update]) == true
-      else
-        false
-      end
+      Mangrullo::ContainerStateHelper.needs_update?(container.id)
     end
 
     # Render the ECR template directly from file
