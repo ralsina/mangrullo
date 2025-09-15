@@ -393,7 +393,7 @@ module Mangrullo
         .value || nil
     end
 
-    private def to_container_info(container : Docr::Types::Container) : ContainerInfo
+    private def to_container_info(container : Docr::Types::ContainerSummary) : ContainerInfo
       container_name = Mangrullo::ContainerNameUtils.normalize_name(container)
 
       ContainerInfo.new(
