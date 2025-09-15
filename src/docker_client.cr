@@ -119,21 +119,7 @@ module Mangrullo
     def list_containers(all : Bool = false, filters : Hash(String, Array(String)) = {} of String => Array(String)) : Array(ContainerInfo)
       with_docker_api_lock("list containers") do
         containers = @api.containers.list(all: all)
-
-        containers.map do |container|
-          # Defensive handling of container names
-          container_name = Mangrullo::ContainerNameUtils.normalize_name(container)
-
-          ContainerInfo.new(
-            id: container.id,
-            name: container_name,
-            image: container.image,
-            image_id: container.image_id,
-            labels: container.labels || {} of String => String,
-            status: container.status || "unknown",
-            created: Time.unix(container.created)
-          )
-        end
+        containers.map { |container| to_container_info(container) }
       end
     rescue ex : JSON::ParseException | Docr::Errors::DockerAPIError
       # For list_containers, we'll retry malformed responses
@@ -148,19 +134,7 @@ module Mangrullo
           begin
             return with_docker_api_lock("list containers retry") do
               containers = @api.containers.list(all: all)
-              containers.map do |container|
-                # Same mapping logic as above
-                container_name = Mangrullo::ContainerNameUtils.normalize_name(container)
-                ContainerInfo.new(
-                  id: container.id,
-                  name: container_name,
-                  image: container.image,
-                  image_id: container.image_id,
-                  labels: container.labels || {} of String => String,
-                  status: container.status || "unknown",
-                  created: Time.unix(container.created)
-                )
-              end
+              containers.map { |container| to_container_info(container) }
             end
           rescue ex
             # Continue retrying
@@ -177,16 +151,7 @@ module Mangrullo
           containers = @api.containers.list(all: true, filters: {"id" => [container_id]})
           return nil if containers.empty?
 
-          container = containers.first
-          ContainerInfo.new(
-            id: container.id,
-            name: normalize_container_name(container),
-            image: container.image,
-            image_id: container.image_id,
-            labels: container.labels || {} of String => String,
-            status: container.status || "unknown",
-            created: Time.unix(container.created)
-          )
+          to_container_info(containers.first)
         end
       end.value || nil
     end
@@ -426,6 +391,20 @@ module Mangrullo
         end
       end
         .value || nil
+    end
+
+    private def to_container_info(container : Docr::Types::Container) : ContainerInfo
+      container_name = Mangrullo::ContainerNameUtils.normalize_name(container)
+
+      ContainerInfo.new(
+        id: container.id,
+        name: container_name,
+        image: container.image,
+        image_id: container.image_id,
+        labels: container.labels || {} of String => String,
+        status: container.status || "unknown",
+        created: Time.unix(container.created)
+      )
     end
 
     private def normalize_container_name(container) : String

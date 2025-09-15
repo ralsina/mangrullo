@@ -141,19 +141,12 @@ class WebServer
         containers = Mangrullo::ContainerState.instance.containers
 
         results = containers.map do |data|
-          # Extract update info, considering allow_major preference
           update_info = data.update_info
-          needs_update = false
-
-          if update_info
-            # Simple version comparison for allow_major
-            if allow_major
-              needs_update = update_info[:needs_update]
-            else
-              # Only allow minor/patch updates
-              needs_update = update_info[:needs_update] && !major_update?(update_info[:local_version], update_info[:remote_version])
-            end
-          end
+          needs_update = if update_info && update_info[:needs_update]
+                           allow_major || !major_update?(update_info[:local_version], update_info[:remote_version])
+                         else
+                           false
+                         end
 
           {
             id:           data.container.id,

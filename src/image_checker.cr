@@ -123,45 +123,7 @@ module Mangrullo
     end
 
     private def fetch_registry_tags(registry_host : String, repository_path : String) : HTTP::Client::Response?
-      # Try authenticated client first
-      auth_client = create_authenticated_client(registry_host, repository_path)
-
-      response = if auth_client
-                   Log.debug { "Using authenticated client for #{registry_host}" }
-                   auth_client.get("/v2/#{repository_path}/tags/list")
-                 else
-                   # Fall back to unauthenticated client for registries that don't require auth
-                   Log.debug { "Using unauthenticated client for #{registry_host}" }
-                   registry_client = create_registry_client(registry_host)
-                   registry_client.get("/v2/#{repository_path}/tags/list")
-                 end
-
-      Log.debug { "Tags response for #{registry_host}/#{repository_path} - Status: #{response.status_code}" }
-
-      if response.status_code != 200
-        Log.error { "Registry returned status #{response.status_code} fetching tags for #{registry_host}/#{repository_path}" }
-        Log.debug { "Response body: #{response.body}" }
-
-        # For 404 errors, provide more helpful information
-        if response.status_code == 404
-          Log.error { "Image repository not found. This could mean:" }
-          Log.error { "1. The repository doesn't exist in the registry" }
-          Log.error { "2. The repository path is incorrect" }
-          Log.error { "3. Authentication is required for this repository" }
-          Log.error { "4. The repository name has been changed or moved" }
-          Log.error { "   Expected repository path: #{repository_path}" }
-          Log.error { "   Full URL: https://#{registry_host}/v2/#{repository_path}/tags/list" }
-        end
-        return nil
-      end
-
-      response
-    rescue ex : Socket::Error | IO::Error
-      Log.error { "Network error fetching tags from #{registry_host}: #{ex.message}" }
-      nil
-    rescue ex
-      Log.error { "Unexpected error fetching tags from #{registry_host}: #{ex.message}" }
-      nil
+      fetch_from_registry(registry_host, repository_path, "tags/list")
     end
 
     private def parse_versions_from_response(response : HTTP::Client::Response) : Array(Version)
@@ -245,62 +207,58 @@ module Mangrullo
         "Accept"     => "application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.manifest.v1+json",
         "User-Agent" => "mangrullo/1.0",
       }
+      response = fetch_from_registry(registry_host, repository_path, "manifests/#{tag}", headers)
 
+      if response && response.status_code == 200
+        digest_header = response.headers["Docker-Content-Digest"]?
+        Log.debug { "Docker-Content-Digest header: #{digest_header}" }
+
+        # If we got a manifest list, we need to parse it to find the manifest for our architecture
+        content_type = response.headers["Content-Type"]?
+        if content_type && content_type.includes?("manifest.list")
+          Log.debug { "Got manifest list, need to find architecture-specific manifest" }
+          Log.debug { "Manifest list body: #{response.body}" }
+        end
+
+        # Fallback: try to extract digest from manifest body if header is missing
+        unless digest_header
+          Log.debug { "No digest header found, trying to extract from manifest body" }
+          digest_header = extract_digest_from_manifest(response.body)
+          Log.debug { "Extracted digest from manifest: #{digest_header}" }
+        end
+      end
+
+      response
+    end
+
+    private def fetch_from_registry(registry_host : String, repository_path : String, endpoint : String, headers : HTTP::Headers? = nil) : HTTP::Client::Response?
       # Try authenticated client first
       auth_client = create_authenticated_client(registry_host, repository_path)
 
       response = if auth_client
-                   Log.debug { "Using authenticated client for digest lookup on #{registry_host}" }
-                   auth_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+                   Log.debug { "Using authenticated client for #{registry_host}" }
+                   auth_client.get("/v2/#{repository_path}/#{endpoint}", headers)
                  else
-                   # Fall back to unauthenticated client
-                   Log.debug { "Using unauthenticated client for digest lookup on #{registry_host}" }
+                   # Fall back to unauthenticated client for registries that don't require auth
+                   Log.debug { "Using unauthenticated client for #{registry_host}" }
                    registry_client = create_registry_client(registry_host)
-                   registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
+                   registry_client.get("/v2/#{repository_path}/#{endpoint}", headers)
                  end
 
-      Log.debug { "Registry response for #{registry_host}/#{repository_path}:#{tag} - Status: #{response.status_code}" }
-      Log.debug { "Response headers: #{response.headers}" }
-      Log.debug { "Content-Type: #{response.headers.fetch("Content-Type", nil)}" }
+      Log.debug { "Registry response for #{registry_host}/#{repository_path}/#{endpoint} - Status: #{response.status_code}" }
 
       if response.status_code != 200
-        Log.error { "Registry returned status #{response.status_code} for #{registry_host}/#{repository_path}:#{tag}" }
+        Log.error { "Registry returned status #{response.status_code} fetching #{endpoint} for #{registry_host}/#{repository_path}" }
         Log.debug { "Response body: #{response.body}" }
-
-        # For 404 errors, provide more helpful information
-        if response.status_code == 404
-          Log.error { "Image not found in registry. This could mean:" }
-          Log.error { "1. The image doesn't exist in the registry" }
-          Log.error { "2. The repository path is incorrect" }
-          Log.error { "3. Authentication is required for this image" }
-          Log.error { "4. The image name has been changed or moved" }
-        end
         return nil
-      end
-
-      digest_header = response.headers["Docker-Content-Digest"]?
-      Log.debug { "Docker-Content-Digest header: #{digest_header}" }
-
-      # If we got a manifest list, we need to parse it to find the manifest for our architecture
-      content_type = response.headers["Content-Type"]?
-      if content_type && content_type.includes?("manifest.list")
-        Log.debug { "Got manifest list, need to find architecture-specific manifest" }
-        Log.debug { "Manifest list body: #{response.body}" }
-      end
-
-      # Fallback: try to extract digest from manifest body if header is missing
-      unless digest_header
-        Log.debug { "No digest header found, trying to extract from manifest body" }
-        digest_header = extract_digest_from_manifest(response.body)
-        Log.debug { "Extracted digest from manifest: #{digest_header}" }
       end
 
       response
     rescue ex : Socket::Error | IO::Error
-      Log.error { "Network error fetching digest from #{registry_host}: #{ex.message}" }
+      Log.error { "Network error fetching #{endpoint} from #{registry_host}: #{ex.message}" }
       nil
     rescue ex
-      Log.error { "Unexpected error fetching digest from #{registry_host}: #{ex.message}" }
+      Log.error { "Unexpected error fetching #{endpoint} from #{registry_host}: #{ex.message}" }
       nil
     end
 

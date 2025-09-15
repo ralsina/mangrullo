@@ -42,17 +42,7 @@ module Mangrullo
       Log.info { config.to_s }
 
       begin
-        results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
-
-        # Use ResultProcessor to generate summary
-        summary = ResultProcessor.generate_summary(results)
-
-        # Only show summary logs in debug mode (table shows the same info)
-        Log.debug { "Update check completed" }
-        Log.debug { ResultProcessor.format_summary_cli(summary) }
-
-        # Log errors using ResultProcessor
-        ResultProcessor.log_errors(results)
+        perform_update_check
       rescue ex : Exception
         Log.error { "Fatal error: #{ex.message}" }
         exit 1
@@ -66,16 +56,7 @@ module Mangrullo
       while running?
         begin
           Log.info { "Starting update cycle" }
-          results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
-
-          # Use ResultProcessor to generate summary
-          summary = ResultProcessor.generate_summary(results)
-
-          Log.debug { "Update cycle completed" }
-          Log.debug { ResultProcessor.format_summary_cli(summary) }
-
-          # Log errors using ResultProcessor
-          ResultProcessor.log_errors(results)
+          perform_update_check
 
           # Wait for next cycle
           Log.info { "Next check in #{config.interval} seconds" }
@@ -88,6 +69,20 @@ module Mangrullo
       end
 
       Log.info { "Mangrullo shutting down" }
+    end
+
+    private def perform_update_check
+      results = update_manager.check_and_update_containers(config.allow_major_upgrade?, config.container_names)
+
+      # Use ResultProcessor to generate summary
+      summary = ResultProcessor.generate_summary(results)
+
+      # Only show summary logs in debug mode (table shows the same info)
+      Log.debug { "Update check completed" }
+      Log.debug { ResultProcessor.format_summary_cli(summary) }
+
+      # Log errors using ResultProcessor
+      ResultProcessor.log_errors(results)
     end
 
     def dry_run
