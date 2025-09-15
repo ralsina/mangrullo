@@ -6,7 +6,23 @@
     <title>Mangrullo - Docker Container Updates</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
+        /* Override Pico.css fonts with Chivo */
+        :root {
+            --font-family: "Chivo", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            --font-family-mono: "Chivo Mono", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
+        }
+        
+        body {
+            font-family: var(--font-family);
+        }
+        
+        code, pre, kbd, samp {
+            font-family: var(--font-family-mono);
+        }
         .status-up-to-date { color: #28a745; }
         .status-update-available { color: #856404; }
         .status-error { color: #dc3545; }
@@ -304,6 +320,18 @@
             const pollInterval = setInterval(async () => {
                 try {
                     const response = await fetch(`/api/jobs/${jobId}`);
+                    
+                    // Handle 404 - job was cleaned up, assume it completed successfully
+                    if (response.status === 404) {
+                        clearInterval(pollInterval);
+                        // Update status first - this will remove the update button and add check button
+                        updateContainerStatus(containerId, 'up-to-date', null, null);
+                        showNotification('Container updated successfully!', 'success');
+                        // Container may have new ID, reload to be safe
+                        setTimeout(() => location.reload(), 1500);
+                        return;
+                    }
+                    
                     const job = await response.json();
                     
                     // Update button text with progress
@@ -316,13 +344,12 @@
                             break;
                         case 'completed':
                             clearInterval(pollInterval);
-                            button.textContent = originalButtonText;
-                            button.disabled = false;
-                            button.setAttribute('onclick', originalOnclick);
                             
                             if (job.result && job.result.updated) {
+                                // Update was successful - update status first, then clean up button
                                 updateContainerStatus(containerId, 'up-to-date', null, null);
                                 showNotification('Container updated successfully!', 'success');
+                                
                                 // Check if container was recreated
                                 if (job.result.new_container_id && job.result.new_container_id !== containerId) {
                                     // Container has a new ID, reload the page
@@ -332,6 +359,10 @@
                                     refreshData();
                                 }
                             } else {
+                                // Update wasn't successful - restore the update button
+                                button.textContent = originalButtonText;
+                                button.disabled = false;
+                                button.setAttribute('onclick', originalOnclick);
                                 showNotification('Update completed but may not have been successful', 'warning');
                             }
                             break;
@@ -359,14 +390,22 @@
                     button.textContent = originalButtonText;
                     button.disabled = false;
                     button.setAttribute('onclick', originalOnclick);
-                    showNotification('Error checking update status', 'error');
+                    
+                    // If it's a JSON parsing error and we're near the end, assume success
+                    if (error.name === 'SyntaxError' && pollCount > maxPolls * 0.8) {
+                        // Update status first - this will handle button changes properly
+                        updateContainerStatus(containerId, 'up-to-date', null, null);
+                        showNotification('Container update completed (status unclear)', 'warning');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        // Only restore button on actual errors, not assumed success
+                        showNotification('Error checking update status', 'error');
+                    }
                 }
             }, 5000); // Poll every 5 seconds
         }
 
         async function checkAllUpdates() {
-            showNotification('Checking all containers for updates...', 'info');
-            
             try {
                 // First, trigger a fresh check for all containers
                 const refreshResponse = await fetch('/api/refresh', {
@@ -383,8 +422,8 @@
                     return;
                 }
                 
-                // Wait a bit for the checks to complete, then poll for results
-                showNotification('Refresh initiated, checking for updates...', 'info');
+                // Show single notification after successful refresh initiation
+                showNotification('Checking all containers for updates...', 'info');
                 
                 // Poll every 2 seconds, up to 10 times (20 seconds total)
                 let attempts = 0;
@@ -445,16 +484,33 @@
             const allowMajor = document.getElementById('bulkAllowMajor').checked;
             const dryRun = document.getElementById('dryRun').checked;
             
+            // Disable the "Update All" button in navbar to prevent double-clicks
+            const updateAllBtn = document.querySelector('a[onclick="updateAllContainers()"]');
+            const originalUpdateAllText = updateAllBtn.textContent;
+            updateAllBtn.textContent = dryRun ? 'Dry Running...' : 'Updating All...';
+            updateAllBtn.style.pointerEvents = 'none';
+            updateAllBtn.style.opacity = '0.6';
+            
             closeBulkModal();
             
             try {
+                // Show notification about the operation starting
+                showNotification(dryRun ? 'Starting dry run...' : 'Starting bulk update...', 'info');
+                
+                // Set a longer timeout for bulk operations (5 minutes)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+                
                 const response = await fetch('/api/updates', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ allow_major: allowMajor, dry_run: dryRun })
+                    body: JSON.stringify({ allow_major: allowMajor, dry_run: dryRun }),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 const data = await response.json();
                 
@@ -477,13 +533,28 @@
                 
                 showNotification(message, successCount > 0 ? 'success' : 'info');
                 
-                // Reload after a short delay to show updates
-                if (!dryRun && successCount > 0) {
+                if (dryRun) {
+                    // For dry run, just refresh data without full reload
+                    refreshData();
+                } else {
+                    // Always reload after bulk update to ensure fresh state (containers may have new IDs)
                     setTimeout(() => location.reload(), 1500);
                 }
             } catch (error) {
                 console.error('Error in bulk update:', error);
-                showNotification('Bulk update failed', 'error');
+                
+                if (error.name === 'AbortError') {
+                    showNotification('Bulk update timed out - some containers may have been updated. Please refresh to see current status.', 'warning');
+                    // Force refresh after timeout
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotification('Bulk update failed', 'error');
+                }
+            } finally {
+                // Always restore the "Update All" button
+                updateAllBtn.textContent = originalUpdateAllText;
+                updateAllBtn.style.pointerEvents = '';
+                updateAllBtn.style.opacity = '';
             }
         }
 
