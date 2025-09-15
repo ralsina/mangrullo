@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
       
       
 
@@ -667,10 +667,14 @@
 <h3 id="building-and-running">Building and Running</h3>
 <ul>
 <li><code>crystal build src/mangrullo.cr</code> - Compile the CLI</li>
-<li><code>crystal build src/web.cr</code> - Compile the web interface</li>
+<li><code>crystal build src/web_baked.cr</code> - Compile the web interface</li>
 <li><code>crystal run src/mangrullo.cr</code> - Run the CLI</li>
-<li><code>crystal run src/web.cr</code> - Run the web interface</li>
+<li><code>crystal run src/web_baked.cr</code> - Run the web interface</li>
+<li><code>shards build</code> - Build all targets</li>
+<li><code>shards build mangrullo</code> - Build CLI target</li>
+<li><code>shards build mangrullo-web</code> - Build web interface target</li>
 <li><code>crystal tool format</code> - Format code according to Crystal style guidelines</li>
+<li><code>ameba --fix</code> - Fix linting issues automatically</li>
 </ul>
 <h3 id="testing">Testing</h3>
 <ul>
@@ -695,9 +699,12 @@
 <li><code>src/docker_client.cr</code> - Docker API wrapper and container operations</li>
 <li><code>src/image_checker.cr</code> - Image update detection and registry access</li>
 <li><code>src/update_manager.cr</code> - Update coordination with container filtering</li>
-<li><code>src/web.cr</code> - Web interface entry point</li>
-<li><code>src/web_server.cr</code> - Kemal web server implementation</li>
-<li><code>src/web_views.cr</code> - Web interface templates</li>
+<li><code>src/web_baked.cr</code> - Web interface entry point with baked assets</li>
+<li><code>src/web_server_baked.cr</code> - Kemal web server with embedded static files</li>
+<li><code>src/web_views.cr</code> - Web interface templates with auto-refresh</li>
+<li><code>src/static_assets.cr</code> - Embedded CSS, JavaScript, and images</li>
+<li><code>src/state_manager.cr</code> - Shared state management for web interface</li>
+<li><code>src/container_state.cr</code> - Container state data structures</li>
 <li><code>src/error_handling.cr</code> - Centralized error management</li>
 </ul>
 <h3 id="configuration">Configuration</h3>
@@ -715,7 +722,11 @@
 <li><strong>Multi-Registry Support</strong>: Docker Hub, GHCR, lscr.io (with proper mapping)</li>
 <li><strong>Semantic Versioning</strong>: Intelligent version comparison with major upgrade control</li>
 <li><strong>Dry Run Mode</strong>: Test updates without making changes</li>
-<li><strong>Web Interface</strong>: Optional web-based monitoring and management</li>
+<li><strong>Web Interface</strong>: Optional web-based monitoring and management with auto-refresh</li>
+<li><strong>Embedded Static Assets</strong>: All web assets baked into binary for easy deployment</li>
+<li><strong>Auto-refresh Dashboard</strong>: Real-time container status updates every 30 seconds</li>
+<li><strong>Rate Limiting Protection</strong>: 6-hour default interval to avoid Docker Hub limits</li>
+<li><strong>Multi-architecture Builds</strong>: Static binaries for Linux AMD64 and ARM64</li>
 <li><strong>Comprehensive Testing</strong>: Unit tests for all major functionality</li>
 </ul>
 <h2 id="code-style">Code Style</h2>
@@ -741,7 +752,10 @@
 - <code>docr</code> - Docker API client
 - <code>docopt</code> - Command-line parsing
 - <code>kemal</code> - Web framework
-- <code>kilt</code> - Template engine</p>
+- <code>kilt</code> - Template engine
+- <code>baked_file_system</code> - Embedded file system for static assets
+- <code>baked_file_handler</code> - Handler for baked files in Kemal
+- <code>progress</code> - Progress bars for CLI operations</p>
 <h2 id="crystal-version">Crystal Version</h2>
 <p>This project requires Crystal &gt;= 1.16.3 (developed with Crystal 1.17.1).</p>
 
@@ -795,7 +809,7 @@
       <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

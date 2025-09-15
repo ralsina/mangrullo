@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
       
       
 
@@ -372,6 +372,15 @@
   <a href="#in-progress" class="md-nav__link">
     <span class="md-ellipsis">
       🚧 In Progress
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recently-completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Recently Completed
     </span>
   </a>
   
@@ -824,6 +833,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#recently-completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Recently Completed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#planned-features" class="md-nav__link">
     <span class="md-ellipsis">
       📋 Planned Features
@@ -1209,10 +1227,17 @@
 </ul>
 <h3 id="in-progress">🚧 In Progress</h3>
 <ul>
-<li><strong>Real-time Updates</strong>: WebSocket support for live status updates</li>
+<li><strong>Real-time Updates</strong>: Auto-refresh functionality for live status updates (every 30 seconds)</li>
 <li><strong>Bulk Operations</strong>: Multi-container update functionality</li>
-<li><strong>Log Viewing</strong>: Container log streaming and viewing</li>
+<li><strong>Log Viewing</strong>: Container log viewing</li>
 <li><strong>Container Restart</strong>: Direct container restart functionality</li>
+</ul>
+<h3 id="recently-completed">✅ Recently Completed</h3>
+<ul>
+<li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images baked into binary</li>
+<li><strong>Auto-refresh Dashboard</strong>: Automatic status updates without manual refresh</li>
+<li><strong>External JavaScript</strong>: Extracted JavaScript to external files for better maintainability</li>
+<li><strong>State Management</strong>: Shared state between web requests and background operations</li>
 </ul>
 <h3 id="planned-features">📋 Planned Features</h3>
 <ul>
@@ -1228,6 +1253,8 @@
 <li><strong>Kemal</strong>: Fast, lightweight web framework for Crystal</li>
 <li><strong>Kilt</strong>: Template engine for HTML rendering</li>
 <li><strong>Crystal</strong>: High-performance programming language</li>
+<li><strong>Baked File System</strong>: Embedded static assets for easy deployment</li>
+<li><strong>State Manager</strong>: Shared state management for web operations</li>
 <li><strong>Existing Mangrullo modules</strong>: Docker client, image checker, update manager</li>
 </ul>
 <h3 id="frontend">Frontend</h3>
@@ -1235,7 +1262,8 @@
 <li><strong>Pico.css</strong>: Lightweight, semantic CSS framework</li>
 <li><strong>Vanilla JavaScript</strong>: No heavy framework dependencies</li>
 <li><strong>HTML5</strong>: Modern, semantic markup</li>
-<li><strong>WebSocket</strong>: Real-time communication (optional)</li>
+<li><strong>Auto-refresh</strong>: Periodic status updates (every 30 seconds)</li>
+<li><strong>External JavaScript Files</strong>: Modular and maintainable code structure</li>
 </ul>
 <h3 id="architecture">Architecture</h3>
 <pre><code>┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -1442,19 +1470,18 @@
 </ol>
 <h2 id="file-structure">File Structure</h2>
 <pre><code>src/
-├── web.cr                 # Web server entry point
-├── web_server.cr          # Main web server class
-├── web_views.cr           # View templates and rendering
-├── public/               # Static assets
-│   ├── css/
-│   ├── js/
-│   └── images/
-└── templates/            # HTML templates
-    ├── layout.ecr
-    ├── dashboard.ecr
-    ├── container_details.ecr
-    └── partials/
+├── web_baked.cr          # Web server entry point with baked assets
+├── web_server_baked.cr   # Main web server class with embedded static files
+├── web_views.cr          # View templates and rendering with auto-refresh
+├── static_assets.cr      # Embedded CSS, JavaScript, and images
+├── state_manager.cr      # Shared state management
+├── container_state.cr    # Container state data structures
+└── public/              # Source static assets (baked into binary)
+    ├── css/
+    ├── js/
+    └── images/
 </code></pre>
+<p><strong>Note</strong>: Static assets are now baked directly into the binary using the <code>baked_file_system</code> and <code>baked_file_handler</code> libraries, eliminating the need for separate static file deployment.</p>
 <h2 id="success-metrics">Success Metrics</h2>
 <ol>
 <li><strong>Functionality</strong>: All core container operations work via web interface</li>
@@ -1527,7 +1554,7 @@
       <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

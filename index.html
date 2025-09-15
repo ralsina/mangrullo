@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.7e37652d.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.e53b48f4.min.css">
       
       
 
@@ -270,6 +270,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pre-built-binaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-built Binaries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-docker" class="md-nav__link">
     <span class="md-ellipsis">
       Using Docker
@@ -315,6 +324,48 @@
   <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Interface
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#starting-the-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Starting the Web Interface
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-interface-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Interface Architecture
     </span>
   </a>
   
@@ -492,6 +543,15 @@
   <a href="#v010" class="md-nav__link">
     <span class="md-ellipsis">
       v0.1.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recent-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recent Updates
     </span>
   </a>
   
@@ -675,6 +735,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pre-built-binaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-built Binaries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-docker" class="md-nav__link">
     <span class="md-ellipsis">
       Using Docker
@@ -720,6 +789,48 @@
   <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Interface
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#starting-the-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Starting the Web Interface
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-interface-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Interface Architecture
     </span>
   </a>
   
@@ -902,6 +1013,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#recent-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recent Updates
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -959,6 +1079,15 @@
    <code>bash
    cp bin/mangrullo /usr/local/bin/</code></li>
 </ol>
+<h3 id="pre-built-binaries">Pre-built Binaries</h3>
+<p>Pre-built static binaries are available for multiple architectures in the <code>bin/</code> directory:</p>
+<ul>
+<li><code>mangrullo-static-linux-amd64</code> - Linux x86_64</li>
+<li><code>mangrullo-static-linux-arm64</code> - Linux ARM64</li>
+<li><code>mangrullo-web-static-linux-amd64</code> - Web interface for Linux x86_64</li>
+<li><code>mangrullo-web-static-linux-arm64</code> - Web interface for Linux ARM64</li>
+</ul>
+<p>These binaries include all dependencies and don't require Crystal to be installed on the target system.</p>
 <h3 id="using-docker">Using Docker</h3>
 <pre><code class="language-bash">docker run -d \
   --name mangrullo \
@@ -971,8 +1100,8 @@
 <pre><code class="language-bash"># Run once and exit
 mangrullo --once
 
-# Run continuously with 5-minute intervals
-mangrullo --interval=300
+# Run continuously with default 6-hour intervals
+mangrullo
 
 # Allow major version upgrades
 mangrullo --allow-major
@@ -983,11 +1112,10 @@ mangrullo --dry-run
 <h3 id="command-line-options">Command Line Options</h3>
 <pre><code>Usage:
   mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;]
-           [--log-level=&lt;level&gt;] [--once] [--dry-run] [&lt;container-name&gt;...]
-           [--help] [--version]
+           [--log-level=&lt;level&gt;] [--once] [--dry-run] [--help] [--version]
 
 Options:
-  --interval=&lt;seconds&gt;   Check interval in seconds [default: 300]
+  --interval=&lt;seconds&gt;   Check interval in seconds [default: 21600]
   --allow-major          Allow major version upgrades
   --socket=&lt;path&gt;        Docker socket path [default: /var/run/docker.sock]
   --log-level=&lt;level&gt;    Log level (debug, info, warn, error) [default: info]
@@ -999,6 +1127,7 @@ Options:
 Arguments:
   &lt;container-name&gt;       Specific container names to check (if not specified, checks all containers)
 </code></pre>
+<p><strong>Note</strong>: The default check interval is 21600 seconds (6 hours) to avoid Docker Hub registry rate limiting.</p>
 <h3 id="examples">Examples</h3>
 <p><strong>Check for updates once:</strong></p>
 <pre><code class="language-bash">mangrullo --once
@@ -1018,6 +1147,35 @@ Arguments:
 <p><strong>Use custom Docker socket:</strong></p>
 <pre><code class="language-bash">mangrullo --socket=/path/to/docker.sock
 </code></pre>
+<h2 id="web-interface">Web Interface</h2>
+<p>Mangrullo includes an optional web interface that provides a dashboard for monitoring and managing Docker container updates.</p>
+<h3 id="starting-the-web-interface">Starting the Web Interface</h3>
+<pre><code class="language-bash"># Build and run the web interface
+shards build mangrullo-web
+./bin/mangrullo-web
+</code></pre>
+<p>The web interface starts on <code>http://localhost:3000</code> and provides:</p>
+<ul>
+<li><strong>Dashboard</strong>: Real-time overview of all containers and their update status</li>
+<li><strong>Auto-refresh</strong>: Automatic updates every 30 seconds</li>
+<li><strong>Container Management</strong>: Check for updates and update individual containers</li>
+<li><strong>Detailed Views</strong>: Container information, version comparison, and logs</li>
+<li><strong>Bulk Operations</strong>: Check all containers for updates at once</li>
+</ul>
+<h3 id="features_1">Features</h3>
+<ul>
+<li><strong>Auto-refresh Dashboard</strong>: Container status automatically updates without manual refresh</li>
+<li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images are baked into the binary for easy deployment</li>
+<li><strong>Responsive Design</strong>: Works on desktop and mobile devices</li>
+<li><strong>Real-time Status</strong>: Live indicators for update checks and container operations</li>
+<li><strong>Clean Interface</strong>: Simple, intuitive design using Pico.css</li>
+</ul>
+<h3 id="web-interface-architecture">Web Interface Architecture</h3>
+<p>The web interface uses:
+- <strong>Kemal</strong>: Fast web framework for Crystal
+- <strong>Baked File System</strong>: Static assets embedded in the binary
+- <strong>State Manager</strong>: Shared state between web requests and background operations
+- <strong>Auto-refresh</strong>: JavaScript-based periodic updates</p>
 <h2 id="configuration">Configuration</h2>
 <p>Mangrullo is configured primarily through command-line arguments. There are no configuration files or environment variables to manage.</p>
 <h3 id="docker-socket">Docker Socket</h3>
@@ -1108,8 +1266,10 @@ crystal spec --verbose
 <li><strong>Update Manager</strong> (<code>src/update_manager.cr</code>): Coordinates the update process with container filtering</li>
 <li><strong>Configuration</strong> (<code>src/config.cr</code>): Command-line argument parsing</li>
 <li><strong>CLI</strong> (<code>src/cli.cr</code>): Main command-line interface</li>
-<li><strong>Web Server</strong> (<code>src/web_server.cr</code>): Web interface (optional)</li>
-<li><strong>Web Views</strong> (<code>src/web_views.cr</code>): Web interface templates</li>
+<li><strong>Web Server</strong> (<code>src/web_server_baked.cr</code>): Web interface with baked static assets (optional)</li>
+<li><strong>Web Views</strong> (<code>src/web_views.cr</code>): Web interface templates with auto-refresh</li>
+<li><strong>Static Assets</strong> (<code>src/static_assets.cr</code>): Embedded CSS, JavaScript, and images</li>
+<li><strong>State Manager</strong> (<code>src/state_manager.cr</code>): Shared state management for web interface</li>
 <li><strong>Error Handling</strong> (<code>src/error_handling.cr</code>): Centralized error management</li>
 </ul>
 <h2 id="contributing">Contributing</h2>
@@ -1153,6 +1313,15 @@ crystal spec --verbose
 <li>Web interface framework (Kemal-based)</li>
 <li>Flexible container name matching (handles both "name" and "/name")</li>
 <li>Comprehensive error handling and logging</li>
+</ul>
+<h3 id="recent-updates">Recent Updates</h3>
+<ul>
+<li><strong>Embedded Static Assets</strong>: All web interface assets (CSS, JS, images) baked into binary</li>
+<li><strong>Auto-refresh Dashboard</strong>: Web interface automatically updates every 30 seconds</li>
+<li><strong>Rate Limiting Protection</strong>: Default 6-hour check interval to avoid Docker Hub rate limits</li>
+<li><strong>Multi-architecture Builds</strong>: Static binaries available for Linux AMD64 and ARM64</li>
+<li><strong>Improved Web UI</strong>: Cleaner interface with real-time status indicators</li>
+<li><strong>External JavaScript</strong>: Extracted JavaScript to external files for better maintainability</li>
 </ul>
 
 
@@ -1205,7 +1374,7 @@ crystal spec --verbose
       <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.92b07e13.min.js"></script>
+      <script src="assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>
