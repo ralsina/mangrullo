@@ -135,7 +135,7 @@
         <article>
             <header>
                 <h3>Update Container</h3>
-                <button aria-label="Close" rel="prev" onclick="closeModal()"></button>
+                <button aria-label="Close" class="close" onclick="closeModal()"></button>
             </header>
             <p>Are you sure you want to update this container?</p>
             <label>
@@ -154,7 +154,7 @@
         <article>
             <header>
                 <h3>Update All Containers</h3>
-                <button aria-label="Close" rel="prev" onclick="closeBulkModal()"></button>
+                <button aria-label="Close" class="close" onclick="closeBulkModal()"></button>
             </header>
             <p>Are you sure you want to update all containers that have updates available?</p>
             <label>
@@ -233,7 +233,11 @@
         }
 
         async function confirmUpdate() {
-            if (!currentContainerId) return;
+            if (!currentContainerId) {
+                console.error('No container ID set for update');
+                showNotification('Error: No container selected', 'error');
+                return;
+            }
             
             const allowMajor = document.getElementById('allowMajor').checked;
             const row = findContainerRow(currentContainerId);
@@ -244,10 +248,14 @@
             
             button.textContent = 'Updating...';
             button.disabled = true;
+            
+            // Close modal AFTER saving the ID
+            const savedContainerId = currentContainerId;
             closeModal();
             
+            // Use the saved ID since closeModal() nullifies it
             try {
-                const response = await fetch(`/containers/${currentContainerId}/update`, {
+                const response = await fetch(`/containers/${savedContainerId}/update`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -257,23 +265,92 @@
                 
                 const data = await response.json();
                 
-                if (data.updated) {
-                    updateContainerStatus(currentContainerId, 'up-to-date', null, null);
+                if (data.job_id) {
+                    // Update is queued
+                    showNotification('Update job queued successfully', 'info');
+                    // Start polling for job status
+                    pollJobStatus(savedContainerId, data.job_id, button, originalText);
+                } else if (data.updated) {
+                    // Legacy response for backwards compatibility
+                    updateContainerStatus(savedContainerId, 'up-to-date', null, null);
                     showNotification('Container updated successfully!', 'success');
-                    // Reload after a short delay to show the update
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     showNotification(`Update failed: ${data.error}`, 'error');
-                    updateContainerStatus(currentContainerId, 'error', null, null);
+                    updateContainerStatus(savedContainerId, 'error', null, null);
                 }
             } catch (error) {
                 console.error('Error updating container:', error);
                 showNotification('Update failed', 'error');
-                updateContainerStatus(currentContainerId, 'error', null, null);
+                updateContainerStatus(savedContainerId, 'error', null, null);
             } finally {
                 button.textContent = originalText;
                 button.disabled = false;
             }
+        }
+        
+        // Poll for job status
+        async function pollJobStatus(containerId, jobId, button, originalButtonText) {
+            const maxPolls = 60; // Poll for up to 5 minutes (60 * 5 seconds)
+            let pollCount = 0;
+            
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/jobs/${jobId}`);
+                    const job = await response.json();
+                    
+                    // Update button text with progress
+                    switch (job.status) {
+                        case 'pending':
+                            button.textContent = 'Queued...';
+                            break;
+                        case 'running':
+                            button.textContent = 'Updating...';
+                            break;
+                        case 'completed':
+                            clearInterval(pollInterval);
+                            button.textContent = originalButtonText;
+                            button.disabled = false;
+                            
+                            if (job.result && job.result.updated) {
+                                updateContainerStatus(containerId, 'up-to-date', null, null);
+                                showNotification('Container updated successfully!', 'success');
+                                // Check if container was recreated
+                                if (job.result.new_container_id && job.result.new_container_id !== containerId) {
+                                    // Container has a new ID, reload the page
+                                    setTimeout(() => location.reload(), 1500);
+                                } else {
+                                    // Same container ID, just refresh the data
+                                    refreshData();
+                                }
+                            } else {
+                                showNotification('Update completed but may not have been successful', 'warning');
+                            }
+                            break;
+                        case 'failed':
+                            clearInterval(pollInterval);
+                            button.textContent = originalButtonText;
+                            button.disabled = false;
+                            updateContainerStatus(containerId, 'error', null, null);
+                            showNotification(`Update failed: ${job.error || 'Unknown error'}`, 'error');
+                            break;
+                    }
+                    
+                    pollCount++;
+                    if (pollCount >= maxPolls) {
+                        clearInterval(pollInterval);
+                        button.textContent = originalButtonText;
+                        button.disabled = false;
+                        showNotification('Update timed out', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error polling job status:', error);
+                    clearInterval(pollInterval);
+                    button.textContent = originalButtonText;
+                    button.disabled = false;
+                    showNotification('Error checking update status', 'error');
+                }
+            }, 5000); // Poll every 5 seconds
         }
 
         async function checkAllUpdates() {

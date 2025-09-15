@@ -86,13 +86,31 @@ module Mangrullo
       Result.new(true, result, nil)
     rescue ex : Docr::Errors::DockerAPIError
       log_and_return_error("Docker API operation: #{operation}", ex, Log::Severity::Error, context)
-      Result.new(false, nil, ex.message)
+      Result.new(false, nil, sanitize_error_message(ex.message))
     rescue ex : Socket::Error | IO::Error
       log_and_return_error("Network operation: #{operation}", ex, Log::Severity::Error, context)
-      Result.new(false, nil, ex.message)
+      Result.new(false, nil, sanitize_error_message(ex.message))
     rescue ex : Exception
       log_and_return_error("Unexpected error in: #{operation}", ex, Log::Severity::Error, context)
-      Result.new(false, nil, ex.message)
+      Result.new(false, nil, sanitize_error_message(ex.message))
+    end
+
+    # Sanitize error messages to prevent malformed output
+    def self.sanitize_error_message(message : String?) : String
+      return "" if message.nil?
+      return "" if message.empty?
+
+      # Remove or replace problematic characters
+      sanitized = message.not_nil!.gsub("\0", "")
+      sanitized = sanitized.gsub(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/, "")
+
+      # Limit length to prevent excessive log spam
+      if sanitized.size > 500
+        sanitized = "#{sanitized[0..496]}..."
+      end
+
+      # Ensure string is valid UTF-8
+      sanitized.scrub
     end
 
     # Wrap HTTP operations with consistent error handling

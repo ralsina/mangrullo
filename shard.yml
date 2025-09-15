@@ -8,7 +8,7 @@ targets:
   mangrullo:
     main: src/mangrullo.cr
   mangrullo-web:
-    main: src/web_baked.cr
+    main: src/web.cr
 
 crystal: '>= 1.16.3'
 

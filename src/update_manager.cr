@@ -37,10 +37,10 @@ module Mangrullo
       end
     end
 
-    def update_container(container : ContainerInfo, allow_major_upgrade : Bool = false) : NamedTuple(container: ContainerInfo, updated: Bool, error: String?)
+    def update_container(container : ContainerInfo, allow_major_upgrade : Bool = false) : NamedTuple(container: ContainerInfo, new_container_id: String?, updated: Bool, error: String?)
       # Check if update is needed
       unless @image_checker.needs_update?(container, allow_major_upgrade)
-        return {container: container, updated: false, error: nil}
+        return {container: container, new_container_id: nil, updated: false, error: nil}
       end
 
       Log.info { "Update needed for container: #{container.name}" }
@@ -64,7 +64,7 @@ module Mangrullo
       # Pull the new image
       Log.info { "Pulling new image: #{container.image}" }
       unless @docker_client.pull_image(image_name, image_tag)
-        return {container: container, updated: false, error: "Failed to pull image"}
+        return {container: container, new_container_id: nil, updated: false, error: "Failed to pull image"}
       end
 
       # Debug: Show state after pull
@@ -88,7 +88,7 @@ module Mangrullo
       Log.debug { "Using image: #{image_to_use}" }
       new_container_id = @docker_client.recreate_container_with_new_image(container.id, image_to_use)
       unless new_container_id
-        return {container: container, updated: false, error: "Failed to recreate container with new image"}
+        return {container: container, new_container_id: nil, updated: false, error: "Failed to recreate container with new image"}
       end
 
       Log.info { "Container successfully recreated with new image. New container ID: #{new_container_id}" }
@@ -116,16 +116,16 @@ module Mangrullo
         Log.warn { "Could not verify new container state - container may not be running" }
       end
 
-      {container: container, updated: true, error: nil}
+      {container: updated_container || container, new_container_id: new_container_id, updated: true, error: nil}
     rescue ex : Docr::Errors::DockerAPIError
       Log.error { "Docker API error updating container #{container.name}: #{ex.message}" }
-      {container: container, updated: false, error: "Docker API error: #{ex.message}"}
+      {container: container, new_container_id: nil, updated: false, error: "Docker API error: #{ex.message}"}
     rescue ex : Socket::Error | IO::Error
       Log.error { "Network error updating container #{container.name}: #{ex.message}" }
-      {container: container, updated: false, error: "Network error: #{ex.message}"}
+      {container: container, new_container_id: nil, updated: false, error: "Network error: #{ex.message}"}
     rescue ex
       Log.error { "Unexpected error updating container #{container.name}: #{ex.message}" }
-      {container: container, updated: false, error: "Unexpected error: #{ex.message}"}
+      {container: container, new_container_id: nil, updated: false, error: "Unexpected error: #{ex.message}"}
     end
 
     def get_containers_needing_update(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(ContainerInfo)

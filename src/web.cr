@@ -1,5 +1,7 @@
 require "kemal"
 require "kilt"
+require "baked_file_handler"
+require "./static_assets"
 require "./web_server"
 require "./types"
 require "./docker_client"
@@ -13,6 +15,9 @@ module Mangrullo
   # Web server entry point
   Kemal.config.port = Mangrullo::Constants::Web::DEFAULT_PORT
   Kemal.config.host_binding = Mangrullo::Constants::Web::DEFAULT_HOST
+
+  # Add handler for static files
+  add_handler BakedFileHandler::BakedFileHandler.new(StaticAssets)
 
   # Initialize the web server
   WebServer.new

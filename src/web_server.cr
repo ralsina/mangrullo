@@ -1,11 +1,12 @@
 require "kemal"
 require "kilt"
-require "json"
+require "baked_file_handler"
 require "./types"
 require "./container_state"
 require "./state_manager"
 require "./docker_client"
 require "./update_manager"
+require "./update_job_queue"
 require "./config"
 require "./web_views"
 require "./error_handling"
@@ -54,36 +55,25 @@ class WebServer
   end
 
   private def setup_routes
-    # Serve static files
-    public_folder "public"
+    setup_page_routes
+    setup_container_routes
+    setup_api_routes
+    setup_error_handlers
+  end
 
+  private def setup_page_routes
     # Main page
     get "/" do |env|
       begin
-        containers = Mangrullo::ContainerState.instance.get_containers.map(&.container)
+        containers = Mangrullo::ContainerState.instance.containers.map(&.container)
         @web_views.dashboard(env, containers)
       rescue ex
         handle_web_error("loading dashboard", env, ex, json_response: false)
       end
     end
+  end
 
-    # Container details
-    get "/containers/:id" do |env|
-      begin
-        container_id = env.params.url["id"]
-        container_data = Mangrullo::ContainerState.instance.get_container(container_id)
-
-        if container_data
-          @web_views.container_details(env, container_data.container, container_data.update_info)
-        else
-          env.response.status_code = 404
-          "Container not found"
-        end
-      rescue ex
-        handle_web_error("getting container details", env, ex, json_response: false)
-      end
-    end
-
+  private def setup_container_routes
     # Check for updates
     post "/containers/:id/check-update" do |env|
       begin
@@ -114,16 +104,20 @@ class WebServer
     post "/containers/:id/update" do |env|
       begin
         container_id = env.params.url["id"]
-        container_data = Mangrullo::ContainerState.instance.get_container(container_id)
+        container_data = Mangrullo::ContainerState.instance.container(container_id)
         allow_major = env.params.body["allow_major"]?.try(&.downcase) == "true"
 
         if container_data
-          result = @update_manager.update_container(container_data.container, allow_major)
+          # Enqueue the update job
+          job_queue = Mangrullo::UpdateJobQueue.instance
+          job_id = job_queue.enqueue_update(container_id, container_data.container.name.lchop('/'), allow_major)
+
           env.response.content_type = "application/json"
           {
-            container_id: container_id,
-            updated:      result[:updated],
-            error:        result[:error],
+            job_id:           job_id,
+            container_id:     container_id,
+            status:           "queued",
+            message:          "Update job queued successfully",
           }.to_json
         else
           env.response.status_code = 404
@@ -134,11 +128,34 @@ class WebServer
       end
     end
 
+    # Restart container
+    post "/containers/:id/restart" do |env|
+      begin
+        container_id = env.params.url["id"]
+
+        # Use the StateManager's docker client
+        docker_client = Mangrullo::StateManager.instance.docker_client
+
+        if docker_client.container_exists?(container_id)
+          success = docker_client.restart_container(container_id)
+          env.response.content_type = "application/json"
+          {success: success}.to_json
+        else
+          env.response.status_code = 404
+          {error: "Container not found"}.to_json
+        end
+      rescue ex
+        handle_web_error("restarting container", env, ex)
+      end
+    end
+  end
+
+  private def setup_api_routes
     # Check all containers for updates
     get "/api/updates" do |env|
       begin
         allow_major = env.params.query["allow_major"]?.try(&.downcase) == "true"
-        containers = Mangrullo::ContainerState.instance.get_containers
+        containers = Mangrullo::ContainerState.instance.containers
 
         results = containers.map do |data|
           # Extract update info, considering allow_major preference
@@ -209,53 +226,6 @@ class WebServer
       end
     end
 
-    # Container logs
-    get "/containers/:id/logs" do |env|
-      begin
-        container_id = env.params.url["id"]
-        tail = env.params.query["tail"]?.try(&.to_i) || Mangrullo::Constants::Docker::DEFAULT_LOG_TAIL
-
-        # Use the StateManager's docker client
-        docker_client = Mangrullo::StateManager.instance.docker_client
-
-        if docker_client.container_exists?(container_id)
-          logs = docker_client.get_container_logs(container_id, tail)
-          env.response.content_type = "text/plain"
-          logs
-        else
-          env.response.status_code = 404
-          "Container not found"
-        end
-      rescue ex
-        handle_web_error("getting container logs", env, ex, json_response: false)
-      end
-    end
-    # Bulk operations page
-    get "/bulk-operations" do |env|
-      @web_views.bulk_operations(env)
-    end
-
-    # Restart container
-    post "/containers/:id/restart" do |env|
-      begin
-        container_id = env.params.url["id"]
-
-        # Use the StateManager's docker client
-        docker_client = Mangrullo::StateManager.instance.docker_client
-
-        if docker_client.container_exists?(container_id)
-          success = docker_client.restart_container(container_id)
-          env.response.content_type = "application/json"
-          {success: success}.to_json
-        else
-          env.response.status_code = 404
-          {error: "Container not found"}.to_json
-        end
-      rescue ex
-        handle_web_error("restarting container", env, ex)
-      end
-    end
-
     # Force refresh all containers
     post "/api/refresh" do |env|
       begin
@@ -274,7 +244,7 @@ class WebServer
     # Get system status
     get "/api/status" do |env|
       begin
-        status = Mangrullo::StateManager.instance.get_status
+        status = Mangrullo::StateManager.instance.status
         env.response.content_type = "application/json"
         status.to_json
       rescue ex
@@ -285,7 +255,7 @@ class WebServer
     # Get all containers with update info
     get "/api/containers" do |env|
       begin
-        containers = Mangrullo::ContainerState.instance.get_containers
+        containers = Mangrullo::ContainerState.instance.containers
         env.response.content_type = "application/json"
         containers.map do |data|
           {
@@ -302,11 +272,46 @@ class WebServer
       end
     end
 
+    # Job status endpoints
+    get "/api/jobs/:job_id" do |env|
+      begin
+        job_id = env.params.url["job_id"]
+        job_queue = Mangrullo::UpdateJobQueue.instance
+        job = job_queue.get_job(job_id)
+
+        if job
+          env.response.content_type = "application/json"
+          job.to_h.to_json
+        else
+          env.response.status_code = 404
+          {error: "Job not found"}.to_json
+        end
+      rescue ex
+        handle_web_error("getting job status", env, ex)
+      end
+    end
+
+    # Get jobs for a specific container
+    get "/api/containers/:container_id/jobs" do |env|
+      begin
+        container_id = env.params.url["container_id"]
+        job_queue = Mangrullo::UpdateJobQueue.instance
+        jobs = job_queue.get_container_jobs(container_id)
+
+        env.response.content_type = "application/json"
+        jobs.map(&.to_h).to_json
+      rescue ex
+        handle_web_error("getting container jobs", env, ex)
+      end
+    end
+
     # Health check
     get "/health" do
       "OK"
     end
+  end
 
+  private def setup_error_handlers
     # 404 handler
     error 404 do
       "Page not found"

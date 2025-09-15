@@ -170,6 +170,13 @@ module Mangrullo
       end
     end
 
+    # Remove a specific container (e.g., when it's recreated with a new ID)
+    def remove_container(container_id : String)
+      @mutex.synchronize do
+        @containers.delete(container_id)
+      end
+    end
+
     # Clear all data (for testing or reset)
     def clear
       @mutex.synchronize do
