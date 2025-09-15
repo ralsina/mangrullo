@@ -55,7 +55,8 @@ module Mangrullo
     end
 
     def initialize
-      @jobs = Hash(String, UpdateJob).new
+      @pending_jobs = Deque(UpdateJob).new
+      @active_jobs = Hash(String, UpdateJob).new  # For tracking active jobs by ID
       @mutex = Mutex.new
       @worker_running = false
       start_worker
@@ -66,7 +67,7 @@ module Mangrullo
       job = UpdateJob.new(container_id, container_name, allow_major)
 
       @mutex.synchronize do
-        @jobs[job.id] = job
+        @pending_jobs.push(job)
         Log.info { "Update job queued for container #{container_name} (ID: #{job.id})" }
       end
 
@@ -76,21 +77,21 @@ module Mangrullo
     # Get job status
     def get_job(job_id : String) : UpdateJob?
       @mutex.synchronize do
-        @jobs[job_id]?
+        @active_jobs[job_id]? || @pending_jobs.find { |job| job.id == job_id }
       end
     end
 
     # Get all jobs
     def all_jobs : Array(UpdateJob)
       @mutex.synchronize do
-        @jobs.values.to_a
+        (@pending_jobs.to_a + @active_jobs.values).to_a
       end
     end
 
     # Get jobs for a specific container
     def get_container_jobs(container_id : String) : Array(UpdateJob)
       @mutex.synchronize do
-        @jobs.values.select { |job| job.container_id == container_id }
+        all_jobs.select { |job| job.container_id == container_id }
       end
     end
 
@@ -115,10 +116,9 @@ module Mangrullo
       cutoff_time = Time.utc - older_than_seconds.seconds
 
       @mutex.synchronize do
-        @jobs.reject! do |_, job|
-          (job.status == JobStatus::Completed || job.status == JobStatus::Failed) &&
-            job.completed_at && job.completed_at < cutoff_time
-        end
+        # Note: With deque-based implementation, jobs are automatically removed
+        # when completed/failed, so this method is now a no-op
+        # Kept for API compatibility
       end
     end
 
@@ -139,12 +139,13 @@ module Mangrullo
 
     private def process_next_job
       job = @mutex.synchronize do
-        # Find the next pending job
-        next_job = @jobs.values.find { |pending_job| pending_job.status == JobStatus::Pending }
+        # Get the next job from the front of the queue
+        next_job = @pending_jobs.shift?
 
         if next_job
           next_job.status = JobStatus::Running
           next_job.started_at = Time.utc
+          @active_jobs[next_job.id] = next_job
           Log.info { "Starting update job for container #{next_job.container_name} (ID: #{next_job.id})" }
         end
 
@@ -162,8 +163,8 @@ module Mangrullo
           job.completed_at = Time.utc
           job.result = result
           Log.info { "Update job completed for container #{job.container_name} (ID: #{job.id})" }
-          # Remove completed job from queue
-          @jobs.delete(job.id)
+          # Remove completed job from active tracking
+          @active_jobs.delete(job.id)
         end
       rescue ex
         @mutex.synchronize do
@@ -171,8 +172,8 @@ module Mangrullo
           job.completed_at = Time.utc
           job.error = ex.message
           Log.error { "Update job failed for container #{job.container_name} (ID: #{job.id}): #{ex.message}" }
-          # Remove failed job from queue
-          @jobs.delete(job.id)
+          # Remove failed job from active tracking
+          @active_jobs.delete(job.id)
         end
       end
     end
