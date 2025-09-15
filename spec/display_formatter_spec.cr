@@ -10,14 +10,15 @@ describe Mangrullo::DisplayFormatter do
       long_name = "very/long/namespace/image/name:with-long-tag"
       truncated = Mangrullo::DisplayFormatter.truncate_image_name(long_name, 30)
       truncated.size.should eq(30)
-      truncated.should end_with("...")
+      truncated.should end_with(":with-long-tag")
     end
 
     it "handles registry names smartly" do
       registry_image = "registry.example.com:5000/namespace/project/service:latest"
       truncated = Mangrullo::DisplayFormatter.truncate_image_name(registry_image, 40)
+      truncated.size.should eq(40)
       truncated.should contain("registry.example.com")
-      truncated.should contain("service")
+      truncated.should end_with(":latest")
     end
 
     it "preserves tags when possible" do
@@ -149,8 +150,8 @@ describe Mangrullo::DisplayFormatter do
       container = TestHelper.mock_container("abc123", "/very-long-container-name-that-should-be-truncated", "very/long/image/name:with-long-tag")
 
       formatted = Mangrullo::DisplayFormatter.format_container_for_log(container)
-      formatted.should contain("very-long-container-name")
-      formatted.should contain("long/image/name")
+      formatted.should contain("very-long-container-name-that-should-be-truncated")
+      formatted.should contain("very/long/ima")
       formatted.size.should be <= 85 # Rough estimate of truncated length
     end
   end

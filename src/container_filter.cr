@@ -1,6 +1,7 @@
 require "./types"
 require "./docker_client"
 require "./error_handling"
+require "./container_name_utils"
 
 module Mangrullo
   # Container filtering and normalization utilities
@@ -12,18 +13,17 @@ module Mangrullo
 
     # Denormalize container name (remove leading slash for display)
     def self.denormalize_container_name(name : String) : String
-      name.lchop('/')
+      ContainerNameUtils.normalize_name_string(name)
     end
 
     # Filter containers by name list
     def self.filter_containers_by_name(containers : Array(ContainerInfo), container_names : Array(String)) : Array(ContainerInfo)
       return containers if container_names.empty?
 
-      normalized_input_names = container_names.map { |name| normalize_container_name(name) }
+      normalized_input_names = container_names.map { |name| ContainerNameUtils.normalize_name_string(name) }
 
       containers.select do |container|
-        normalized_input_names.includes?(container.name) ||
-          normalized_input_names.includes?(container.name.lchop('/'))
+        normalized_input_names.includes?(ContainerNameUtils.normalize_name_string(container.name))
       end
     end
 
@@ -42,7 +42,7 @@ module Mangrullo
 
       containers.find do |container|
         container.name == normalized_name ||
-          container.name.lchop('/') == normalized_name.lchop('/')
+          ContainerNameUtils.normalize_name_string(container.name) == ContainerNameUtils.normalize_name_string(normalized_name)
       end
     end
 
@@ -75,7 +75,7 @@ module Mangrullo
 
     # Sort containers by name
     def self.sort_containers_by_name(containers : Array(ContainerInfo), ascending : Bool = true) : Array(ContainerInfo)
-      containers.sort_by(&.name.lchop('/'))
+      containers.sort_by { |container| ContainerNameUtils.normalize_name_string(container.name) }
     end
 
     # Sort containers by image
@@ -146,7 +146,7 @@ module Mangrullo
       suggestions = [] of String
 
       containers.each do |container|
-        display_name = container.name.lchop('/')
+        display_name = ContainerNameUtils.normalize_name_string(container.name)
         if display_name.downcase.includes?(invalid_name.downcase)
           suggestions << display_name
         end

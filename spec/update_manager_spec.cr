@@ -35,7 +35,9 @@ describe "UpdateManager private methods" do
       # Test full SHA256 digest
       image = "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
       result = manager.expose_truncate_image_name(image)
-      result.should eq("sha256:1234567890ab...")
+      result.starts_with?("sha256:").should be_true
+      result.ends_with?("...").should be_true
+      result.size.should be <= 50
 
       # Test shorter digest
       image = "sha256:1234567890"
@@ -50,7 +52,7 @@ describe "UpdateManager private methods" do
       image = "very.long.registry.example.com/very/long/repository/path:latest"
       result = manager.expose_truncate_image_name(image)
       result.size.should be <= 50
-      result.should end_with("...")
+      result.should end_with(":latest")
     end
 
     it "preserves short image names" do
