@@ -56,7 +56,7 @@ module Mangrullo
 
     def initialize
       @pending_jobs = Deque(UpdateJob).new
-      @active_jobs = Hash(String, UpdateJob).new  # For tracking active jobs by ID
+      @active_jobs = Hash(String, UpdateJob).new # For tracking active jobs by ID
       @mutex = Mutex.new
       @worker_running = false
       start_worker
@@ -113,8 +113,6 @@ module Mangrullo
 
     # Clean up completed jobs older than specified seconds
     def cleanup_old_jobs(older_than_seconds : Int = 3600)
-      cutoff_time = Time.utc - older_than_seconds.seconds
-
       @mutex.synchronize do
         # Note: With deque-based implementation, jobs are automatically removed
         # when completed/failed, so this method is now a no-op

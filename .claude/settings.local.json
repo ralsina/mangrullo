@@ -17,7 +17,11 @@
       "Bash(sed:*)",
       "Bash(grep:*)",
       "Bash(shards check:*)",
-      "Bash(ameba:*)"
+      "Bash(ameba:*)",
+      "Bash(npm install:*)",
+      "Bash(chmod:*)",
+      "Bash(node lint-js.js)",
+      "Bash(make:*)"
     ],
     "deny": [],
     "ask": []

@@ -30,7 +30,7 @@ class WebServer
 
     if json_response
       env.response.status_code = 500
-      env.response.content_type = "application/json"
+      env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
       error_message = case error
                       when Docr::Errors::DockerAPIError
                         "Docker API error"
@@ -80,14 +80,14 @@ class WebServer
 
         # Trigger update for this specific container
         if Mangrullo::StateManager.instance.force_update_container(container_id)
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           {
             container_id: container_id,
             status:       "updating",
             message:      "Update check initiated",
           }.to_json
         else
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           {
             container_id: container_id,
             status:       "error",
@@ -111,7 +111,7 @@ class WebServer
           job_queue = Mangrullo::UpdateJobQueue.instance
           job_id = job_queue.enqueue_update(container_id, container_data.container.name.lchop('/'), allow_major)
 
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           {
             job_id:       job_id,
             container_id: container_id,
@@ -137,7 +137,7 @@ class WebServer
 
         if docker_client.container_exists?(container_id)
           success = docker_client.restart_container(container_id)
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           {success: success}.to_json
         else
           env.response.status_code = 404
@@ -229,10 +229,10 @@ class WebServer
     post "/api/refresh" do |env|
       begin
         if Mangrullo::StateManager.instance.force_update
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           {success: true, message: "Refresh initiated"}.to_json
         else
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           {success: false, message: "Refresh already in progress"}.to_json
         end
       rescue ex
@@ -244,7 +244,7 @@ class WebServer
     get "/api/status" do |env|
       begin
         status = Mangrullo::StateManager.instance.status
-        env.response.content_type = "application/json"
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
         status.to_json
       rescue ex
         handle_web_error("getting status", env, ex)
@@ -255,7 +255,7 @@ class WebServer
     get "/api/containers" do |env|
       begin
         containers = Mangrullo::ContainerState.instance.containers
-        env.response.content_type = "application/json"
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
         containers.map do |data|
           {
             id:          data.container.id,
@@ -279,7 +279,7 @@ class WebServer
         job = job_queue.get_job(job_id)
 
         if job
-          env.response.content_type = "application/json"
+          env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
           job.to_h.to_json
         else
           env.response.status_code = 404
@@ -297,7 +297,7 @@ class WebServer
         job_queue = Mangrullo::UpdateJobQueue.instance
         jobs = job_queue.get_container_jobs(container_id)
 
-        env.response.content_type = "application/json"
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
         jobs.map(&.to_h).to_json
       rescue ex
         handle_web_error("getting container jobs", env, ex)

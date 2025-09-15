@@ -1,0 +1,19 @@
+{
+  "name": "mangrullo",
+  "version": "1.0.0",
+  "description": "Docker container update automation tool",
+  "scripts": {
+    "lint": "node lint-js.js",
+    "lint:fix": "eslint src/templates/*.ecr --ext .js --fix",
+    "prebuild": "npm run lint"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "eslintIgnore": [
+    "**/*.cr",
+    "**/*.sh",
+    "lib/**",
+    "node_modules/**"
+  ]
+}
