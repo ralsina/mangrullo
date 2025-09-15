@@ -588,21 +588,40 @@
                 fetch('/api/status').then(r => r.json())
             ])
             .then(([containers, status]) => {
-                updateHeaderStats(containers, status);
-                updateContainerTable(containers);
+                // Check if updates are in progress
+                if (status.update_in_progress) {
+                    // Updates in progress, keep showing updating status
+                    if (statusElement) {
+                        statusElement.textContent = 'Auto-refresh: UPDATING...';
+                        statusElement.style.color = '#007bff';
+                    }
+                } else {
+                    // Updates complete, update the UI
+                    updateHeaderStats(containers, status);
+                    updateContainerTable(containers);
 
-                // Reset status
-                if (statusElement) {
-                    statusElement.textContent = 'Auto-refresh: ON';
-                    statusElement.style.color = '#666';
+                    // Reset status
+                    if (statusElement) {
+                        statusElement.textContent = 'Auto-refresh: ON';
+                        statusElement.style.color = '#666';
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error refreshing data:', error);
-                // Show error status
-                if (statusElement) {
-                    statusElement.textContent = 'Auto-refresh: ERROR';
-                    statusElement.style.color = '#dc3545';
+                // Check if error might be due to container updates in progress
+                if (error.message && error.message.includes('fetch')) {
+                    // Network error - might be due to server restarting during updates
+                    if (statusElement) {
+                        statusElement.textContent = 'Auto-refresh: RETRYING...';
+                        statusElement.style.color = '#ffc107';
+                    }
+                } else {
+                    // Other error
+                    if (statusElement) {
+                        statusElement.textContent = 'Auto-refresh: ERROR';
+                        statusElement.style.color = '#dc3545';
+                    }
                 }
             });
         }
