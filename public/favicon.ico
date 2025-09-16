@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#333">
+  <!-- Cell tower icon simplified for favicon -->
+  <path d="M12 2L8 6h8l-4-4zm0 20l4-4H8l4 4z"/>
+  <circle cx="12" cy="12" r="2" fill="#333"/>
+  <path d="M7 9l-2-2 1.4-1.4L8 7.2 7 9zm10 0l-1-1.8 1.6-1.6L19 7l-2 2z"/>
+  <path d="M7 15l1 1.8-1.6 1.6L5 17l2-2zm10 0l2 2-1.4 1.4L16 16.8l1-1.8z"/>
+</svg>

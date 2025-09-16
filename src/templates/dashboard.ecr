@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
         /* Override Pico.css fonts with Chivo */
         :root {
@@ -77,6 +79,76 @@
         .brand-link .material-icons {
             font-size: 1.2em;
             vertical-align: middle;
+        }
+        
+        /* Dry run results modal styling */
+        #dryRunResultsModal article {
+            max-width: 800px;
+            width: 90vw;
+        }
+        
+        .results-summary {
+            background: var(--card-background-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--card-border-color);
+            margin-bottom: 1rem;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            table-layout: fixed;
+        }
+        
+        .results-table th,
+        .results-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border-color);
+            overflow: hidden;
+        }
+        
+        .results-table th {
+            background: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .results-table th:nth-child(1),
+        .results-table td:nth-child(1) {
+            width: 25%;
+        }
+        
+        .results-table th:nth-child(2),
+        .results-table td:nth-child(2) {
+            width: 35%;
+            word-wrap: break-word;
+        }
+        
+        .results-table th:nth-child(3),
+        .results-table td:nth-child(3) {
+            width: 15%;
+        }
+        
+        .results-table th:nth-child(4),
+        .results-table td:nth-child(4) {
+            width: 25%;
+        }
+        
+        .results-table .image-cell {
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+        
+        .status-needs-update {
+            color: #856404;
+            font-weight: 500;
+        }
+        
+        .status-up-to-date-table {
+            color: #28a745;
+            font-weight: 500;
         }
         
         .status-up-to-date { color: #28a745; }
@@ -244,6 +316,22 @@
         </article>
     </dialog>
 
+    <!-- Dry Run Results Modal -->
+    <dialog id="dryRunResultsModal">
+        <article>
+            <header>
+                <h3>Dry Run Results</h3>
+                <button aria-label="Close" class="close" onclick="closeDryRunResultsModal()"></button>
+            </header>
+            <div id="dryRunResults">
+                <!-- Results will be populated here -->
+            </div>
+            <footer>
+                <button onclick="closeDryRunResultsModal()" class="primary">Close</button>
+            </footer>
+        </article>
+    </dialog>
+
     <script>
         let currentContainerId = null;
 
@@ -263,6 +351,70 @@
 
         function closeBulkModal() {
             document.getElementById('bulkUpdateModal').close();
+        }
+
+        function showDryRunResultsModal(results) {
+            const modal = document.getElementById('dryRunResultsModal');
+            const resultsDiv = document.getElementById('dryRunResults');
+            
+            // Count results
+            const needingUpdate = results.filter(r => r.needs_update);
+            const upToDate = results.filter(r => !r.needs_update);
+            
+            // Generate summary
+            const summaryHtml = `
+                <div class="results-summary">
+                    <h4>Summary</h4>
+                    <p><strong>Total containers:</strong> ${results.length}</p>
+                    <p><strong>Would be updated:</strong> ${needingUpdate.length}</p>
+                    <p><strong>Already up-to-date:</strong> ${upToDate.length}</p>
+                </div>
+            `;
+            
+            // Generate table
+            let tableHtml = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Container</th>
+                            <th>Image</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            results.forEach(result => {
+                const containerName = result.container.name.startsWith('/') ? 
+                    result.container.name.substring(1) : result.container.name;
+                const fullImage = result.container.image;
+                const displayImage = fullImage.length > 40 ? fullImage.substring(0, 37) + '...' : fullImage;
+                const statusClass = result.needs_update ? 'status-needs-update' : 'status-up-to-date-table';
+                const statusText = result.needs_update ? 'Needs Update' : 'Up to Date';
+                const reason = result.reason || (result.needs_update ? 'Update available' : 'Already current');
+                
+                tableHtml += `
+                    <tr>
+                        <td title="${containerName}">${containerName}</td>
+                        <td class="image-cell" title="${fullImage}"><code>${displayImage}</code></td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td title="${reason}">${reason}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+            
+            resultsDiv.innerHTML = summaryHtml + tableHtml;
+            modal.showModal();
+        }
+
+        function closeDryRunResultsModal() {
+            document.getElementById('dryRunResultsModal').close();
         }
 
         async function checkUpdate(containerId) {
@@ -573,26 +725,36 @@
                 let successCount = 0;
                 let failureCount = 0;
                 
-                data.forEach(result => {
-                    if (result.updated) {
-                        successCount++;
-                        updateContainerStatus(result.container.id, 'up-to-date', null, null);
-                    } else if (result.error) {
-                        failureCount++;
-                        updateContainerStatus(result.container.id, 'error', null, null);
-                    }
-                });
-                
-                const message = dryRun ? 
-                    `Dry run completed: ${successCount} containers would be updated` :
-                    `Update completed: ${successCount} successful, ${failureCount} failed`;
-                
-                showNotification(message, successCount > 0 ? 'success' : 'info');
-                
                 if (dryRun) {
-                    // For dry run, just refresh data without full reload
+                    // Dry run results have different structure: {container, needs_update, reason}
+                    data.forEach(result => {
+                        if (result.needs_update) {
+                            successCount++;
+                        }
+                    });
+                    failureCount = data.length - successCount; // Containers that don't need updates
+                    
+                    // Show detailed results in modal for dry run
+                    showDryRunResultsModal(data);
+                    showNotification('Dry run completed - see detailed results in modal', 'success');
+                    
+                    // Refresh data to show any status changes
                     refreshData();
                 } else {
+                    // Regular update results: {container, updated, error}
+                    data.forEach(result => {
+                        if (result.updated) {
+                            successCount++;
+                            updateContainerStatus(result.container.id, 'up-to-date', null, null);
+                        } else if (result.error) {
+                            failureCount++;
+                            updateContainerStatus(result.container.id, 'error', null, null);
+                        }
+                    });
+                    
+                    const message = `Update completed: ${successCount} successful, ${failureCount} failed`;
+                    showNotification(message, successCount > 0 ? 'success' : 'info');
+                    
                     // Always reload after bulk update to ensure fresh state (containers may have new IDs)
                     setTimeout(() => location.reload(), 1500);
                 }

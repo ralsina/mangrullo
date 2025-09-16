@@ -167,8 +167,10 @@ class WebServer
     # Update all containers
     post "/api/updates" do |env|
       begin
-        allow_major = env.params.body["allow_major"]?.try(&.downcase) == "true"
-        dry_run = env.params.body["dry_run"]?.try(&.downcase) == "true"
+        # Parse JSON body
+        json_body = JSON.parse(env.request.body.not_nil!.gets_to_end)
+        allow_major = json_body["allow_major"]?.try(&.as_bool?) || false
+        dry_run = json_body["dry_run"]?.try(&.as_bool?) || false
 
         if dry_run
           results = @update_manager.dry_run(allow_major)
