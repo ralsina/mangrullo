@@ -5,6 +5,7 @@ This guide explains how to deploy Mangrullo using Docker containers.
 ## Quick Start
 
 ### Option 1: One-shot Mode (Recommended)
+
 Run a single update check:
 
 ```bash
@@ -14,6 +15,7 @@ docker run --rm \
 ```
 
 ### Option 2: Daemon Mode
+
 Run Mangrullo as a background daemon that periodically checks for updates:
 
 ```bash
@@ -24,6 +26,7 @@ docker run -d \
 ```
 
 ### Option 3: Dry Run Mode
+
 See what would be updated without making changes:
 
 ```bash
@@ -33,6 +36,7 @@ docker run --rm \
 ```
 
 ### Option 4: Check Specific Containers
+
 Check only specific containers:
 
 ```bash
@@ -46,16 +50,19 @@ docker run --rm \
 Use the provided `docker-compose.yml` for easier deployment:
 
 ### Start Mangrullo
+
 ```bash
 docker-compose up -d
 ```
 
 ### Stop Mangrullo
+
 ```bash
 docker-compose down
 ```
 
 ### View Logs
+
 ```bash
 docker-compose logs -f
 ```
@@ -101,7 +108,9 @@ docker build -t mangrullo --platform linux/arm64 .
 ## Security Considerations
 
 ### Docker Socket Access
+
 Mangrullo needs access to the Docker socket to manage containers. This is done with:
+
 ```bash
 -v /var/run/docker.sock:/var/run/docker.sock
 ```
@@ -113,11 +122,13 @@ Note: Mangrullo needs write access to the Docker socket to recreate containers. 
 3. **Using Docker's socket activation** with proper permissions
 
 ### Non-root User
+
 The Docker image runs Mangrullo as a non-root user (UID 1000) for improved security.
 
 ## Monitoring
 
 ### Logs
+
 View container logs:
 
 ```bash
@@ -126,6 +137,7 @@ docker logs -f mangrullo  # Follow logs
 ```
 
 ### Health Checks
+
 Basic container health can be checked with:
 
 ```bash
@@ -197,7 +209,9 @@ spec:
 ## Troubleshooting
 
 ### Permission Denied
+
 If you get permission denied errors:
+
 ```bash
 # Add user to docker group on host
 sudo usermod -aG docker $USER
@@ -207,18 +221,20 @@ docker run --privileged ...
 ```
 
 ### Connection Issues
+
 If Mangrullo can't connect to Docker:
+
 1. Verify Docker is running: `docker ps`
 2. Check socket permissions: `ls -la /var/run/docker.sock`
 3. Ensure the socket is mounted correctly
 
-
 ## Advanced Usage
 
 ### Custom Dockerfile
+
 For custom builds, create a `.dockerignore` file:
 
-```
+```text
 .git
 .github
 .spec
@@ -229,6 +245,7 @@ bin/
 ```
 
 ### Multi-architecture Builds
+
 Build for multiple architectures:
 
 ```bash
@@ -236,6 +253,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t mangrullo:latest .
 ```
 
 ### Private Registry
+
 Push to a private registry:
 
 ```bash

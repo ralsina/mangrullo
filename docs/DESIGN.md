@@ -1,9 +1,12 @@
 # Mangrullo Design Document
 
 ## Overview
-Mangrullo is a Crystal implementation of a Watchtower-like Docker container update automation tool.
+
+Mangrullo is a Docker container update automation tool designed to automatically
+manage container updates.
 
 ## Core Features
+
 - Monitor running Docker containers and their image versions
 - Check for new image versions
 - Calculate if updates are needed (with major version upgrade control)
@@ -15,6 +18,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
 ## Architecture
 
 ### Dependencies
+
 - `marghidanu/docr` - Docker API client for Crystal
 - `ralsina/docopt.cr` - Command line argument parsing
 - `kemalcr/kemal` - Web framework (for web interface)
@@ -24,6 +28,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
 ### Core Modules
 
 #### 1. Mangrullo::DockerClient
+
 - **Purpose**: Interface with Docker daemon
 - **Responsibilities**:
   - Connect to Docker socket
@@ -42,6 +47,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
   - `create_container_from_inspect_data(image_name : String, container_name : String, inspect_data : String)`
 
 #### 2. Mangrullo::ImageChecker
+
 - **Purpose**: Check for image updates
 - **Responsibilities**:
   - Compare local and remote image digests
@@ -58,6 +64,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
   - `get_update_status(container : ContainerInfo)`
 
 #### 3. Mangrullo::UpdateManager
+
 - **Purpose**: Coordinate the update process
 - **Responsibilities**:
   - Main update workflow with container recreation
@@ -73,6 +80,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
   - `get_update_summary(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String)`
 
 #### 4. Mangrullo::Config
+
 - **Purpose**: Configuration management
 - **Responsibilities**:
   - Parse command line arguments using Docopt
@@ -88,6 +96,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
   - `dry_run` (show what would be updated)
 
 #### 5. Mangrullo::Types
+
 - **Purpose**: Type definitions
 - **Key Structs**:
   - `ContainerInfo` - container details
@@ -95,6 +104,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
   - `Version` - semantic version parsing and comparison
 
 #### 6. Mangrullo::WebServer (Optional)
+
 - **Purpose**: Web interface for monitoring and management
 - **Responsibilities**:
   - HTTP server using Kemal
@@ -106,6 +116,7 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
   - Status monitoring
 
 #### 7. Mangrullo::ErrorHandling
+
 - **Purpose**: Centralized error management
 - **Responsibilities**:
   - Consistent error handling across modules
@@ -147,55 +158,72 @@ Mangrullo is a Crystal implementation of a Watchtower-like Docker container upda
 ## Implementation Plan
 
 ### Phase 1: Core Infrastructure ✓
+
 1. Add `docr` and `docopt.cr` dependencies to shard.yml
 2. Implement basic Docker client wrapper
 3. Create type definitions
 
 ### Phase 2: Update Logic ✓
+
 1. Implement image version checking
 2. Add major version upgrade logic
 3. Create update manager
 
 ### Phase 3: Application Structure ✓
+
 1. Add configuration system
 2. Implement main CLI interface
 3. Add logging
 
 ### Phase 4: Container Recreation ✓
+
 1. Implement container recreation (not just restart)
 2. Add configuration preservation
 3. Add verification and error handling
 
 ### Phase 5: Container Filtering ✓
+
 1. Add container name filtering
 2. Implement flexible name matching
 3. Update all methods to support filtering
 
 ### Phase 6: Multi-Registry Support ✓
+
 1. Add registry authentication
 2. Implement lscr.io → ghcr.io mapping
 3. Support multiple registry types
 
 ### Phase 7: Testing ✓
+
 1. Unit tests for all modules (56 examples)
 2. Integration tests for critical functionality
 3. Test edge cases and error conditions
 
-### Phase 8: Web Interface (Framework) ✓
+### Phase 8: Web Interface (Complete) ✓
+
 1. Add Kemal web framework
 2. Create basic web server structure
 3. Add web views templates
+4. Implement auto-refresh dashboard
+5. Add bulk operations with dry run support
+6. Integrate custom branding and typography
+7. Add comprehensive dry run results modal
+8. Implement embedded static assets
 
 ### Phase 9: Documentation and Polish ✓
+
 1. Update all documentation
 2. Add comprehensive examples
 3. Finalize error handling
+4. Add favicon and branding
+5. Fix critical JSON parsing bugs
+6. Add CI workflow improvements
 
 ## Configuration Options
 
 ### Docopt Usage String
 
-```
+```text
 Mangrullo - Docker container update automation tool
 
 Usage:
@@ -213,6 +241,7 @@ Options:
 ```
 
 Environment Variables:
+
 - `MANGRULLO_INTERVAL`
 - `MANGRULLO_ALLOW_MAJOR_UPGRADE`
 - `MANGRULLO_DOCKER_SOCKET`
@@ -220,7 +249,7 @@ Environment Variables:
 
 ## File Structure
 
-```
+```text
 src/
 ├── mangrullo.cr              # Main module and CLI
 ├── docker_client.cr          # Docker API wrapper

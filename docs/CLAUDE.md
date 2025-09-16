@@ -9,6 +9,7 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 ## Development Commands
 
 ### Building and Running
+
 - `crystal build src/mangrullo.cr` - Compile the CLI
 - `crystal build src/web_baked.cr` - Compile the web interface
 - `crystal run src/mangrullo.cr` - Run the CLI
@@ -20,11 +21,13 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 - `ameba --fix` - Fix linting issues automatically
 
 ### Testing
+
 - `crystal spec` - Run all tests (56 examples)
 - `crystal spec spec/mangrullo_spec.cr` - Run main test file
 - `crystal spec --verbose` - Run tests with detailed output
 
 ### Dependencies
+
 - `shards install` - Install dependencies from shard.yml
 - `shards build` - Build all targets using shards
 - `shards build mangrullo` - Build CLI target
@@ -33,6 +36,7 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 ## Project Structure
 
 ### Source Files
+
 - `src/mangrullo.cr` - Main CLI entry point
 - `src/cli.cr` - CLI interface and main loop
 - `src/config.cr` - Configuration management using Docopt
@@ -49,6 +53,7 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 - `src/error_handling.cr` - Centralized error management
 
 ### Configuration
+
 - `shard.yml` - Project dependencies and build targets
 - `spec/mangrullo_spec.cr` - Comprehensive test suite (56 examples)
 - `spec/spec_helper.cr` - Test configuration
@@ -61,17 +66,24 @@ This is a Crystal Language project called "mangrullo" - a Docker container updat
 - **Container Recreation**: Properly recreates containers with new images (like Watchtower)
 - **Multi-Registry Support**: Docker Hub, GHCR, lscr.io (with proper mapping)
 - **Semantic Versioning**: Intelligent version comparison with major upgrade control
-- **Dry Run Mode**: Test updates without making changes
-- **Web Interface**: Optional web-based monitoring and management with auto-refresh
-- **Embedded Static Assets**: All web assets baked into binary for easy deployment
+- **Dry Run Mode**: Test updates without making changes with comprehensive results modal
+- **Full Web Interface**: Complete web-based monitoring and management dashboard
+- **Bulk Operations**: Update multiple containers with dry run and major version controls
+- **Custom Branding**: Cell tower icons and favicon throughout interface
+- **Typography**: Chivo and Chivo Mono Google Fonts integration for enhanced readability
 - **Auto-refresh Dashboard**: Real-time container status updates every 30 seconds
+- **Embedded Static Assets**: All web assets baked into binary for easy deployment
+- **Button State Management**: Proper onclick attribute handling to prevent double operations
+- **Critical Bug Fixes**: JSON parameter parsing fix for dry run functionality
 - **Rate Limiting Protection**: 6-hour default interval to avoid Docker Hub limits
 - **Multi-architecture Builds**: Static binaries for Linux AMD64 and ARM64
-- **Comprehensive Testing**: Unit tests for all major functionality
+- **Comprehensive Testing**: Unit tests for all major functionality (155 examples passing)
+- **CI/CD Integration**: GitHub Actions with Ameba linting and automated testing
 
 ## Code Style
 
 Follow Crystal Language conventions:
+
 - Use 2-space indentation
 - Module names are CamelCase
 - Constants are UPPER_SNAKE_CASE
@@ -83,6 +95,7 @@ Follow Crystal Language conventions:
 ## Current State
 
 The project is fully functional with:
+
 - Complete CLI implementation with all planned features
 - Container recreation that properly updates containers (not just restart)
 - Flexible container name matching (handles both "name" and "/name")
@@ -91,9 +104,10 @@ The project is fully functional with:
 - Multi-registry support with authentication
 - Proper error handling and logging
 
-## Dependencies
+## Project Dependencies
 
 From `shard.yml`:
+
 - `docr` - Docker API client
 - `docopt` - Command-line parsing
 - `kemal` - Web framework

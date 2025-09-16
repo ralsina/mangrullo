@@ -1,6 +1,30 @@
 # Mangrullo
 
-[![Crystal CI](https://github.com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg)](https://github.com/ralsina/mangrullo/actions)
+[![Crystal CI1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/ralsina/mangrullo.git
+   cd mangrullo
+   ```
+
+1. Install dependencies:
+
+   ```bash
+   shards install
+   ```
+
+1. Build the project:
+
+   ```bash
+   shards build
+   ```
+
+1. Install the binary (optional):
+
+   ```bash
+   cp bin/mangrullo /usr/local/bin/
+   ```com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg)](https://github.com/ralsina/mangrullo/actions)
+
 [![GitHub release](https://img.shields.io/github/v/release/ralsina/mangrullo)](https://github.com/ralsina/mangrullo/releases)
 [![License](https://img.shields.io/github/license/ralsina/mangrullo)](https://github.com/ralsina/mangrullo/blob/main/LICENSE)
 
@@ -25,19 +49,26 @@ Mangrullo is a Docker container update automation tool written in Crystal. It mo
 
 1. Install Crystal (>= 1.16.3) following the [official installation guide](https://crystal-lang.org/installation/)
 2. Clone the repository:
+
    ```bash
    git clone https://github.com/ralsina/mangrullo.git
    cd mangrullo
    ```
+
 3. Install dependencies:
+
    ```bash
    shards install
    ```
+
 4. Build the project:
+
    ```bash
    shards build
    ```
+
 5. Install the binary (optional):
+
    ```bash
    cp bin/mangrullo /usr/local/bin/
    ```
@@ -84,7 +115,7 @@ mangrullo --dry-run
 
 ### Command Line Options
 
-```
+```text
 Usage:
   mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
            [--log-level=<level>] [--once] [--dry-run] [--help] [--version]
@@ -108,38 +139,44 @@ Arguments:
 ### Examples
 
 **Check for updates once:**
+
 ```bash
 mangrullo --once
 ```
 
 **Monitor every 10 minutes with debug logging:**
+
 ```bash
 mangrullo --interval=600 --log-level=debug
 ```
 
 **Test updates including major versions:**
+
 ```bash
 mangrullo --dry-run --allow-major
 ```
 
 **Check only specific containers:**
+
 ```bash
 mangrullo --once flatnotes atuin radicale
 ```
 
 **Check specific containers (with or without leading slash):**
+
 ```bash
 mangrullo --once /flatnotes atuin /radicale
 ```
 
 **Use custom Docker socket:**
+
 ```bash
 mangrullo --socket=/path/to/docker.sock
 ```
 
 ## Web Interface
 
-Mangrullo includes an optional web interface that provides a dashboard for monitoring and managing Docker container updates.
+Mangrullo includes a fully-featured web interface that provides a modern dashboard for monitoring and managing Docker container updates.
 
 ### Starting the Web Interface
 
@@ -154,24 +191,32 @@ The web interface starts on `http://localhost:3000` and provides:
 - **Dashboard**: Real-time overview of all containers and their update status
 - **Auto-refresh**: Automatic updates every 30 seconds
 - **Container Management**: Check for updates and update individual containers
-- **Detailed Views**: Container information, version comparison, and logs
-- **Bulk Operations**: Check all containers for updates at once
+- **Bulk Operations**: Update multiple containers at once with dry-run support
+- **Dry Run Modal**: Comprehensive results display showing what would be updated
+- **Modern UI**: Clean, responsive design using Pico.css with Chivo fonts
+- **Brand Identity**: Custom cell tower icon and favicon integration
 
-### Features
+### Key Features
 
 - **Auto-refresh Dashboard**: Container status automatically updates without manual refresh
 - **Embedded Static Assets**: All CSS, JavaScript, and images are baked into the binary for easy deployment
-- **Responsive Design**: Works on desktop and mobile devices
+- **Responsive Design**: Works on desktop and mobile devices with proper scaling
 - **Real-time Status**: Live indicators for update checks and container operations
-- **Clean Interface**: Simple, intuitive design using Pico.css
+- **Dry Run Support**: Comprehensive dry run results with detailed tables showing update status
+- **Bulk Update Operations**: Update all containers with major version control and dry run options
+- **Custom Branding**: Cell tower icon throughout interface with 50% larger text
+- **Favicon Support**: Both SVG and ICO favicons with cell tower branding
 
 ### Web Interface Architecture
 
 The web interface uses:
+
 - **Kemal**: Fast web framework for Crystal
-- **Baked File System**: Static assets embedded in the binary
+- **Baked File System**: Static assets embedded in the binary for zero-dependency deployment
 - **State Manager**: Shared state between web requests and background operations
-- **Auto-refresh**: JavaScript-based periodic updates
+- **Auto-refresh**: JavaScript-based periodic updates every 30 seconds
+- **Google Fonts**: Chivo and Chivo Mono fonts for enhanced typography
+- **Material Icons**: Google Material Icons for consistent iconography
 
 ## Configuration
 
@@ -192,6 +237,7 @@ Mangrullo uses semantic versioning to determine when updates are available:
 ### Image Support
 
 Mangrullo works with:
+
 - Standard image tags (nginx:1.2.3)
 - Registry prefixes (docker.io/library/nginx:1.2.3)
 - SHA256 digests (skipped for version comparison)
@@ -213,22 +259,26 @@ Mangrullo works with:
 ### Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/ralsina/mangrullo.git
    cd mangrullo
    ```
 
 2. Install dependencies:
+
    ```bash
    shards install
    ```
 
 3. Run tests:
+
    ```bash
    crystal spec
    ```
 
 4. Build the project:
+
    ```bash
    shards build
    ```
@@ -249,6 +299,7 @@ crystal spec --verbose
 ```
 
 The test suite covers:
+
 - Container name matching and filtering
 - Registry mapping and authentication
 - Container recreation logic
@@ -264,6 +315,7 @@ The test suite covers:
 - Method names are snake_case
 
 Format code with:
+
 ```bash
 crystal tool format
 ```
@@ -335,9 +387,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Recent Updates
 
+- **Comprehensive Web Interface**: Full-featured dashboard with auto-refresh and bulk operations
+- **Dry Run Modal**: Detailed results display showing what would be updated with CLI-like output
+- **Custom Branding**: Cell tower icons throughout interface with favicon support
+- **Typography Enhancement**: Chivo and Chivo Mono Google Fonts integration
+- **Bulk Update Operations**: Update multiple containers with dry run and major version controls
+- **Button State Management**: Proper onclick handling to prevent double-clicks during operations
+- **Critical JSON Fix**: Fixed dry run checkbox being ignored due to form vs JSON parameter parsing
 - **Embedded Static Assets**: All web interface assets (CSS, JS, images) baked into binary
 - **Auto-refresh Dashboard**: Web interface automatically updates every 30 seconds
 - **Rate Limiting Protection**: Default 6-hour check interval to avoid Docker Hub rate limits
 - **Multi-architecture Builds**: Static binaries available for Linux AMD64 and ARM64
-- **Improved Web UI**: Cleaner interface with real-time status indicators
-- **External JavaScript**: Extracted JavaScript to external files for better maintainability
+- **CI Workflow Improvements**: Added Ameba as development dependency for proper linting

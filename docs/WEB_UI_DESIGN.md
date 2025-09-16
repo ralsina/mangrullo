@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document describes the design and implementation plan for a web-based user interface for Mangrullo, a Docker container update automation tool. The web UI will provide a modern, responsive interface for monitoring and managing Docker container updates.
+This document outlines the design and implementation plan for Mangrullo's web
+interface. The web UI provides a modern, responsive dashboard for monitoring
+and managing Docker container updates through a browser interface.
 
 ## Goals
 
@@ -14,31 +16,38 @@ This document describes the design and implementation plan for a web-based user 
 
 ## Current Status
 
-The web interface is partially implemented with the following components completed:
+The web interface is fully implemented with comprehensive functionality:
 
 ### ✅ Completed Features
+
 - **Basic Web Server**: Kemal-based HTTP server running on port 3000
 - **Dashboard Page**: Overview of all running containers and their update status
 - **Container List**: Display of containers with update status indicators
 - **Container Details**: Individual container management pages
 - **Update Checking**: Web-based update detection functionality
 - **Container Updates**: Web-triggered container recreation and updates
-- **HTML Templates**: Pico.css-based responsive design
+- **HTML Templates**: Pico.css-based responsive design with custom fonts
 - **Error Handling**: Graceful error handling and user-friendly messages
+- **Real-time Updates**: Auto-refresh functionality for live status updates (every 30 seconds)
+- **Bulk Operations**: Multi-container update functionality with dry run support
+- **Embedded Static Assets**: All CSS, JavaScript, and images baked into binary
+- **Auto-refresh Dashboard**: Automatic status updates without manual refresh
+- **State Management**: Shared state between web requests and background operations
+- **Custom Branding**: Cell tower icons and favicons throughout interface
+- **Typography**: Chivo and Chivo Mono Google Fonts integration
+- **Dry Run Modal**: Comprehensive results display with CLI-like output
+- **Modal Improvements**: Proper close button positioning and responsive design
+- **Bulk Update Modal**: Dry run checkbox and major version upgrade controls
+- **Button State Management**: Proper onclick attribute handling during operations
+- **Notification System**: Toast notifications for user feedback
 
 ### 🚧 In Progress
-- **Real-time Updates**: Auto-refresh functionality for live status updates (every 30 seconds)
-- **Bulk Operations**: Multi-container update functionality
+
 - **Log Viewing**: Container log viewing
 - **Container Restart**: Direct container restart functionality
 
-### ✅ Recently Completed
-- **Embedded Static Assets**: All CSS, JavaScript, and images baked into binary
-- **Auto-refresh Dashboard**: Automatic status updates without manual refresh
-- **External JavaScript**: Extracted JavaScript to external files for better maintainability
-- **State Management**: Shared state between web requests and background operations
-
 ### 📋 Planned Features
+
 - **Authentication**: User authentication and access control
 - **Metrics**: Performance and usage metrics
 - **Scheduling**: Web-based update scheduling
@@ -48,6 +57,7 @@ The web interface is partially implemented with the following components complet
 ## Technology Stack
 
 ### Backend
+
 - **Kemal**: Fast, lightweight web framework for Crystal
 - **Kilt**: Template engine for HTML rendering
 - **Crystal**: High-performance programming language
@@ -56,6 +66,7 @@ The web interface is partially implemented with the following components complet
 - **Existing Mangrullo modules**: Docker client, image checker, update manager
 
 ### Frontend
+
 - **Pico.css**: Lightweight, semantic CSS framework
 - **Vanilla JavaScript**: No heavy framework dependencies
 - **HTML5**: Modern, semantic markup
@@ -63,7 +74,8 @@ The web interface is partially implemented with the following components complet
 - **External JavaScript Files**: Modular and maintainable code structure
 
 ### Architecture
-```
+
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Browser      │    │   Kemal Server  │    │   Docker API    │
 │                │    │                │    │                │
@@ -78,11 +90,13 @@ The web interface is partially implemented with the following components complet
 ## Features
 
 ### 1. Dashboard (Main Page)
+
 **URL**: `/`
 
 **Purpose**: Overview of all running containers and their update status
 
 **Components**:
+
 - Header with app title and navigation
 - Summary statistics (total containers, updates available)
 - Container list with:
@@ -95,17 +109,20 @@ The web interface is partially implemented with the following components complet
 - Real-time status indicators
 
 **Status Indicators**:
+
 - 🟢 Up to date
 - 🟡 Update available
 - 🔴 Unknown/error
 - ⚪ Latest tag (always check)
 
 ### 2. Container Details Page
+
 **URL**: `/containers/:id`
 
 **Purpose**: Detailed view and management of individual containers
 
 **Components**:
+
 - Container information (name, ID, image, status)
 - Version comparison (current vs available)
 - Update history
@@ -120,6 +137,7 @@ The web interface is partially implemented with the following components complet
 ### 3. API Endpoints
 
 #### Container Management
+
 - `GET /api/containers` - List all containers
 - `GET /api/containers/:id` - Get container details
 - `POST /api/containers/:id/check-update` - Check for updates
@@ -128,27 +146,33 @@ The web interface is partially implemented with the following components complet
 - `GET /api/containers/:id/logs` - Get container logs
 
 #### Bulk Operations
+
 - `GET /api/updates` - Check all containers for updates
 - `POST /api/updates` - Update multiple containers
 
 #### System
+
 - `GET /health` - Health check
 
 ### 4. Real-time Features (Optional)
 
 #### WebSocket Support
+
 - Live status updates
 - Progress notifications for long-running operations
 - Log streaming
 
 #### Auto-refresh
+
 - Periodic status checks
 - Manual refresh button
 
 ## User Interface Design
 
 ### Color Scheme
+
 Using Pico.css default color scheme:
+
 - **Primary**: #007bff (blue for actions)
 - **Success**: #28a745 (green for up-to-date)
 - **Warning**: #ffc107 (yellow for updates available)
@@ -157,6 +181,7 @@ Using Pico.css default color scheme:
 - **Dark**: #343a40 (text)
 
 ### Layout Structure
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -191,6 +216,7 @@ Using Pico.css default color scheme:
 ### Component Templates
 
 #### Container Card
+
 ```html
 <div class="card">
   <article>
@@ -209,6 +235,7 @@ Using Pico.css default color scheme:
 ```
 
 #### Update Modal
+
 ```html
 <dialog id="update-modal">
   <article>
@@ -232,6 +259,7 @@ Using Pico.css default color scheme:
 ## Implementation Plan
 
 ### Phase 1: Basic Web Interface ✓
+
 1. [x] Add Kemal dependency
 2. [x] Create basic web server structure
 3. [x] Implement HTML templates with Pico.css
@@ -239,22 +267,29 @@ Using Pico.css default color scheme:
 5. [x] Add container list view
 
 ### Phase 2: Core Functionality ✓
+
 1. [x] Implement container details page
 2. [x] Add update checking functionality
 3. [x] Implement container updates
 4. [x] Add error handling and validation
 
-### Phase 3: Advanced Features
-1. [ ] Add bulk operations
-2. [ ] Implement real-time updates (WebSocket)
+### Phase 3: Advanced Features ✅
+
+1. [x] Add bulk operations
+2. [x] Implement real-time updates (Auto-refresh every 30 seconds)
 3. [ ] Add log viewing
 4. [ ] Add container restart functionality
 
-### Phase 4: Polish and Documentation
-1. [ ] Responsive design improvements
-2. [ ] Loading states and spinners
-3. [ ] Better error messages
-4. [ ] Update documentation
+### Phase 4: Polish and Documentation ✅
+
+1. [x] Responsive design improvements
+2. [x] Loading states and spinners
+3. [x] Better error messages
+4. [x] Update documentation
+5. [x] Custom branding with cell tower icons
+6. [x] Typography improvements with Chivo fonts
+7. [x] Comprehensive dry run modal
+8. [x] Favicon integration
 
 ## Security Considerations
 
@@ -280,7 +315,7 @@ Using Pico.css default color scheme:
 
 ## File Structure
 
-```
+```text
 src/
 ├── web_baked.cr          # Web server entry point with baked assets
 ├── web_server_baked.cr   # Main web server class with embedded static files
