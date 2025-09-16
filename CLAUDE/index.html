@@ -463,9 +463,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dependencies_1" class="md-nav__link">
+  <a href="#project-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
-      Dependencies
+      Project Dependencies
     </span>
   </a>
   
@@ -626,9 +626,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dependencies_1" class="md-nav__link">
+  <a href="#project-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
-      Dependencies
+      Project Dependencies
     </span>
   </a>
   
@@ -721,41 +721,53 @@
 <li><strong>Container Recreation</strong>: Properly recreates containers with new images (like Watchtower)</li>
 <li><strong>Multi-Registry Support</strong>: Docker Hub, GHCR, lscr.io (with proper mapping)</li>
 <li><strong>Semantic Versioning</strong>: Intelligent version comparison with major upgrade control</li>
-<li><strong>Dry Run Mode</strong>: Test updates without making changes</li>
-<li><strong>Web Interface</strong>: Optional web-based monitoring and management with auto-refresh</li>
-<li><strong>Embedded Static Assets</strong>: All web assets baked into binary for easy deployment</li>
+<li><strong>Dry Run Mode</strong>: Test updates without making changes with comprehensive results modal</li>
+<li><strong>Full Web Interface</strong>: Complete web-based monitoring and management dashboard</li>
+<li><strong>Bulk Operations</strong>: Update multiple containers with dry run and major version controls</li>
+<li><strong>Custom Branding</strong>: Cell tower icons and favicon throughout interface</li>
+<li><strong>Typography</strong>: Chivo and Chivo Mono Google Fonts integration for enhanced readability</li>
 <li><strong>Auto-refresh Dashboard</strong>: Real-time container status updates every 30 seconds</li>
+<li><strong>Embedded Static Assets</strong>: All web assets baked into binary for easy deployment</li>
+<li><strong>Button State Management</strong>: Proper onclick attribute handling to prevent double operations</li>
+<li><strong>Critical Bug Fixes</strong>: JSON parameter parsing fix for dry run functionality</li>
 <li><strong>Rate Limiting Protection</strong>: 6-hour default interval to avoid Docker Hub limits</li>
 <li><strong>Multi-architecture Builds</strong>: Static binaries for Linux AMD64 and ARM64</li>
-<li><strong>Comprehensive Testing</strong>: Unit tests for all major functionality</li>
+<li><strong>Comprehensive Testing</strong>: Unit tests for all major functionality (155 examples passing)</li>
+<li><strong>CI/CD Integration</strong>: GitHub Actions with Ameba linting and automated testing</li>
 </ul>
 <h2 id="code-style">Code Style</h2>
-<p>Follow Crystal Language conventions:
-- Use 2-space indentation
-- Module names are CamelCase
-- Constants are UPPER_SNAKE_CASE
-- Method names are snake_case
-- Use <code>crystal tool format</code> for formatting
-- Avoid <code>not_nil!</code> - use proper nilable handling
-- Prefer <code>unless</code> over <code>if !</code> for negative conditions</p>
+<p>Follow Crystal Language conventions:</p>
+<ul>
+<li>Use 2-space indentation</li>
+<li>Module names are CamelCase</li>
+<li>Constants are UPPER_SNAKE_CASE</li>
+<li>Method names are snake_case</li>
+<li>Use <code>crystal tool format</code> for formatting</li>
+<li>Avoid <code>not_nil!</code> - use proper nilable handling</li>
+<li>Prefer <code>unless</code> over <code>if !</code> for negative conditions</li>
+</ul>
 <h2 id="current-state">Current State</h2>
-<p>The project is fully functional with:
-- Complete CLI implementation with all planned features
-- Container recreation that properly updates containers (not just restart)
-- Flexible container name matching (handles both "name" and "/name")
-- Comprehensive test suite (56 examples, 0 failures)
-- Web interface framework in place
-- Multi-registry support with authentication
-- Proper error handling and logging</p>
-<h2 id="dependencies_1">Dependencies</h2>
-<p>From <code>shard.yml</code>:
-- <code>docr</code> - Docker API client
-- <code>docopt</code> - Command-line parsing
-- <code>kemal</code> - Web framework
-- <code>kilt</code> - Template engine
-- <code>baked_file_system</code> - Embedded file system for static assets
-- <code>baked_file_handler</code> - Handler for baked files in Kemal
-- <code>progress</code> - Progress bars for CLI operations</p>
+<p>The project is fully functional with:</p>
+<ul>
+<li>Complete CLI implementation with all planned features</li>
+<li>Container recreation that properly updates containers (not just restart)</li>
+<li>Flexible container name matching (handles both "name" and "/name")</li>
+<li>Comprehensive test suite (56 examples, 0 failures)</li>
+<li>Web interface framework in place</li>
+<li>Multi-registry support with authentication</li>
+<li>Proper error handling and logging</li>
+</ul>
+<h2 id="project-dependencies">Project Dependencies</h2>
+<p>From <code>shard.yml</code>:</p>
+<ul>
+<li><code>docr</code> - Docker API client</li>
+<li><code>docopt</code> - Command-line parsing</li>
+<li><code>kemal</code> - Web framework</li>
+<li><code>kilt</code> - Template engine</li>
+<li><code>baked_file_system</code> - Embedded file system for static assets</li>
+<li><code>baked_file_handler</code> - Handler for baked files in Kemal</li>
+<li><code>progress</code> - Progress bars for CLI operations</li>
+</ul>
 <h2 id="crystal-version">Crystal Version</h2>
 <p>This project requires Crystal &gt;= 1.16.3 (developed with Crystal 1.17.1).</p>
 

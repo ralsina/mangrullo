@@ -378,15 +378,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#recently-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      ✅ Recently Completed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#planned-features" class="md-nav__link">
     <span class="md-ellipsis">
       📋 Planned Features
@@ -647,7 +638,7 @@
           <li class="md-nav__item">
   <a href="#phase-3-advanced-features" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Advanced Features
+      Phase 3: Advanced Features ✅
     </span>
   </a>
   
@@ -656,7 +647,7 @@
           <li class="md-nav__item">
   <a href="#phase-4-polish-and-documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 4: Polish and Documentation
+      Phase 4: Polish and Documentation ✅
     </span>
   </a>
   
@@ -833,15 +824,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#recently-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      ✅ Recently Completed
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#planned-features" class="md-nav__link">
     <span class="md-ellipsis">
       📋 Planned Features
@@ -1102,7 +1084,7 @@
           <li class="md-nav__item">
   <a href="#phase-3-advanced-features" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Advanced Features
+      Phase 3: Advanced Features ✅
     </span>
   </a>
   
@@ -1111,7 +1093,7 @@
           <li class="md-nav__item">
   <a href="#phase-4-polish-and-documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 4: Polish and Documentation
+      Phase 4: Polish and Documentation ✅
     </span>
   </a>
   
@@ -1203,7 +1185,9 @@
 
 <h1 id="mangrullo-web-ui-design-document">Mangrullo Web UI Design Document</h1>
 <h2 id="overview">Overview</h2>
-<p>This document describes the design and implementation plan for a web-based user interface for Mangrullo, a Docker container update automation tool. The web UI will provide a modern, responsive interface for monitoring and managing Docker container updates.</p>
+<p>This document outlines the design and implementation plan for Mangrullo's web
+interface. The web UI provides a modern, responsive dashboard for monitoring
+and managing Docker container updates through a browser interface.</p>
 <h2 id="goals">Goals</h2>
 <ol>
 <li><strong>Visual Monitoring</strong>: Provide a dashboard view of all running containers and their update status</li>
@@ -1213,7 +1197,7 @@
 <li><strong>Mobile Responsive</strong>: Work well on both desktop and mobile devices</li>
 </ol>
 <h2 id="current-status">Current Status</h2>
-<p>The web interface is partially implemented with the following components completed:</p>
+<p>The web interface is fully implemented with comprehensive functionality:</p>
 <h3 id="completed-features">✅ Completed Features</h3>
 <ul>
 <li><strong>Basic Web Server</strong>: Kemal-based HTTP server running on port 3000</li>
@@ -1222,22 +1206,25 @@
 <li><strong>Container Details</strong>: Individual container management pages</li>
 <li><strong>Update Checking</strong>: Web-based update detection functionality</li>
 <li><strong>Container Updates</strong>: Web-triggered container recreation and updates</li>
-<li><strong>HTML Templates</strong>: Pico.css-based responsive design</li>
+<li><strong>HTML Templates</strong>: Pico.css-based responsive design with custom fonts</li>
 <li><strong>Error Handling</strong>: Graceful error handling and user-friendly messages</li>
+<li><strong>Real-time Updates</strong>: Auto-refresh functionality for live status updates (every 30 seconds)</li>
+<li><strong>Bulk Operations</strong>: Multi-container update functionality with dry run support</li>
+<li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images baked into binary</li>
+<li><strong>Auto-refresh Dashboard</strong>: Automatic status updates without manual refresh</li>
+<li><strong>State Management</strong>: Shared state between web requests and background operations</li>
+<li><strong>Custom Branding</strong>: Cell tower icons and favicons throughout interface</li>
+<li><strong>Typography</strong>: Chivo and Chivo Mono Google Fonts integration</li>
+<li><strong>Dry Run Modal</strong>: Comprehensive results display with CLI-like output</li>
+<li><strong>Modal Improvements</strong>: Proper close button positioning and responsive design</li>
+<li><strong>Bulk Update Modal</strong>: Dry run checkbox and major version upgrade controls</li>
+<li><strong>Button State Management</strong>: Proper onclick attribute handling during operations</li>
+<li><strong>Notification System</strong>: Toast notifications for user feedback</li>
 </ul>
 <h3 id="in-progress">🚧 In Progress</h3>
 <ul>
-<li><strong>Real-time Updates</strong>: Auto-refresh functionality for live status updates (every 30 seconds)</li>
-<li><strong>Bulk Operations</strong>: Multi-container update functionality</li>
 <li><strong>Log Viewing</strong>: Container log viewing</li>
 <li><strong>Container Restart</strong>: Direct container restart functionality</li>
-</ul>
-<h3 id="recently-completed">✅ Recently Completed</h3>
-<ul>
-<li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images baked into binary</li>
-<li><strong>Auto-refresh Dashboard</strong>: Automatic status updates without manual refresh</li>
-<li><strong>External JavaScript</strong>: Extracted JavaScript to external files for better maintainability</li>
-<li><strong>State Management</strong>: Shared state between web requests and background operations</li>
 </ul>
 <h3 id="planned-features">📋 Planned Features</h3>
 <ul>
@@ -1266,7 +1253,7 @@
 <li><strong>External JavaScript Files</strong>: Modular and maintainable code structure</li>
 </ul>
 <h3 id="architecture">Architecture</h3>
-<pre><code>┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+<pre><code class="language-text">┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Browser      │    │   Kemal Server  │    │   Docker API    │
 │                │    │                │    │                │
 │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
@@ -1280,36 +1267,42 @@
 <h3 id="1-dashboard-main-page">1. Dashboard (Main Page)</h3>
 <p><strong>URL</strong>: <code>/</code></p>
 <p><strong>Purpose</strong>: Overview of all running containers and their update status</p>
-<p><strong>Components</strong>:
-- Header with app title and navigation
-- Summary statistics (total containers, updates available)
-- Container list with:
-  - Container name and ID
-  - Current image tag
-  - Update status indicator
-  - Last checked timestamp
-  - Quick actions (Check Update, Update)
-- Action bar for bulk operations
-- Real-time status indicators</p>
-<p><strong>Status Indicators</strong>:
-- 🟢 Up to date
-- 🟡 Update available
-- 🔴 Unknown/error
-- ⚪ Latest tag (always check)</p>
+<p><strong>Components</strong>:</p>
+<ul>
+<li>Header with app title and navigation</li>
+<li>Summary statistics (total containers, updates available)</li>
+<li>Container list with:</li>
+<li>Container name and ID</li>
+<li>Current image tag</li>
+<li>Update status indicator</li>
+<li>Last checked timestamp</li>
+<li>Quick actions (Check Update, Update)</li>
+<li>Action bar for bulk operations</li>
+<li>Real-time status indicators</li>
+</ul>
+<p><strong>Status Indicators</strong>:</p>
+<ul>
+<li>🟢 Up to date</li>
+<li>🟡 Update available</li>
+<li>🔴 Unknown/error</li>
+<li>⚪ Latest tag (always check)</li>
+</ul>
 <h3 id="2-container-details-page">2. Container Details Page</h3>
 <p><strong>URL</strong>: <code>/containers/:id</code></p>
 <p><strong>Purpose</strong>: Detailed view and management of individual containers</p>
-<p><strong>Components</strong>:
-- Container information (name, ID, image, status)
-- Version comparison (current vs available)
-- Update history
-- Action buttons:
-  - Check for updates
-  - Update container
-  - Restart container
-  - View logs
-- Logs viewer with real-time updates
-- Configuration summary</p>
+<p><strong>Components</strong>:</p>
+<ul>
+<li>Container information (name, ID, image, status)</li>
+<li>Version comparison (current vs available)</li>
+<li>Update history</li>
+<li>Action buttons:</li>
+<li>Check for updates</li>
+<li>Update container</li>
+<li>Restart container</li>
+<li>View logs</li>
+<li>Logs viewer with real-time updates</li>
+<li>Configuration summary</li>
+</ul>
 <h3 id="3-api-endpoints">3. API Endpoints</h3>
 <h4 id="container-management">Container Management</h4>
 <ul>
@@ -1343,13 +1336,15 @@
 </ul>
 <h2 id="user-interface-design">User Interface Design</h2>
 <h3 id="color-scheme">Color Scheme</h3>
-<p>Using Pico.css default color scheme:
-- <strong>Primary</strong>: #007bff (blue for actions)
-- <strong>Success</strong>: #28a745 (green for up-to-date)
-- <strong>Warning</strong>: #ffc107 (yellow for updates available)
-- <strong>Danger</strong>: #dc3545 (red for errors)
-- <strong>Light</strong>: #f8f9fa (backgrounds)
-- <strong>Dark</strong>: #343a40 (text)</p>
+<p>Using Pico.css default color scheme:</p>
+<ul>
+<li><strong>Primary</strong>: #007bff (blue for actions)</li>
+<li><strong>Success</strong>: #28a745 (green for up-to-date)</li>
+<li><strong>Warning</strong>: #ffc107 (yellow for updates available)</li>
+<li><strong>Danger</strong>: #dc3545 (red for errors)</li>
+<li><strong>Light</strong>: #f8f9fa (backgrounds)</li>
+<li><strong>Dark</strong>: #343a40 (text)</li>
+</ul>
 <h3 id="layout-structure">Layout Structure</h3>
 <pre><code class="language-html">&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
@@ -1432,19 +1427,23 @@
 <li>[x] Implement container updates</li>
 <li>[x] Add error handling and validation</li>
 </ol>
-<h3 id="phase-3-advanced-features">Phase 3: Advanced Features</h3>
+<h3 id="phase-3-advanced-features">Phase 3: Advanced Features ✅</h3>
 <ol>
-<li>[ ] Add bulk operations</li>
-<li>[ ] Implement real-time updates (WebSocket)</li>
+<li>[x] Add bulk operations</li>
+<li>[x] Implement real-time updates (Auto-refresh every 30 seconds)</li>
 <li>[ ] Add log viewing</li>
 <li>[ ] Add container restart functionality</li>
 </ol>
-<h3 id="phase-4-polish-and-documentation">Phase 4: Polish and Documentation</h3>
+<h3 id="phase-4-polish-and-documentation">Phase 4: Polish and Documentation ✅</h3>
 <ol>
-<li>[ ] Responsive design improvements</li>
-<li>[ ] Loading states and spinners</li>
-<li>[ ] Better error messages</li>
-<li>[ ] Update documentation</li>
+<li>[x] Responsive design improvements</li>
+<li>[x] Loading states and spinners</li>
+<li>[x] Better error messages</li>
+<li>[x] Update documentation</li>
+<li>[x] Custom branding with cell tower icons</li>
+<li>[x] Typography improvements with Chivo fonts</li>
+<li>[x] Comprehensive dry run modal</li>
+<li>[x] Favicon integration</li>
 </ol>
 <h2 id="security-considerations">Security Considerations</h2>
 <ol>
@@ -1469,7 +1468,7 @@
 <li><strong>Browser Testing</strong>: Test across different browsers and devices</li>
 </ol>
 <h2 id="file-structure">File Structure</h2>
-<pre><code>src/
+<pre><code class="language-text">src/
 ├── web_baked.cr          # Web server entry point with baked assets
 ├── web_server_baked.cr   # Main web server class with embedded static files
 ├── web_views.cr          # View templates and rendering with auto-refresh

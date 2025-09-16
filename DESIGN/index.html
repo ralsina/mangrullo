@@ -468,9 +468,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-8-web-interface-framework" class="md-nav__link">
+  <a href="#phase-8-web-interface-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 8: Web Interface (Framework) ✓
+      Phase 8: Web Interface (Complete) ✓
     </span>
   </a>
   
@@ -857,9 +857,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-8-web-interface-framework" class="md-nav__link">
+  <a href="#phase-8-web-interface-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 8: Web Interface (Framework) ✓
+      Phase 8: Web Interface (Complete) ✓
     </span>
   </a>
   
@@ -939,7 +939,8 @@
 
 <h1 id="mangrullo-design-document">Mangrullo Design Document</h1>
 <h2 id="overview">Overview</h2>
-<p>Mangrullo is a Crystal implementation of a Watchtower-like Docker container update automation tool.</p>
+<p>Mangrullo is a Docker container update automation tool designed to automatically
+manage container updates.</p>
 <h2 id="core-features">Core Features</h2>
 <ul>
 <li>Monitor running Docker containers and their image versions</li>
@@ -1145,21 +1146,29 @@
 <li>Integration tests for critical functionality</li>
 <li>Test edge cases and error conditions</li>
 </ol>
-<h3 id="phase-8-web-interface-framework">Phase 8: Web Interface (Framework) ✓</h3>
+<h3 id="phase-8-web-interface-complete">Phase 8: Web Interface (Complete) ✓</h3>
 <ol>
 <li>Add Kemal web framework</li>
 <li>Create basic web server structure</li>
 <li>Add web views templates</li>
+<li>Implement auto-refresh dashboard</li>
+<li>Add bulk operations with dry run support</li>
+<li>Integrate custom branding and typography</li>
+<li>Add comprehensive dry run results modal</li>
+<li>Implement embedded static assets</li>
 </ol>
 <h3 id="phase-9-documentation-and-polish">Phase 9: Documentation and Polish ✓</h3>
 <ol>
 <li>Update all documentation</li>
 <li>Add comprehensive examples</li>
 <li>Finalize error handling</li>
+<li>Add favicon and branding</li>
+<li>Fix critical JSON parsing bugs</li>
+<li>Add CI workflow improvements</li>
 </ol>
 <h2 id="configuration-options">Configuration Options</h2>
 <h3 id="docopt-usage-string">Docopt Usage String</h3>
-<pre><code>Mangrullo - Docker container update automation tool
+<pre><code class="language-text">Mangrullo - Docker container update automation tool
 
 Usage:
   mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;] 
@@ -1174,13 +1183,15 @@ Options:
   --help                 Show this help message
   --version              Show version information
 </code></pre>
-<p>Environment Variables:
-- <code>MANGRULLO_INTERVAL</code>
-- <code>MANGRULLO_ALLOW_MAJOR_UPGRADE</code>
-- <code>MANGRULLO_DOCKER_SOCKET</code>
-- <code>MANGRULLO_LOG_LEVEL</code></p>
+<p>Environment Variables:</p>
+<ul>
+<li><code>MANGRULLO_INTERVAL</code></li>
+<li><code>MANGRULLO_ALLOW_MAJOR_UPGRADE</code></li>
+<li><code>MANGRULLO_DOCKER_SOCKET</code></li>
+<li><code>MANGRULLO_LOG_LEVEL</code></li>
+</ul>
 <h2 id="file-structure">File Structure</h2>
-<pre><code>src/
+<pre><code class="language-text">src/
 ├── mangrullo.cr              # Main module and CLI
 ├── docker_client.cr          # Docker API wrapper
 ├── image_checker.cr          # Image update logic

@@ -354,9 +354,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#features_1" class="md-nav__link">
+  <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
-      Features
+      Key Features
     </span>
   </a>
   
@@ -819,9 +819,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#features_1" class="md-nav__link">
+  <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
-      Features
+      Key Features
     </span>
   </a>
   
@@ -1044,8 +1044,26 @@
 
 
 <h1 id="mangrullo">Mangrullo</h1>
-<p><a href="https://github.com/ralsina/mangrullo/actions"><img alt="Crystal CI" src="https://github.com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg" /></a>
-<a href="https://github.com/ralsina/mangrullo/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ralsina/mangrullo" /></a>
+<p>[![Crystal CI1. Clone the repository:</p>
+<p><code>bash
+   git clone https://github.com/ralsina/mangrullo.git
+   cd mangrullo</code></p>
+<ol>
+<li>Install dependencies:</li>
+</ol>
+<p><code>bash
+   shards install</code></p>
+<ol>
+<li>Build the project:</li>
+</ol>
+<p><code>bash
+   shards build</code></p>
+<ol>
+<li>Install the binary (optional):</li>
+</ol>
+<p><code>bash
+   cp bin/mangrullo /usr/local/bin/</code>com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg)](https://github.com/ralsina/mangrullo/actions)</p>
+<p><a href="https://github.com/ralsina/mangrullo/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ralsina/mangrullo" /></a>
 <a href="https://github.com/ralsina/mangrullo/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/ralsina/mangrullo" /></a></p>
 <p>Mangrullo is a Docker container update automation tool written in Crystal. It monitors running Docker containers and automatically updates them to newer image versions, similar to Watchtower but with a focus on simplicity and reliability.</p>
 <h2 id="features">Features</h2>
@@ -1065,20 +1083,26 @@
 <h3 id="from-source">From Source</h3>
 <ol>
 <li>Install Crystal (&gt;= 1.16.3) following the <a href="https://crystal-lang.org/installation/">official installation guide</a></li>
-<li>Clone the repository:
-   <code>bash
-   git clone https://github.com/ralsina/mangrullo.git
-   cd mangrullo</code></li>
-<li>Install dependencies:
-   <code>bash
-   shards install</code></li>
-<li>Build the project:
-   <code>bash
-   shards build</code></li>
-<li>Install the binary (optional):
-   <code>bash
-   cp bin/mangrullo /usr/local/bin/</code></li>
+<li>Clone the repository:</li>
 </ol>
+<p><code>bash
+   git clone https://github.com/ralsina/mangrullo.git
+   cd mangrullo</code></p>
+<ol>
+<li>Install dependencies:</li>
+</ol>
+<p><code>bash
+   shards install</code></p>
+<ol>
+<li>Build the project:</li>
+</ol>
+<p><code>bash
+   shards build</code></p>
+<ol>
+<li>Install the binary (optional):</li>
+</ol>
+<p><code>bash
+   cp bin/mangrullo /usr/local/bin/</code></p>
 <h3 id="pre-built-binaries">Pre-built Binaries</h3>
 <p>Pre-built static binaries are available for multiple architectures in the <code>bin/</code> directory:</p>
 <ul>
@@ -1110,7 +1134,7 @@ mangrullo --allow-major
 mangrullo --dry-run
 </code></pre>
 <h3 id="command-line-options">Command Line Options</h3>
-<pre><code>Usage:
+<pre><code class="language-text">Usage:
   mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;]
            [--log-level=&lt;level&gt;] [--once] [--dry-run] [--help] [--version]
 
@@ -1148,7 +1172,7 @@ Arguments:
 <pre><code class="language-bash">mangrullo --socket=/path/to/docker.sock
 </code></pre>
 <h2 id="web-interface">Web Interface</h2>
-<p>Mangrullo includes an optional web interface that provides a dashboard for monitoring and managing Docker container updates.</p>
+<p>Mangrullo includes a fully-featured web interface that provides a modern dashboard for monitoring and managing Docker container updates.</p>
 <h3 id="starting-the-web-interface">Starting the Web Interface</h3>
 <pre><code class="language-bash"># Build and run the web interface
 shards build mangrullo-web
@@ -1159,23 +1183,32 @@ shards build mangrullo-web
 <li><strong>Dashboard</strong>: Real-time overview of all containers and their update status</li>
 <li><strong>Auto-refresh</strong>: Automatic updates every 30 seconds</li>
 <li><strong>Container Management</strong>: Check for updates and update individual containers</li>
-<li><strong>Detailed Views</strong>: Container information, version comparison, and logs</li>
-<li><strong>Bulk Operations</strong>: Check all containers for updates at once</li>
+<li><strong>Bulk Operations</strong>: Update multiple containers at once with dry-run support</li>
+<li><strong>Dry Run Modal</strong>: Comprehensive results display showing what would be updated</li>
+<li><strong>Modern UI</strong>: Clean, responsive design using Pico.css with Chivo fonts</li>
+<li><strong>Brand Identity</strong>: Custom cell tower icon and favicon integration</li>
 </ul>
-<h3 id="features_1">Features</h3>
+<h3 id="key-features">Key Features</h3>
 <ul>
 <li><strong>Auto-refresh Dashboard</strong>: Container status automatically updates without manual refresh</li>
 <li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images are baked into the binary for easy deployment</li>
-<li><strong>Responsive Design</strong>: Works on desktop and mobile devices</li>
+<li><strong>Responsive Design</strong>: Works on desktop and mobile devices with proper scaling</li>
 <li><strong>Real-time Status</strong>: Live indicators for update checks and container operations</li>
-<li><strong>Clean Interface</strong>: Simple, intuitive design using Pico.css</li>
+<li><strong>Dry Run Support</strong>: Comprehensive dry run results with detailed tables showing update status</li>
+<li><strong>Bulk Update Operations</strong>: Update all containers with major version control and dry run options</li>
+<li><strong>Custom Branding</strong>: Cell tower icon throughout interface with 50% larger text</li>
+<li><strong>Favicon Support</strong>: Both SVG and ICO favicons with cell tower branding</li>
 </ul>
 <h3 id="web-interface-architecture">Web Interface Architecture</h3>
-<p>The web interface uses:
-- <strong>Kemal</strong>: Fast web framework for Crystal
-- <strong>Baked File System</strong>: Static assets embedded in the binary
-- <strong>State Manager</strong>: Shared state between web requests and background operations
-- <strong>Auto-refresh</strong>: JavaScript-based periodic updates</p>
+<p>The web interface uses:</p>
+<ul>
+<li><strong>Kemal</strong>: Fast web framework for Crystal</li>
+<li><strong>Baked File System</strong>: Static assets embedded in the binary for zero-dependency deployment</li>
+<li><strong>State Manager</strong>: Shared state between web requests and background operations</li>
+<li><strong>Auto-refresh</strong>: JavaScript-based periodic updates every 30 seconds</li>
+<li><strong>Google Fonts</strong>: Chivo and Chivo Mono fonts for enhanced typography</li>
+<li><strong>Material Icons</strong>: Google Material Icons for consistent iconography</li>
+</ul>
 <h2 id="configuration">Configuration</h2>
 <p>Mangrullo is configured primarily through command-line arguments. There are no configuration files or environment variables to manage.</p>
 <h3 id="docker-socket">Docker Socket</h3>
@@ -1188,16 +1221,18 @@ shards build mangrullo-web
 <li><strong>Major updates</strong> (1.0.0 → 2.0.0): Only applied when <code>--allow-major</code> is specified</li>
 </ul>
 <h3 id="image-support">Image Support</h3>
-<p>Mangrullo works with:
-- Standard image tags (nginx:1.2.3)
-- Registry prefixes (docker.io/library/nginx:1.2.3)
-- SHA256 digests (skipped for version comparison)
-- Latest tags (always check for updates)
-- Multiple registries:
-  - Docker Hub (registry-1.docker.io)
-  - GitHub Container Registry (ghcr.io)
-  - LinuxServer.io (lscr.io - maps to ghcr.io/linuxserver/)
-  - Other standard Docker registry v2 implementations</p>
+<p>Mangrullo works with:</p>
+<ul>
+<li>Standard image tags (nginx:1.2.3)</li>
+<li>Registry prefixes (docker.io/library/nginx:1.2.3)</li>
+<li>SHA256 digests (skipped for version comparison)</li>
+<li>Latest tags (always check for updates)</li>
+<li>Multiple registries:</li>
+<li>Docker Hub (registry-1.docker.io)</li>
+<li>GitHub Container Registry (ghcr.io)</li>
+<li>LinuxServer.io (lscr.io - maps to ghcr.io/linuxserver/)</li>
+<li>Other standard Docker registry v2 implementations</li>
+</ul>
 <h2 id="development">Development</h2>
 <h3 id="prerequisites">Prerequisites</h3>
 <ul>
@@ -1207,28 +1242,26 @@ shards build mangrullo-web
 </ul>
 <h3 id="setup">Setup</h3>
 <ol>
-<li>
-<p>Clone the repository:
-   <code>bash
+<li>Clone the repository:</li>
+</ol>
+<p><code>bash
    git clone https://github.com/ralsina/mangrullo.git
    cd mangrullo</code></p>
-</li>
-<li>
-<p>Install dependencies:
-   <code>bash
-   shards install</code></p>
-</li>
-<li>
-<p>Run tests:
-   <code>bash
-   crystal spec</code></p>
-</li>
-<li>
-<p>Build the project:
-   <code>bash
-   shards build</code></p>
-</li>
+<ol>
+<li>Install dependencies:</li>
 </ol>
+<p><code>bash
+   shards install</code></p>
+<ol>
+<li>Run tests:</li>
+</ol>
+<p><code>bash
+   crystal spec</code></p>
+<ol>
+<li>Build the project:</li>
+</ol>
+<p><code>bash
+   shards build</code></p>
 <h3 id="running-tests">Running Tests</h3>
 <p>The project includes comprehensive unit tests:</p>
 <pre><code class="language-bash"># Run all tests
@@ -1240,12 +1273,14 @@ crystal spec spec/mangrullo_spec.cr
 # Run with verbose output
 crystal spec --verbose
 </code></pre>
-<p>The test suite covers:
-- Container name matching and filtering
-- Registry mapping and authentication
-- Container recreation logic
-- Version parsing and comparison
-- Image update detection algorithms</p>
+<p>The test suite covers:</p>
+<ul>
+<li>Container name matching and filtering</li>
+<li>Registry mapping and authentication</li>
+<li>Container recreation logic</li>
+<li>Version parsing and comparison</li>
+<li>Image update detection algorithms</li>
+</ul>
 <h3 id="code-style">Code Style</h3>
 <ul>
 <li>Follow Crystal language conventions</li>
@@ -1316,12 +1351,18 @@ crystal spec --verbose
 </ul>
 <h3 id="recent-updates">Recent Updates</h3>
 <ul>
+<li><strong>Comprehensive Web Interface</strong>: Full-featured dashboard with auto-refresh and bulk operations</li>
+<li><strong>Dry Run Modal</strong>: Detailed results display showing what would be updated with CLI-like output</li>
+<li><strong>Custom Branding</strong>: Cell tower icons throughout interface with favicon support</li>
+<li><strong>Typography Enhancement</strong>: Chivo and Chivo Mono Google Fonts integration</li>
+<li><strong>Bulk Update Operations</strong>: Update multiple containers with dry run and major version controls</li>
+<li><strong>Button State Management</strong>: Proper onclick handling to prevent double-clicks during operations</li>
+<li><strong>Critical JSON Fix</strong>: Fixed dry run checkbox being ignored due to form vs JSON parameter parsing</li>
 <li><strong>Embedded Static Assets</strong>: All web interface assets (CSS, JS, images) baked into binary</li>
 <li><strong>Auto-refresh Dashboard</strong>: Web interface automatically updates every 30 seconds</li>
 <li><strong>Rate Limiting Protection</strong>: Default 6-hour check interval to avoid Docker Hub rate limits</li>
 <li><strong>Multi-architecture Builds</strong>: Static binaries available for Linux AMD64 and ARM64</li>
-<li><strong>Improved Web UI</strong>: Cleaner interface with real-time status indicators</li>
-<li><strong>External JavaScript</strong>: Extracted JavaScript to external files for better maintainability</li>
+<li><strong>CI Workflow Improvements</strong>: Added Ameba as development dependency for proper linting</li>
 </ul>
 
 

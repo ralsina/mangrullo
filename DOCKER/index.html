@@ -1198,14 +1198,16 @@ sudo usermod -aG docker $USER
 docker run --privileged ...
 </code></pre>
 <h3 id="connection-issues">Connection Issues</h3>
-<p>If Mangrullo can't connect to Docker:
-1. Verify Docker is running: <code>docker ps</code>
-2. Check socket permissions: <code>ls -la /var/run/docker.sock</code>
-3. Ensure the socket is mounted correctly</p>
+<p>If Mangrullo can't connect to Docker:</p>
+<ol>
+<li>Verify Docker is running: <code>docker ps</code></li>
+<li>Check socket permissions: <code>ls -la /var/run/docker.sock</code></li>
+<li>Ensure the socket is mounted correctly</li>
+</ol>
 <h2 id="advanced-usage">Advanced Usage</h2>
 <h3 id="custom-dockerfile">Custom Dockerfile</h3>
 <p>For custom builds, create a <code>.dockerignore</code> file:</p>
-<pre><code>.git
+<pre><code class="language-text">.git
 .github
 .spec
 lib/

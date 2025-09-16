@@ -1467,10 +1467,12 @@ end
   local_digest != remote_digest
 end
 </code></pre>
-<p><strong>Benefits:</strong>
-- Single API call to get remote manifest digest
-- No need to parse hundreds or thousands of tags
-- Fast and efficient</p>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>Single API call to get remote manifest digest</li>
+<li>No need to parse hundreds or thousands of tags</li>
+<li>Fast and efficient</li>
+</ul>
 <h3 id="3-versioned-tag-handling">3. Versioned Tag Handling</h3>
 <p>For images with semantic version tags (e.g., <code>nginx:1.2.3</code>):</p>
 <h4 id="31-version-extraction">3.1 Version Extraction</h4>
@@ -1530,17 +1532,19 @@ end
 <li><strong>GitHub Container Registry</strong>: <code>ghcr.io</code></li>
 <li><strong>Other registries</strong>: Dynamic detection</li>
 </ul>
-<p><strong>Authentication:</strong>
-- JWT token authentication with caching
-- Support for both Docker Hub and ghcr.io token endpoints
-- Graceful fallback to unauthenticated requests</p>
+<p><strong>Authentication:</strong></p>
+<ul>
+<li>JWT token authentication with caching</li>
+<li>Support for both Docker Hub and ghcr.io token endpoints</li>
+<li>Graceful fallback to unauthenticated requests</li>
+</ul>
 <h2 id="message-generation">Message Generation</h2>
 <p>The algorithm generates clean, user-friendly messages:</p>
 <h3 id="latest-tags">Latest Tags</h3>
-<pre><code>&quot;Update available for ghcr.io/home-assistant/home-assistant:latest (current: latest)&quot;
+<pre><code class="language-text">&quot;Update available for ghcr.io/home-assistant/home-assistant:latest (current: latest)&quot;
 </code></pre>
 <h3 id="versioned-tags">Versioned Tags</h3>
-<pre><code>&quot;Version update available: 1.2.0 -&gt; 1.4.5&quot;
+<pre><code class="language-text">&quot;Version update available: 1.2.0 -&gt; 1.4.5&quot;
 </code></pre>
 <h2 id="key-methods-and-their-roles">Key Methods and Their Roles</h2>
 <h3 id="core-methods">Core Methods</h3>
@@ -1607,9 +1611,11 @@ end
 <li>Non-semantic version strings</li>
 </ul>
 <h2 id="major-upgrade-control">Major Upgrade Control</h2>
-<p>The <code>allow_major_upgrade</code> parameter controls upgrade behavior:
-- <strong><code>true</code></strong>: Any version increase (1.2.3 → 2.0.0)
-- <strong><code>false</code></strong>: Only minor/patch updates (1.2.3 → 1.3.0, NOT 1.2.3 → 2.0.0)</p>
+<p>The <code>allow_major_upgrade</code> parameter controls upgrade behavior:</p>
+<ul>
+<li><strong><code>true</code></strong>: Any version increase (1.2.3 → 2.0.0)</li>
+<li><strong><code>false</code></strong>: Only minor/patch updates (1.2.3 → 1.3.0, NOT 1.2.3 → 2.0.0)</li>
+</ul>
 <h2 id="performance-characteristics">Performance Characteristics</h2>
 <h3 id="api-efficiency">API Efficiency</h3>
 <ul>
