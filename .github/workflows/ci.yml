@@ -20,4 +20,4 @@ jobs:
     - name: Run tests
       run: crystal spec
     - name: Run linter
-      run: ameba
+      run: bin/ameba
