@@ -23,7 +23,7 @@ The pre-commit hook runs tests and linting before allowing commits.
 
 ## Documentation
 
-The full documentation for this project is available on our [GitHub Pages site](https://USER.github.io/mangrullo/).
+The full documentation for this project is available on our [GitHub Pages site](https://ralsina.github.io/mangrullo/).
 
 The documentation is automatically built from the files in the `docs` directory.
 
