@@ -16,7 +16,7 @@ license: MIT
 
 dependencies:
   baked_file_system:
-    github: schovi/baked_file_system
+    github: ralsina/baked_file_system
   baked_file_handler:
     github: ralsina/baked_file_handler
   docr:
