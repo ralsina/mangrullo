@@ -51,11 +51,10 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Create directories for data and logs
 RUN mkdir -p /var/lib/mangrullo /var/log/mangrullo && \
-    chown -R mangrullo:mangrullo /var/lib/mangrullo /var/log/mangrullo /app && \
     chmod +x /usr/local/bin/entrypoint.sh
 
-# Switch to non-root user
-USER mangrullo
+# Note: Running as root to access Docker socket
+# The container needs access to /var/run/docker.sock which requires root privileges
 
 # Expose port for web interface
 EXPOSE 3000

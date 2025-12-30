@@ -21,7 +21,8 @@
       "Bash(npm install:*)",
       "Bash(chmod:*)",
       "Bash(node lint-js.js)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(git filter-repo:*)"
     ],
     "deny": [],
     "ask": []
