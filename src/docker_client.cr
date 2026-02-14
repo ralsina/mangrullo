@@ -1,4 +1,4 @@
-require "docr"
+require "./docr_workarounds"
 require "./types"
 require "./error_handling"
 require "./constants"
@@ -196,7 +196,7 @@ module Mangrullo
       handle_docker_errors_typed("inspecting image", "image_name=#{image_name}") do
         with_retry_and_lock("inspect image") do
           image_inspect = @api.images.inspect(image_name)
-          repo_digest = image_inspect.repo_digests.first?
+          repo_digest = image_inspect.repo_digests.try(&.first?)
           return repo_digest if repo_digest
           nil
         end
