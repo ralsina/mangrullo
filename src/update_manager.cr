@@ -46,6 +46,12 @@ module Mangrullo
         return {container: container, new_container_id: nil, updated: false, error: nil}
       end
 
+      # Special handling for mangrullo self-update
+      if mangrullo_container?(container)
+        Log.info { "Self-update detected for mangrullo container: #{container.name}" }
+        return update_mangrullo_self(container, allow_major_upgrade)
+      end
+
       Log.info { "Update needed for container: #{container.name}" }
 
       # Debug: Show container state before update
@@ -502,6 +508,21 @@ module Mangrullo
     private def mangrullo_container?(container : ContainerInfo) : Bool
       container_name = ContainerNameUtils.normalize_name_string(container.name).downcase
       Mangrullo::Constants::SelfUpdate::EXCLUDED_NAMES.any? { |excluded| container_name == excluded.downcase }
+    end
+
+    # Handle mangrullo self-update
+    # For now, we prevent self-update from the web UI to avoid service interruption
+    # Users can update via docker CLI or docker-compose pull + up -d
+    private def update_mangrullo_self(container : ContainerInfo, allow_major_upgrade : Bool) : NamedTuple(container: ContainerInfo, new_container_id: String?, updated: Bool, error: String?)
+      error_msg = "Cannot update Mangrullo from within the web UI. " +
+                  "Please update manually using: docker pull #{container.image} && " +
+                  "docker stop #{container.id} && docker rm #{container.id} && " +
+                  "docker run -d --name #{ContainerNameUtils.normalize_name_string(container.name)} [original args] #{container.image}"
+
+      Log.warn { "Self-update attempted for mangrullo container: #{container.name}" }
+      Log.warn { error_msg }
+
+      {container: container, new_container_id: nil, updated: false, error: error_msg}
     end
   end
 end
