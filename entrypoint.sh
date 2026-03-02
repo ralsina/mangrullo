@@ -17,12 +17,14 @@ Commands:
     help                Show this help
 
 Environment Variables:
-    MANGRULLO_DOCKER_SOCKET     Docker socket path (default: /var/run/docker.sock)
+    MANGRULLO_SOCKET            Docker socket path (default: /var/run/docker.sock)
     MANGRULLO_LOG_LEVEL         Log level: debug, info, warn, error (default: info)
     MANGRULLO_INTERVAL          Check interval in seconds (default: 3600)
     MANGRULLO_WEB_PORT          Web interface port (default: 3000)
     MANGRULLO_WEB_HOST          Web interface host (default: 0.0.0.0)
     MANGRULLO_ALLOW_MAJOR       Allow major version upgrades (default: false)
+    MANGRULLO_RUN_ONCE          Run once and exit (default: false)
+    MANGRULLO_DRY_RUN           Show what would be updated (default: false)
 
 Examples:
     # Run as daemon
@@ -54,7 +56,7 @@ case "${1:-daemon}" in
         echo "Starting Mangrullo in daemon mode..."
         exec mangrullo --log-level="${MANGRULLO_LOG_LEVEL:-info}" \
              --interval="${MANGRULLO_INTERVAL:-3600}" \
-             --socket="${MANGRULLO_DOCKER_SOCKET}" \
+             --socket="${MANGRULLO_SOCKET:-/var/run/docker.sock}" \
              ${MANGRULLO_ALLOW_MAJOR:+--allow-major}
         ;;
     "web")
@@ -65,14 +67,14 @@ case "${1:-daemon}" in
     "check")
         echo "Running single update check..."
         exec mangrullo --log-level="${MANGRULLO_LOG_LEVEL:-info}" \
-             --socket="${MANGRULLO_DOCKER_SOCKET}" \
+             --socket="${MANGRULLO_SOCKET:-/var/run/docker.sock}" \
              ${MANGRULLO_ALLOW_MAJOR:+--allow-major} \
              --once
         ;;
     "dry-run")
         echo "Running dry run..."
         exec mangrullo --log-level="${MANGRULLO_LOG_LEVEL:-info}" \
-             --socket="${MANGRULLO_DOCKER_SOCKET}" \
+             --socket="${MANGRULLO_SOCKET:-/var/run/docker.sock}" \
              --dry-run
         ;;
     "help"|"-h"|"--help")

@@ -60,7 +60,7 @@ RUN mkdir -p /var/lib/mangrullo /var/log/mangrullo && \
 EXPOSE 3000
 
 # Set default environment variables
-ENV MANGRULLO_DOCKER_SOCKET=/var/run/docker.sock \
+ENV MANGRULLO_SOCKET=/var/run/docker.sock \
     MANGRULLO_LOG_LEVEL=info \
     MANGRULLO_INTERVAL=3600 \
     MANGRULLO_WEB_PORT=3000
