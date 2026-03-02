@@ -87,6 +87,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Labels
 LABEL org.opencontainers.image.title="Mangrullo" \
       org.opencontainers.image.description="Docker container update manager" \
-      org.opencontainers.image.version="0.4.0" \
+      org.opencontainers.image.version="0.5.0" \
       org.opencontainers.image.authors="Roberto Alsina <roberto.alsina@gmail.com>" \
       org.opencontainers.image.source="https://github.com/ralsina/mangrullo"

@@ -1,5 +1,5 @@
 require "./cli"
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 Mangrullo::CLI.run(ARGV)
