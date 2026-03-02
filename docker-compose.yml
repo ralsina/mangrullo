@@ -11,3 +11,17 @@ services:
       - MANGRULLO_LOG_LEVEL=info
       - MANGRULLO_INTERVAL=3600
       - MANGRULLO_ALLOW_MAJOR=false
+
+  mangrullo-web:
+    image: ghcr.io/ralsina/mangrullo-arm64:latest
+    container_name: mangrullo-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - MANGRULLO_LOG_LEVEL=info
+      - MANGRULLO_INTERVAL=3600
+      - MANGRULLO_ALLOW_MAJOR=false
+    command: ["web"]
