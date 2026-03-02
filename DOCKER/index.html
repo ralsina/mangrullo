@@ -444,6 +444,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example-with-custom-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -926,6 +937,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example-with-custom-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1216,6 +1238,7 @@
 </code></pre>
 <h2 id="configuration">Configuration</h2>
 <h3 id="environment-variables">Environment Variables</h3>
+<p>All configuration options can be set via environment variables with the <code>MANGRULLO_</code> prefix:</p>
 <table>
 <thead>
 <tr>
@@ -1226,16 +1249,6 @@
 </thead>
 <tbody>
 <tr>
-<td><code>MANGRULLO_DOCKER_SOCKET</code></td>
-<td>Docker socket path</td>
-<td><code>/var/run/docker.sock</code></td>
-</tr>
-<tr>
-<td><code>MANGRULLO_LOG_LEVEL</code></td>
-<td>Log level (debug, info, warn, error)</td>
-<td><code>info</code></td>
-</tr>
-<tr>
 <td><code>MANGRULLO_INTERVAL</code></td>
 <td>Check interval in seconds</td>
 <td><code>3600</code></td>
@@ -1245,8 +1258,45 @@
 <td>Allow major version upgrades</td>
 <td><code>false</code></td>
 </tr>
+<tr>
+<td><code>MANGRULLO_SOCKET</code></td>
+<td>Docker socket path</td>
+<td><code>/var/run/docker.sock</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_LOG_LEVEL</code></td>
+<td>Log level (debug, info, warn, error)</td>
+<td><code>info</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_RUN_ONCE</code></td>
+<td>Run once and exit</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_DRY_RUN</code></td>
+<td>Show what would be updated without changes</td>
+<td><code>false</code></td>
+</tr>
 </tbody>
 </table>
+<p><strong>Note:</strong> The old environment variable <code>MANGRULLO_DOCKER_SOCKET</code> has been renamed to <code>MANGRULLO_SOCKET</code> for consistency.</p>
+<h3 id="configuration-file">Configuration File</h3>
+<p>You can also use a YAML configuration file by mounting it into the container:</p>
+<pre><code class="language-bash">docker run -d \
+  --name mangrullo \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /path/to/config.yml:/config.yml:ro \
+  mangrullo --config=/config.yml
+</code></pre>
+<p>Example <code>config.yml</code>:</p>
+<pre><code class="language-yaml">interval: 3600
+allow_major: false
+socket: &quot;/var/run/docker.sock&quot;
+log_level: &quot;info&quot;
+run_once: false
+dry_run: false
+</code></pre>
 <h3 id="example-with-custom-configuration">Example with Custom Configuration</h3>
 <pre><code class="language-bash">docker run -d \
   --name mangrullo \

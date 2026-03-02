@@ -427,6 +427,50 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#precedence-highest-to-lowest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precedence (highest to lowest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command-line-options_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command-Line Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#docker-socket" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -979,6 +1023,50 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#precedence-highest-to-lowest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precedence (highest to lowest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command-line-options_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command-Line Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#docker-socket" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1372,14 +1460,124 @@ shards build mangrullo-web
 <li><strong>Material Icons</strong>: Google Material Icons for consistent iconography</li>
 </ul>
 <h2 id="configuration">Configuration</h2>
-<p>Mangrullo is configured primarily through command-line arguments. There are no configuration files or environment variables to manage.</p>
+<p>Mangrillo supports flexible configuration through multiple methods with a clear precedence order:</p>
+<h3 id="precedence-highest-to-lowest">Precedence (highest to lowest)</h3>
+<ol>
+<li><strong>Command-line arguments</strong> - Always take precedence</li>
+<li><strong>Environment variables</strong> - Used when CLI argument is not provided</li>
+<li><strong>Configuration file</strong> - YAML file for persistent settings</li>
+<li><strong>Default values</strong> - Built-in defaults as last resort</li>
+</ol>
+<h3 id="command-line-options_1">Command-Line Options</h3>
+<pre><code class="language-bash">mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;]
+          [--log-level=&lt;level&gt;] [--once] [--dry-run] [&lt;container-name&gt;...]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--interval=&lt;seconds&gt;</code></td>
+<td>Check interval in seconds</td>
+<td><code>300</code></td>
+</tr>
+<tr>
+<td><code>--allow-major</code></td>
+<td>Allow major version upgrades</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--socket=&lt;path&gt;</code></td>
+<td>Docker socket path</td>
+<td><code>/var/run/docker.sock</code></td>
+</tr>
+<tr>
+<td><code>--log-level=&lt;level&gt;</code></td>
+<td>Logging level (debug, info, warn, error)</td>
+<td><code>info</code></td>
+</tr>
+<tr>
+<td><code>--once</code></td>
+<td>Run once and exit</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Show what would be updated without changes</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>&lt;container-name&gt;...</code></td>
+<td>Specific containers to check</td>
+<td>all containers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="environment-variables">Environment Variables</h3>
+<p>All options can be set via environment variables with the <code>MANGRULLO_</code> prefix:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MANGRULLO_INTERVAL</code></td>
+<td>Check interval</td>
+<td><code>MANGRULLO_INTERVAL=600</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_ALLOW_MAJOR</code></td>
+<td>Allow major upgrades</td>
+<td><code>MANGRULLO_ALLOW_MAJOR=true</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_SOCKET</code></td>
+<td>Docker socket path</td>
+<td><code>MANGRULLO_SOCKET=/var/run/docker.sock</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_LOG_LEVEL</code></td>
+<td>Logging level</td>
+<td><code>MANGRULLO_LOG_LEVEL=debug</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_RUN_ONCE</code></td>
+<td>Run once and exit</td>
+<td><code>MANGRULLO_RUN_ONCE=true</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_DRY_RUN</code></td>
+<td>Dry run mode</td>
+<td><code>MANGRULLO_DRY_RUN=true</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuration-file">Configuration File</h3>
+<p>You can also use a YAML configuration file (<code>config.yml</code>):</p>
+<pre><code class="language-yaml"># Mangrullo configuration
+interval: 600
+allow_major: false
+socket: &quot;/var/run/docker.sock&quot;
+log_level: &quot;info&quot;
+run_once: false
+dry_run: false
+</code></pre>
 <h3 id="docker-socket">Docker Socket</h3>
-<p>By default, Mangrullo connects to the Docker daemon at <code>/var/run/docker.sock</code>. You can specify a different path using the <code>--socket</code> option.</p>
+<p>By default, Mangrullo connects to the Docker daemon at <code>/var/run/docker.sock</code>. You can specify a different path using the <code>--socket</code> option or <code>MANGRULLO_SOCKET</code> environment variable.</p>
 <h3 id="version-handling">Version Handling</h3>
 <p>Mangrullo uses semantic versioning to determine when updates are available:</p>
 <ul>
 <li><strong>Patch updates</strong> (1.0.0 → 1.0.1): Always applied by default</li>
-<li><strong>Minor updates</strong> (1.0.0 → 1.1.0): Always applied by default  </li>
+<li><strong>Minor updates</strong> (1.0.0 → 1.1.0): Always applied by default</li>
 <li><strong>Major updates</strong> (1.0.0 → 2.0.0): Only applied when <code>--allow-major</code> is specified</li>
 </ul>
 <h3 id="image-support">Image Support</h3>

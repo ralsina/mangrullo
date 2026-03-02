@@ -1329,12 +1329,17 @@ Options:
   --help                 Show this help message
   --version              Show version information
 </code></pre>
+<p>Configuration Options:</p>
+<p>Mangrullo can be configured through command-line arguments, environment variables (with <code>MANGRULLO_</code> prefix), or a YAML configuration file.</p>
+<p>Command-line arguments have the highest priority, followed by environment variables, then the config file, and finally default values.</p>
 <p>Environment Variables:</p>
 <ul>
-<li><code>MANGRULLO_INTERVAL</code></li>
-<li><code>MANGRULLO_ALLOW_MAJOR_UPGRADE</code></li>
-<li><code>MANGRULLO_DOCKER_SOCKET</code></li>
-<li><code>MANGRULLO_LOG_LEVEL</code></li>
+<li><code>MANGRULLO_INTERVAL</code> - Check interval in seconds</li>
+<li><code>MANGRULLO_ALLOW_MAJOR</code> - Allow major version upgrades</li>
+<li><code>MANGRULLO_SOCKET</code> - Docker socket path</li>
+<li><code>MANGRULLO_LOG_LEVEL</code> - Logging level</li>
+<li><code>MANGRULLO_RUN_ONCE</code> - Run once and exit</li>
+<li><code>MANGRULLO_DRY_RUN</code> - Show what would be updated without changes</li>
 </ul>
 <h2 id="file-structure">File Structure</h2>
 <pre><code class="language-text">src/
