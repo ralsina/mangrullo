@@ -220,18 +220,69 @@ The web interface uses:
 
 ## Configuration
 
-Mangrullo is configured primarily through command-line arguments. There are no configuration files or environment variables to manage.
+Mangrillo supports flexible configuration through multiple methods with a clear precedence order:
+
+### Precedence (highest to lowest)
+
+1. **Command-line arguments** - Always take precedence
+2. **Environment variables** - Used when CLI argument is not provided
+3. **Configuration file** - YAML file for persistent settings
+4. **Default values** - Built-in defaults as last resort
+
+### Command-Line Options
+
+```bash
+mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
+          [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--interval=<seconds>` | Check interval in seconds | `300` |
+| `--allow-major` | Allow major version upgrades | `false` |
+| `--socket=<path>` | Docker socket path | `/var/run/docker.sock` |
+| `--log-level=<level>` | Logging level (debug, info, warn, error) | `info` |
+| `--once` | Run once and exit | `false` |
+| `--dry-run` | Show what would be updated without changes | `false` |
+| `<container-name>...` | Specific containers to check | all containers |
+
+### Environment Variables
+
+All options can be set via environment variables with the `MANGRULLO_` prefix:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `MANGRULLO_INTERVAL` | Check interval | `MANGRULLO_INTERVAL=600` |
+| `MANGRULLO_ALLOW_MAJOR` | Allow major upgrades | `MANGRULLO_ALLOW_MAJOR=true` |
+| `MANGRULLO_SOCKET` | Docker socket path | `MANGRULLO_SOCKET=/var/run/docker.sock` |
+| `MANGRULLO_LOG_LEVEL` | Logging level | `MANGRULLO_LOG_LEVEL=debug` |
+| `MANGRULLO_RUN_ONCE` | Run once and exit | `MANGRULLO_RUN_ONCE=true` |
+| `MANGRULLO_DRY_RUN` | Dry run mode | `MANGRULLO_DRY_RUN=true` |
+
+### Configuration File
+
+You can also use a YAML configuration file (`config.yml`):
+
+```yaml
+# Mangrullo configuration
+interval: 600
+allow_major: false
+socket: "/var/run/docker.sock"
+log_level: "info"
+run_once: false
+dry_run: false
+```
 
 ### Docker Socket
 
-By default, Mangrullo connects to the Docker daemon at `/var/run/docker.sock`. You can specify a different path using the `--socket` option.
+By default, Mangrullo connects to the Docker daemon at `/var/run/docker.sock`. You can specify a different path using the `--socket` option or `MANGRULLO_SOCKET` environment variable.
 
 ### Version Handling
 
 Mangrullo uses semantic versioning to determine when updates are available:
 
 - **Patch updates** (1.0.0 → 1.0.1): Always applied by default
-- **Minor updates** (1.0.0 → 1.1.0): Always applied by default  
+- **Minor updates** (1.0.0 → 1.1.0): Always applied by default
 - **Major updates** (1.0.0 → 2.0.0): Only applied when `--allow-major` is specified
 
 ### Image Support

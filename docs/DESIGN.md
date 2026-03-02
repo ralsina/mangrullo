@@ -240,12 +240,20 @@ Options:
   --version              Show version information
 ```
 
+Configuration Options:
+
+Mangrullo can be configured through command-line arguments, environment variables (with `MANGRULLO_` prefix), or a YAML configuration file.
+
+Command-line arguments have the highest priority, followed by environment variables, then the config file, and finally default values.
+
 Environment Variables:
 
-- `MANGRULLO_INTERVAL`
-- `MANGRULLO_ALLOW_MAJOR_UPGRADE`
-- `MANGRULLO_DOCKER_SOCKET`
-- `MANGRULLO_LOG_LEVEL`
+- `MANGRULLO_INTERVAL` - Check interval in seconds
+- `MANGRULLO_ALLOW_MAJOR` - Allow major version upgrades
+- `MANGRULLO_SOCKET` - Docker socket path
+- `MANGRULLO_LOG_LEVEL` - Logging level
+- `MANGRULLO_RUN_ONCE` - Run once and exit
+- `MANGRULLO_DRY_RUN` - Show what would be updated without changes
 
 ## File Structure
 

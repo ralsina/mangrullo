@@ -71,12 +71,41 @@ docker-compose logs -f
 
 ### Environment Variables
 
+All configuration options can be set via environment variables with the `MANGRULLO_` prefix:
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MANGRULLO_DOCKER_SOCKET` | Docker socket path | `/var/run/docker.sock` |
-| `MANGRULLO_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `MANGRULLO_INTERVAL` | Check interval in seconds | `3600` |
 | `MANGRULLO_ALLOW_MAJOR` | Allow major version upgrades | `false` |
+| `MANGRULLO_SOCKET` | Docker socket path | `/var/run/docker.sock` |
+| `MANGRULLO_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
+| `MANGRULLO_RUN_ONCE` | Run once and exit | `false` |
+| `MANGRULLO_DRY_RUN` | Show what would be updated without changes | `false` |
+
+**Note:** The old environment variable `MANGRULLO_DOCKER_SOCKET` has been renamed to `MANGRULLO_SOCKET` for consistency.
+
+### Configuration File
+
+You can also use a YAML configuration file by mounting it into the container:
+
+```bash
+docker run -d \
+  --name mangrullo \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /path/to/config.yml:/config.yml:ro \
+  mangrullo --config=/config.yml
+```
+
+Example `config.yml`:
+
+```yaml
+interval: 3600
+allow_major: false
+socket: "/var/run/docker.sock"
+log_level: "info"
+run_once: false
+dry_run: false
+```
 
 ### Example with Custom Configuration
 
