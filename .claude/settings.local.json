@@ -37,7 +37,8 @@
       "Bash(docker buildx:*)",
       "Bash(./scripts/build-docker.sh:*)",
       "Bash(docker-compose config:*)",
-      "Bash(bash scripts/build-docker.sh)"
+      "Bash(bash scripts/build-docker.sh)",
+      "Bash(shards version:*)"
     ],
     "deny": [],
     "ask": []
