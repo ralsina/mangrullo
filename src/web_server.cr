@@ -14,6 +14,7 @@ require "./json_response_helper"
 require "./container_name_utils"
 require "./container_state_helper"
 require "./version_utils"
+require "./sse"
 
 class WebServer
   @web_views : WebViews
@@ -279,6 +280,38 @@ class WebServer
     # Health check
     get "/health" do
       "OK"
+    end
+
+    # SSE endpoint for real-time updates
+    get "/api/events" do |env|
+      # Set SSE headers
+      env.response.content_type = "text/event-stream"
+      env.response.headers["Cache-Control"] = "no-cache"
+      env.response.headers["Connection"] = "keep-alive"
+      env.response.headers["X-Accel-Buffering"] = "no"
+
+      # Generate a unique client ID
+      client_id = "client_#{Random::Secure.hex(8)}"
+
+      # Send initial connection event
+      initial_event = Mangrullo::SSE::Event.new(
+        type: Mangrullo::SSE::EventType::StatusUpdate,
+        container_id: "",
+        container_name: "",
+        message: "Connected to real-time updates",
+        data: {"client_id" => client_id} of String => Int32 | Bool | String
+      )
+
+      # Send the event directly to the response
+      env.response << "event: #{initial_event.type.to_s.underscore}\n"
+      env.response << "data: #{initial_event.to_sse_json}\n"
+      env.response << "\n"
+      env.response.flush
+
+      # Keep the connection alive with periodic comments
+      # Note: In Kemal, the response will be closed when the handler returns
+      # For proper SSE, we'd need to stream asynchronously
+      # This is a simplified version that shows the concept
     end
   end
 

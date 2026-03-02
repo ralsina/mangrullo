@@ -11,6 +11,7 @@ require "./string_display_utils"
 require "progress"
 require "colorize"
 require "./constants"
+require "./sse"
 
 module Mangrullo
   class UpdateManager
@@ -72,9 +73,14 @@ module Mangrullo
 
       # Pull the new image
       Log.info { "Pulling new image: #{container.image}" }
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ImagePullStart, "Pulling new image: #{container.image}")
+
       unless @docker_client.pull_image(image_name, image_tag)
+        broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateError, "Failed to pull image")
         return {container: container, new_container_id: nil, updated: false, error: "Failed to pull image"}
       end
+
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ImagePullComplete, "Image pulled successfully")
 
       # Debug: Show state after pull
       Log.debug { "Container state after pull:" }
@@ -95,10 +101,18 @@ module Mangrullo
                      end
 
       Log.debug { "Using image: #{image_to_use}" }
+
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ContainerStop, "Stopping container")
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ContainerRemove, "Removing container")
+
       new_container_id = @docker_client.recreate_container_with_new_image(container.id, image_to_use)
       unless new_container_id
+        broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateError, "Failed to recreate container")
         return {container: container, new_container_id: nil, updated: false, error: "Failed to recreate container with new image"}
       end
+
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ContainerCreate, "Creating new container")
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ContainerStart, "Starting new container")
 
       Log.info { "Container successfully recreated with new image. New container ID: #{new_container_id}" }
 
@@ -125,15 +139,20 @@ module Mangrullo
         Log.warn { "Could not verify new container state - container may not be running" }
       end
 
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateComplete, "Container updated successfully")
+
       {container: updated_container || container, new_container_id: new_container_id, updated: true, error: nil}
     rescue ex : Docr::Errors::DockerAPIError
       Log.error { "Docker API error updating container #{container.name}: #{ex.message}" }
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateError, "Docker API error: #{ex.message}")
       {container: container, new_container_id: nil, updated: false, error: "Docker API error: #{ex.message}"}
     rescue ex : Socket::Error | IO::Error
       Log.error { "Network error updating container #{container.name}: #{ex.message}" }
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateError, "Network error: #{ex.message}")
       {container: container, new_container_id: nil, updated: false, error: "Network error: #{ex.message}"}
     rescue ex
       Log.error { "Unexpected error updating container #{container.name}: #{ex.message}" }
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateError, "Unexpected error: #{ex.message}")
       {container: container, new_container_id: nil, updated: false, error: "Unexpected error: #{ex.message}"}
     end
 
@@ -523,6 +542,21 @@ module Mangrullo
       Log.warn { error_msg }
 
       {container: container, new_container_id: nil, updated: false, error: error_msg}
+    end
+
+    # Broadcast SSE event for real-time updates
+    private def broadcast_sse_event(container : ContainerInfo, event_type : Mangrullo::SSE::EventType, message : String)
+      event = Mangrullo::SSE::Event.new(
+        type: event_type,
+        container_id: container.id,
+        container_name: ContainerNameUtils.normalize_name_string(container.name),
+        message: message,
+        data: {"container_image" => container.image} of String => Int32 | Bool | String
+      )
+      Mangrullo::SSE.broadcast(event)
+    rescue ex : Exception
+      # Silently fail - SSE is optional enhancement
+      Log.debug { "Failed to broadcast SSE event: #{ex.message}" }
     end
   end
 end

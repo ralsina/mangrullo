@@ -38,7 +38,8 @@
       "Bash(./scripts/build-docker.sh:*)",
       "Bash(docker-compose config:*)",
       "Bash(bash scripts/build-docker.sh)",
-      "Bash(shards version:*)"
+      "Bash(shards version:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
