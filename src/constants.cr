@@ -59,5 +59,11 @@ module Mangrullo
       AUTH_HEADER      = "Authorization"
       BEARER_PREFIX    = "Bearer "
     end
+
+    # Self-update exclusion
+    module SelfUpdate
+      # Container names that should never be updated by mangrullo
+      EXCLUDED_NAMES = ["mangrullo", "mangrullo-web"]
+    end
   end
 end

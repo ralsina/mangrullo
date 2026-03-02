@@ -28,7 +28,7 @@ module Mangrullo
     end
 
     def check_and_update_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?))
-      unified_results = process_containers(allow_major_upgrade, container_names, dry_run: false)
+      unified_results = process_containers(allow_major_upgrade, container_names, dry_run: false, exclude_self: true)
 
       # Convert back to the expected format
       unified_results.map do |result|
@@ -185,7 +185,7 @@ module Mangrullo
       {total: 0, needing_update: 0, update_candidates: [] of ContainerInfo}
     end
 
-    private def process_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String, dry_run : Bool = false) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?, needs_update: Bool?, reason: String?))
+    private def process_containers(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String, dry_run : Bool = false, exclude_self : Bool = false) : Array(NamedTuple(container: ContainerInfo, updated: Bool, error: String?, needs_update: Bool?, reason: String?))
       results = [] of NamedTuple(container: ContainerInfo, updated: Bool, error: String?, needs_update: Bool?, reason: String?)
 
       Log.info { "Starting container #{dry_run ? "dry run" : "update"} check" }
@@ -197,6 +197,16 @@ module Mangrullo
         unless container_names.empty?
           containers = ContainerFilter.filter_containers_by_name(containers, container_names)
           Log.info { "Filtered to #{containers.size} containers matching: #{container_names.join(", ")}" }
+        end
+
+        # Exclude mangrullo containers from mass updates to prevent self-termination
+        if exclude_self
+          original_count = containers.size
+          containers = containers.reject { |container| mangrullo_container?(container) }
+          excluded_count = original_count - containers.size
+          if excluded_count > 0
+            Log.info { "Excluding #{excluded_count} mangrullo container(s) from update to prevent self-termination" }
+          end
         end
 
         Log.debug { "Processing #{containers.size} containers" }
@@ -266,7 +276,7 @@ module Mangrullo
     end
 
     def dry_run(allow_major_upgrade : Bool = false, container_names : Array(String) = [] of String) : Array(NamedTuple(container: ContainerInfo, needs_update: Bool, reason: String?))
-      unified_results = process_containers(allow_major_upgrade, container_names, dry_run: true)
+      unified_results = process_containers(allow_major_upgrade, container_names, dry_run: true, exclude_self: true)
 
       # Convert back to the expected format
       unified_results.map do |result|
@@ -486,6 +496,12 @@ module Mangrullo
                                     reason: String?,
                                   )) : String
       ContainerStatus.get_cli_status(result[:container], result[:needs_update], result[:error])
+    end
+
+    # Check if a container is a mangrullo container (should be excluded from updates)
+    private def mangrullo_container?(container : ContainerInfo) : Bool
+      container_name = ContainerNameUtils.normalize_name_string(container.name).downcase
+      Mangrullo::Constants::SelfUpdate::EXCLUDED_NAMES.any? { |excluded| container_name == excluded.downcase }
     end
   end
 end

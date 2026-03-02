@@ -1,14 +1,30 @@
 # Multi-stage build for optimal image size
-FROM crystallang/crystal:1.17.1-alpine AS builder
+FROM alpine:edge AS builder
 
-# Install build dependencies
+# Install build dependencies and Crystal
 RUN apk add --no-cache \
     build-base \
+    crystal \
+    shards \
+    libxml2-static \
     libxml2-dev \
+    libxslt-static \
     libxslt-dev \
+    yaml-static \
     yaml-dev \
     openssl-dev \
-    zlib-dev
+    openssl-libs-static \
+    zlib-dev \
+    zlib-static \
+    pcre2-dev \
+    pcre2-static \
+    gc-dev \
+    gc-static \
+    llvm15-libs \
+    musl-dev \
+    linux-headers \
+    libunwind-dev \
+    libunwind-static
 
 WORKDIR /app
 
@@ -21,7 +37,7 @@ RUN shards install --without-development
 # Copy source code
 COPY . .
 
-# Build both binaries in release mode
+# Build both binaries in release mode with static linking
 RUN shards build --without-development --release --static
 
 # Final runtime image
@@ -44,17 +60,12 @@ WORKDIR /app
 COPY --from=builder /app/bin/mangrullo /usr/local/bin/
 COPY --from=builder /app/bin/mangrullo-web /usr/local/bin/
 
-# Note: ECR templates are compiled into the binary, no need to copy them
-
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Create directories for data and logs
 RUN mkdir -p /var/lib/mangrullo /var/log/mangrullo && \
     chmod +x /usr/local/bin/entrypoint.sh
-
-# Note: Running as root to access Docker socket
-# The container needs access to /var/run/docker.sock which requires root privileges
 
 # Expose port for web interface
 EXPOSE 3000
@@ -76,6 +87,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Labels
 LABEL org.opencontainers.image.title="Mangrullo" \
       org.opencontainers.image.description="Docker container update manager" \
-      org.opencontainers.image.version="0.1.0" \
+      org.opencontainers.image.version="0.3.0" \
       org.opencontainers.image.authors="Roberto Alsina <roberto.alsina@gmail.com>" \
       org.opencontainers.image.source="https://github.com/ralsina/mangrullo"

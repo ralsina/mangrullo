@@ -33,7 +33,11 @@
       "Bash(gh api:*)",
       "Bash(gh repo view:*)",
       "Bash(docker pull:*)",
-      "Bash(docker manifest inspect:*)"
+      "Bash(docker manifest inspect:*)",
+      "Bash(docker buildx:*)",
+      "Bash(./scripts/build-docker.sh:*)",
+      "Bash(docker-compose config:*)",
+      "Bash(bash scripts/build-docker.sh)"
     ],
     "deny": [],
     "ask": []
