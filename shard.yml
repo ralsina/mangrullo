@@ -23,6 +23,8 @@ dependencies:
     github: marghidanu/docr
   docopt:
     github: ralsina/docopt.cr
+  docopt-config:
+    github: ralsina/docopt-config
   kemal:
     github: kemalcr/kemal
   progress:

@@ -4,12 +4,12 @@ describe Mangrullo::Config do
   describe ".from_env" do
     it "creates config from environment variables" do
       with_env_vars({
-        "MANGRULLO_INTERVAL"            => "120",
-        "MANGRULLO_ALLOW_MAJOR_UPGRADE" => "true",
-        "MANGRULLO_DOCKER_SOCKET"       => "/custom/path",
-        "MANGRULLO_LOG_LEVEL"           => "warn",
-        "MANGRULLO_RUN_ONCE"            => "true",
-        "MANGRULLO_DRY_RUN"             => "true",
+        "MANGRULLO_INTERVAL"    => "120",
+        "MANGRULLO_ALLOW_MAJOR" => "true",
+        "MANGRULLO_SOCKET"      => "/custom/path",
+        "MANGRULLO_LOG_LEVEL"   => "warn",
+        "MANGRULLO_RUN_ONCE"    => "true",
+        "MANGRULLO_DRY_RUN"     => "true",
       }) do
         config = Mangrullo::Config.from_env
 
@@ -25,8 +25,8 @@ describe Mangrullo::Config do
     it "uses defaults when env vars are not set" do
       # Clear relevant env vars
       old_env = ENV.to_h
-      ["MANGRULLO_INTERVAL", "MANGRULLO_ALLOW_MAJOR_UPGRADE",
-       "MANGRULLO_DOCKER_SOCKET", "MANGRULLO_LOG_LEVEL",
+      ["MANGRULLO_INTERVAL", "MANGRULLO_ALLOW_MAJOR",
+       "MANGRULLO_SOCKET", "MANGRULLO_LOG_LEVEL",
        "MANGRULLO_RUN_ONCE", "MANGRULLO_DRY_RUN"].each { |k| ENV.delete(k) }
 
       begin
@@ -61,12 +61,12 @@ describe Mangrullo::Config do
         "MANGRULLO_INTERVAL"  => "120",
         "MANGRULLO_LOG_LEVEL" => "debug",
       }) do
-        args = ["--dry-run", "--log-level=warn"] # CLI parsed first, but env overrides
+        args = ["--dry-run", "--log-level=warn"] # CLI args take precedence over env vars
         config = Mangrullo::Config.from_args_and_env(args)
 
-        config.interval.should eq(120)      # From env
-        config.log_level.should eq("debug") # From env (overrides CLI)
-        config.dry_run?.should be_true      # From CLI
+        config.interval.should eq(120)     # From env (no CLI arg provided)
+        config.log_level.should eq("warn") # From CLI (overrides env)
+        config.dry_run?.should be_true     # From CLI
       end
     end
   end

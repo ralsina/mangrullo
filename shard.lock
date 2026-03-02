@@ -24,6 +24,10 @@ shards:
     git: https://github.com/ralsina/docopt.cr.git
     version: 0.3.1
 
+  docopt-config:
+    git: https://github.com/ralsina/docopt-config.git
+    version: 0.1.0+git.commit.5421c74745d0212c2d2ab28c72a4a73d8c87adee
+
   docr:
     git: https://github.com/marghidanu/docr.git
     version: 0.1.3

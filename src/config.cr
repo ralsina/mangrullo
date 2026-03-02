@@ -1,4 +1,4 @@
-require "docopt"
+require "docopt-config"
 require "./types"
 require "./constants"
 
@@ -42,13 +42,22 @@ module Mangrullo
                    @container_names : Array(String) = [] of String)
     end
 
-    def self.parse(args : Array(String)) : Config
+    def self.parse(args : Array(String), config_file_path : String? = nil) : Config
       version = begin
         ::VERSION
       rescue
         "0.1.0"
       end
-      docopt = Docopt.docopt(DOCOPT, argv: args, help: true, version: "Mangrullo #{version}")
+
+      # Use docopt-config to parse with CLI args, env vars, and optional config file
+      docopt = Docopt.docopt_config(
+        DOCOPT,
+        argv: args,
+        help: true,
+        version: "Mangrullo #{version}",
+        env_prefix: "MANGRULLO",
+        config_file_path: config_file_path
+      )
 
       # Parse container names
       container_names = if docopt["<container-name>"]?
@@ -57,13 +66,52 @@ module Mangrullo
                           [] of String
                         end
 
+      # Helper to parse boolean flags
+      # When CLI is not provided (false), check env vars
+      parse_bool_flag = ->(key : String, env_var : String) {
+        value = docopt[key]
+        case value
+        when Bool
+          # If true, CLI explicitly set it; if false, check env var
+          value ? true : ENV[env_var]? == "true"
+        when String
+          value.as(String).downcase == "true"
+        else
+          # nil or other type, check env var
+          ENV[env_var]? == "true"
+        end
+      }
+
+      # Helper to convert values that might come as strings from env vars
+      interval_value = docopt["--interval"]
+      interval = case interval_value
+                 when Int32
+                   interval_value
+                 when String
+                   interval_value.to_i? || Mangrullo::Constants::Config::DEFAULT_INTERVAL
+                 else
+                   Mangrullo::Constants::Config::DEFAULT_INTERVAL
+                 end
+
+      allow_major_upgrade = parse_bool_flag.call("--allow-major", "MANGRULLO_ALLOW_MAJOR")
+
+      socket_value = docopt["--socket"]
+      docker_socket_path = socket_value.as(String)
+
+      log_level_value = docopt["--log-level"]
+      log_level = log_level_value.as(String)
+
+      run_once = parse_bool_flag.call("--once", "MANGRULLO_RUN_ONCE")
+
+      dry_run = parse_bool_flag.call("--dry-run", "MANGRULLO_DRY_RUN")
+
       Config.new(
-        interval: docopt["--interval"].as(String).to_i,
-        allow_major_upgrade: docopt["--allow-major"].as(Bool | Nil) || false,
-        docker_socket_path: docopt["--socket"].as(String),
-        log_level: docopt["--log-level"].as(String),
-        run_once: docopt["--once"].as(Bool | Nil) || false,
-        dry_run: docopt["--dry-run"].as(Bool | Nil) || false,
+        interval: interval,
+        allow_major_upgrade: allow_major_upgrade,
+        docker_socket_path: docker_socket_path,
+        log_level: log_level,
+        run_once: run_once,
+        dry_run: dry_run,
         container_names: container_names
       )
     rescue ex
@@ -72,30 +120,15 @@ module Mangrullo
     end
 
     def self.from_env : Config
-      Config.new(
-        interval: ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || Mangrullo::Constants::Config::DEFAULT_INTERVAL,
-        allow_major_upgrade: ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true",
-        docker_socket_path: ENV["MANGRULLO_DOCKER_SOCKET"]? || Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH,
-        log_level: ENV["MANGRULLO_LOG_LEVEL"]? || Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL,
-        run_once: ENV["MANGRULLO_RUN_ONCE"]? == "true",
-        dry_run: ENV["MANGRULLO_DRY_RUN"]? == "true",
-        container_names: [] of String
-      )
+      # This method is kept for backward compatibility but now uses parse
+      # with empty args to rely solely on environment variables
+      parse([] of String)
     end
 
     def self.from_args_and_env(args : Array(String)) : Config
-      # Parse command line args first, then override with environment variables
-      config = parse(args)
-
-      # Environment variables override command line arguments
-      config.interval = ENV["MANGRULLO_INTERVAL"]?.try(&.to_i?) || config.interval
-      config.allow_major_upgrade = ENV["MANGRULLO_ALLOW_MAJOR_UPGRADE"]? == "true" || config.allow_major_upgrade?
-      config.docker_socket_path = ENV["MANGRULLO_DOCKER_SOCKET"]? || Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH
-      config.log_level = ENV["MANGRULLO_LOG_LEVEL"]? || Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL
-      config.run_once = ENV["MANGRULLO_RUN_ONCE"]? == "true" || config.run_once?
-      config.dry_run = ENV["MANGRULLO_DRY_RUN"]? == "true" || config.dry_run?
-
-      config
+      # docopt-config already handles the precedence: CLI > env vars > config file
+      # So we can just call parse directly
+      parse(args)
     end
 
     def setup_logging : Void
