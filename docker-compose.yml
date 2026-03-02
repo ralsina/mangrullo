@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mangrullo:
-    build: .
+    image: ghcr.io/ralsina/mangrullo:latest-arm64
     container_name: mangrullo
     restart: unless-stopped
     volumes:
@@ -11,10 +11,3 @@ services:
       - MANGRULLO_LOG_LEVEL=info
       - MANGRULLO_INTERVAL=3600
       - MANGRULLO_ALLOW_MAJOR=false
-    networks:
-      - mangrullo-network
-
-volumes:
-networks:
-  mangrullo-network:
-    driver: bridge
