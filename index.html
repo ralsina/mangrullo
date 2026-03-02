@@ -254,10 +254,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation-from-source" class="md-nav__link">
+  <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation from Source
+        Features
       
     </span>
   </a>
@@ -265,10 +265,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#quick-start-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Quick Start (Docker)
       
     </span>
   </a>
@@ -288,10 +288,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#from-source" class="md-nav__link">
+  <a href="#docker-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From Source
+        Docker (Recommended)
       
     </span>
   </a>
@@ -310,10 +310,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-docker" class="md-nav__link">
+  <a href="#from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using Docker
+        From Source
       
     </span>
   </a>
@@ -861,10 +861,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation-from-source" class="md-nav__link">
+  <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation from Source
+        Features
       
     </span>
   </a>
@@ -872,10 +872,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#quick-start-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Quick Start (Docker)
       
     </span>
   </a>
@@ -895,10 +895,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#from-source" class="md-nav__link">
+  <a href="#docker-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From Source
+        Docker (Recommended)
       
     </span>
   </a>
@@ -917,10 +917,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-docker" class="md-nav__link">
+  <a href="#from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using Docker
+        From Source
       
     </span>
   </a>
@@ -1320,28 +1320,6 @@
 <a href="https://github.com/ralsina/mangrullo/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ralsina/mangrullo" /></a>
 <a href="https://github.com/ralsina/mangrullo/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/ralsina/mangrullo" /></a></p>
 <p>Mangrullo is a Docker container update automation tool written in Crystal. It monitors running Docker containers and automatically updates them to newer image versions, similar to Watchtower but with a focus on simplicity and reliability.</p>
-<h2 id="installation-from-source">Installation from Source</h2>
-<ol>
-<li>Clone the repository:</li>
-</ol>
-<p><code>bash
-   git clone https://github.com/ralsina/mangrillo.git
-   cd mangrullo</code></p>
-<ol>
-<li>Install dependencies:</li>
-</ol>
-<p><code>bash
-   shards install</code></p>
-<ol>
-<li>Build the project:</li>
-</ol>
-<p><code>bash
-   shards build</code></p>
-<ol>
-<li>Install the binary (optional):</li>
-</ol>
-<p><code>bash
-   cp bin/mangrullo /usr/local/bin/</code></p>
 <h2 id="features">Features</h2>
 <ul>
 <li>🔍 <strong>Automatic Monitoring</strong>: Continuously monitors running Docker containers for image updates</li>
@@ -1354,53 +1332,67 @@
 <li>🎯 <strong>Container Filtering</strong>: Check specific containers by name instead of all containers</li>
 <li>🔄 <strong>Container Recreation</strong>: Properly recreates containers with new images (like Watchtower)</li>
 <li>🌐 <strong>Multi-Registry Support</strong>: Works with Docker Hub, GitHub Container Registry, and more</li>
+<li>📝 <strong>YAML Config Files</strong>: Optional configuration file support for persistent settings</li>
+<li>🐳 <strong>Official Docker Images</strong>: Multi-architecture images available on GHCR</li>
 </ul>
+<h2 id="quick-start-docker">Quick Start (Docker)</h2>
+<p>The easiest way to run Mangrullo is using the official Docker image:</p>
+<pre><code class="language-bash">docker run -d \
+  --name mangrullo \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  ghcr.io/ralsina/mangrullo:latest
+</code></pre>
+<p>This will start Mangrullo in daemon mode, checking for updates every hour (default: 3600 seconds).</p>
 <h2 id="installation">Installation</h2>
-<h3 id="from-source">From Source</h3>
-<ol>
-<li>Install Crystal (&gt;= 1.16.3) following the <a href="https://crystal-lang.org/installation/">official installation guide</a></li>
-<li>Clone the repository:</li>
-</ol>
-<p><code>bash
-   git clone https://github.com/ralsina/mangrullo.git
-   cd mangrullo</code></p>
-<ol>
-<li>Install dependencies:</li>
-</ol>
-<p><code>bash
-   shards install</code></p>
-<ol>
-<li>Build the project:</li>
-</ol>
-<p><code>bash
-   shards build</code></p>
-<ol>
-<li>Install the binary (optional):</li>
-</ol>
-<p><code>bash
-   cp bin/mangrullo /usr/local/bin/</code></p>
+<h3 id="docker-recommended">Docker (Recommended)</h3>
+<p>Pull the latest image from GitHub Container Registry:</p>
+<pre><code class="language-bash">docker pull ghcr.io/ralsina/mangrullo:latest
+</code></pre>
+<p>See <a href="DOCKER/">DOCKER.md</a> for detailed Docker deployment instructions, including docker-compose examples and environment variable configuration.</p>
 <h3 id="pre-built-binaries">Pre-built Binaries</h3>
-<p>Pre-built static binaries are available for multiple architectures in the <code>bin/</code> directory:</p>
+<p>Static binaries are available on the <a href="https://github.com/ralsina/mangrullo/releases">Releases</a> page for multiple architectures:</p>
 <ul>
 <li><code>mangrullo-static-linux-amd64</code> - Linux x86_64</li>
 <li><code>mangrullo-static-linux-arm64</code> - Linux ARM64</li>
 <li><code>mangrullo-web-static-linux-amd64</code> - Web interface for Linux x86_64</li>
 <li><code>mangrullo-web-static-linux-arm64</code> - Web interface for Linux ARM64</li>
 </ul>
-<p>These binaries include all dependencies and don't require Crystal to be installed on the target system.</p>
-<h3 id="using-docker">Using Docker</h3>
-<pre><code class="language-bash">docker run -d \
-  --name mangrullo \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  ralsina/mangrullo:latest
-</code></pre>
+<p>These binaries include all dependencies and don't require Crystal to be installed.</p>
+<h3 id="from-source">From Source</h3>
+<p>If you prefer to build from source or need to customize:</p>
+<ol>
+<li>
+<p>Install Crystal (&gt;= 1.16.3) following the <a href="https://crystal-lang.org/installation/">official installation guide</a></p>
+</li>
+<li>
+<p>Clone the repository:
+   <code>bash
+   git clone https://github.com/ralsina/mangrullo.git
+   cd mangrullo</code></p>
+</li>
+<li>
+<p>Install dependencies:
+   <code>bash
+   shards install</code></p>
+</li>
+<li>
+<p>Build the project:
+   <code>bash
+   shards build</code></p>
+</li>
+<li>
+<p>Install the binary (optional):
+   <code>bash
+   cp bin/mangrullo /usr/local/bin/</code></p>
+</li>
+</ol>
 <h2 id="usage">Usage</h2>
 <h3 id="basic-usage">Basic Usage</h3>
 <p>Monitor running containers and update them when new images are available:</p>
 <pre><code class="language-bash"># Run once and exit
 mangrullo --once
 
-# Run continuously with default 6-hour intervals
+# Run continuously with default intervals
 mangrullo
 
 # Allow major version upgrades
