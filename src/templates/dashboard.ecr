@@ -178,6 +178,38 @@
         }
         .loading { opacity: 0.6; pointer-events: none; }
         .hidden { display: none; }
+
+        /* Sortable table styling */
+        .container-table th {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 1.5rem;
+        }
+        .container-table th:hover {
+            background-color: var(--secondary-hover);
+        }
+        .container-table th.sort-asc::after {
+            content: "▲";
+            position: absolute;
+            right: 0.5rem;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        .container-table th.sort-desc::after {
+            content: "▼";
+            position: absolute;
+            right: 0.5rem;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        .container-table th.sort-none::after {
+            content: "▼▲";
+            position: absolute;
+            right: 0.5rem;
+            font-size: 0.5rem;
+            opacity: 0.3;
+        }
         @media (max-width: 768px) {
             .header-stats { flex-direction: column; gap: 1rem; }
             table { font-size: 0.875rem; }
@@ -208,12 +240,12 @@
             </div>
         </div>
 
-        <table class="container-table table-striped table-hover">
+        <table class="container-table table-striped table-hover" id="containerTable">
             <thead>
                 <tr>
-                    <th>Container</th>
-                    <th>Image</th>
-                    <th>Actions</th>
+                    <th class="sort-none" data-column="0" data-type="string">Container</th>
+                    <th class="sort-none" data-column="1" data-type="string">Image</th>
+                    <th class="sort-none" data-column="2" data-type="actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -1073,6 +1105,111 @@
                 // Refresh immediately when page becomes visible again
                 refreshData();
             }
+        });
+
+        // Table sorting functionality
+        let currentSortColumn = -1;
+        let currentSortDirection = 'none'; // 'asc', 'desc', or 'none'
+
+        function setupTableSorting() {
+            const table = document.getElementById('containerTable');
+            if (!table) return;
+
+            const headers = table.querySelectorAll('th');
+            headers.forEach((header, columnIndex) => {
+                header.addEventListener('click', () => {
+                    sortTable(columnIndex, header.dataset.type);
+                });
+            });
+        }
+
+        function sortTable(columnIndex, columnType) {
+            const table = document.getElementById('containerTable');
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const headers = table.querySelectorAll('th');
+            const currentHeader = headers[columnIndex];
+
+            // Determine sort direction
+            let direction = 'asc';
+            if (currentSortColumn === columnIndex) {
+                if (currentSortDirection === 'asc') {
+                    direction = 'desc';
+                } else if (currentSortDirection === 'desc') {
+                    direction = 'asc';
+                }
+            }
+
+            // Update header classes
+            headers.forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc', 'sort-none');
+                h.classList.add('sort-none');
+            });
+            currentHeader.classList.remove('sort-none');
+            currentHeader.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+            // Sort rows
+            rows.sort((a, b) => {
+                let aVal, bVal;
+
+                if (columnType === 'actions') {
+                    // For actions column, sort by status (update available > latest > up to date)
+                    aVal = getRowSortOrder(a);
+                    bVal = getRowSortOrder(b);
+                } else {
+                    aVal = getCellValue(a, columnIndex);
+                    bVal = getCellValue(b, columnIndex);
+                }
+
+                // Compare values
+                let comparison = 0;
+                if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    comparison = aVal.localeCompare(bVal);
+                } else {
+                    comparison = aVal - bVal;
+                }
+
+                return direction === 'asc' ? comparison : -comparison;
+            });
+
+            // Reorder rows in DOM
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Update current sort state
+            currentSortColumn = columnIndex;
+            currentSortDirection = direction;
+        }
+
+        function getCellValue(row, columnIndex) {
+            const cell = row.cells[columnIndex];
+            if (!cell) return '';
+
+            // Get text content, stripping any HTML tags
+            return cell.textContent.trim();
+        }
+
+        function getRowSortOrder(row) {
+            // Define sort priority based on status classes
+            // Update available (highest priority) > Latest tag > Up to date
+            if (row.classList.contains('status-update-available')) {
+                return 1;
+            } else if (row.classList.contains('status-latest')) {
+                return 2;
+            } else if (row.classList.contains('status-up-to-date')) {
+                return 3;
+            } else if (row.classList.contains('status-error')) {
+                return 4;
+            }
+            return 5;
+        }
+
+        // Initialize sorting on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setupTableSorting();
         });
     </script>
 </body>
