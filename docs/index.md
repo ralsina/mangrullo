@@ -1,9 +1,17 @@
 # Mangrullo
 
-[![Crystal CI1. Clone the repository:
+[![Crystal CI](https://github.com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg)](https://github.com/ralsina/mangrullo/actions)
+[![GitHub release](https://img.shields.io/github/v/release/ralsina/mangrullo)](https://github.com/ralsina/mangrullo/releases)
+[![License](https://img.shields.io/github/license/ralsina/mangrullo)](https://github.com/ralsina/mangrullo/blob/main/LICENSE)
+
+Mangrullo is a Docker container update automation tool written in Crystal. It monitors running Docker containers and automatically updates them to newer image versions, similar to Watchtower but with a focus on simplicity and reliability.
+
+## Installation from Source
+
+1. Clone the repository:
 
    ```bash
-   git clone https://github.com/ralsina/mangrullo.git
+   git clone https://github.com/ralsina/mangrillo.git
    cd mangrullo
    ```
 
@@ -23,12 +31,7 @@
 
    ```bash
    cp bin/mangrullo /usr/local/bin/
-   ```com/ralsina/mangrullo/workflows/Crystal%20CI/badge.svg)](https://github.com/ralsina/mangrullo/actions)
-
-[![GitHub release](https://img.shields.io/github/v/release/ralsina/mangrullo)](https://github.com/ralsina/mangrullo/releases)
-[![License](https://img.shields.io/github/license/ralsina/mangrullo)](https://github.com/ralsina/mangrullo/blob/main/LICENSE)
-
-Mangrullo is a Docker container update automation tool written in Crystal. It monitors running Docker containers and automatically updates them to newer image versions, similar to Watchtower but with a focus on simplicity and reliability.
+   ```
 
 ## Features
 
