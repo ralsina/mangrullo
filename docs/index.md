@@ -6,33 +6,6 @@
 
 Mangrullo is a Docker container update automation tool written in Crystal. It monitors running Docker containers and automatically updates them to newer image versions, similar to Watchtower but with a focus on simplicity and reliability.
 
-## Installation from Source
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/ralsina/mangrillo.git
-   cd mangrullo
-   ```
-
-1. Install dependencies:
-
-   ```bash
-   shards install
-   ```
-
-1. Build the project:
-
-   ```bash
-   shards build
-   ```
-
-1. Install the binary (optional):
-
-   ```bash
-   cp bin/mangrullo /usr/local/bin/
-   ```
-
 ## Features
 
 - 🔍 **Automatic Monitoring**: Continuously monitors running Docker containers for image updates
@@ -45,56 +18,71 @@ Mangrullo is a Docker container update automation tool written in Crystal. It mo
 - 🎯 **Container Filtering**: Check specific containers by name instead of all containers
 - 🔄 **Container Recreation**: Properly recreates containers with new images (like Watchtower)
 - 🌐 **Multi-Registry Support**: Works with Docker Hub, GitHub Container Registry, and more
+- 📝 **YAML Config Files**: Optional configuration file support for persistent settings
+- 🐳 **Official Docker Images**: Multi-architecture images available on GHCR
+
+## Quick Start (Docker)
+
+The easiest way to run Mangrullo is using the official Docker image:
+
+```bash
+docker run -d \
+  --name mangrullo \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  ghcr.io/ralsina/mangrullo:latest
+```
+
+This will start Mangrullo in daemon mode, checking for updates every hour (default: 3600 seconds).
 
 ## Installation
 
-### From Source
+### Docker (Recommended)
 
-1. Install Crystal (>= 1.16.3) following the [official installation guide](https://crystal-lang.org/installation/)
-2. Clone the repository:
+Pull the latest image from GitHub Container Registry:
 
-   ```bash
-   git clone https://github.com/ralsina/mangrullo.git
-   cd mangrullo
-   ```
+```bash
+docker pull ghcr.io/ralsina/mangrullo:latest
+```
 
-3. Install dependencies:
-
-   ```bash
-   shards install
-   ```
-
-4. Build the project:
-
-   ```bash
-   shards build
-   ```
-
-5. Install the binary (optional):
-
-   ```bash
-   cp bin/mangrullo /usr/local/bin/
-   ```
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment instructions, including docker-compose examples and environment variable configuration.
 
 ### Pre-built Binaries
 
-Pre-built static binaries are available for multiple architectures in the `bin/` directory:
+Static binaries are available on the [Releases](https://github.com/ralsina/mangrullo/releases) page for multiple architectures:
 
 - `mangrullo-static-linux-amd64` - Linux x86_64
 - `mangrullo-static-linux-arm64` - Linux ARM64
 - `mangrullo-web-static-linux-amd64` - Web interface for Linux x86_64
 - `mangrullo-web-static-linux-arm64` - Web interface for Linux ARM64
 
-These binaries include all dependencies and don't require Crystal to be installed on the target system.
+These binaries include all dependencies and don't require Crystal to be installed.
 
-### Using Docker
+### From Source
 
-```bash
-docker run -d \
-  --name mangrullo \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  ralsina/mangrullo:latest
-```
+If you prefer to build from source or need to customize:
+
+1. Install Crystal (>= 1.16.3) following the [official installation guide](https://crystal-lang.org/installation/)
+
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/ralsina/mangrullo.git
+   cd mangrullo
+   ```
+
+3. Install dependencies:
+   ```bash
+   shards install
+   ```
+
+4. Build the project:
+   ```bash
+   shards build
+   ```
+
+5. Install the binary (optional):
+   ```bash
+   cp bin/mangrullo /usr/local/bin/
+   ```
 
 ## Usage
 
@@ -106,7 +94,7 @@ Monitor running containers and update them when new images are available:
 # Run once and exit
 mangrullo --once
 
-# Run continuously with default 6-hour intervals
+# Run continuously with default intervals
 mangrullo
 
 # Allow major version upgrades
