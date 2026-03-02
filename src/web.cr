@@ -9,7 +9,7 @@ require "./update_manager"
 require "./constants"
 
 module Mangrullo
-  VERSION = "0.5.0"
+  VERSION = "0.6.0"
 
   # Web server entry point
   Kemal.config.port = Mangrullo::Constants::Web::DEFAULT_PORT
