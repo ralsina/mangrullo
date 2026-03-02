@@ -22,7 +22,18 @@
       "Bash(chmod:*)",
       "Bash(node lint-js.js)",
       "Bash(make:*)",
-      "Bash(git filter-repo:*)"
+      "Bash(git filter-repo:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(docker rmi:*)",
+      "Bash(gh release create:*)",
+      "Bash(gh release view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo view:*)",
+      "Bash(docker pull:*)",
+      "Bash(docker manifest inspect:*)"
     ],
     "deny": [],
     "ask": []
