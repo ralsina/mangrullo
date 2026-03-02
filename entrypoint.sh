@@ -61,8 +61,9 @@ case "${1:-daemon}" in
         ;;
     "web")
         echo "Starting Mangrullo web interface..."
-        exec mangrullo-web --port="${MANGRULLO_WEB_PORT:-3000}" \
-             --host="${MANGRULLO_WEB_HOST:-0.0.0.0}"
+        # Kemal config is set in web.cr, just run the binary
+        # Host/port can be overridden via env vars if needed in the future
+        exec mangrullo-web
         ;;
     "check")
         echo "Running single update check..."
