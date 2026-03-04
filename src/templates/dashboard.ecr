@@ -1091,17 +1091,108 @@
             }
         }
 
+        // ========== SSE (Server-Sent Events) for real-time updates ==========
+        let sseEventSource = null;
+
+        function connectSSE() {
+            if (sseEventSource) {
+                sseEventSource.close();
+            }
+
+            sseEventSource = new EventSource('/api/events');
+
+            sseEventSource.onopen = function() {
+                console.log('SSE connected');
+            };
+
+            sseEventSource.addEventListener('status_update', function(e) {
+                const data = JSON.parse(e.data);
+                console.log('Status update:', data);
+            });
+
+            sseEventSource.addEventListener('image_pull_start', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Pulling image for ${data.container_name}...`, 'info');
+            });
+
+            sseEventSource.addEventListener('image_pull_complete', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Image pulled for ${data.container_name}`, 'success');
+            });
+
+            sseEventSource.addEventListener('container_stop', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Stopping ${data.container_name}...`, 'info');
+            });
+
+            sseEventSource.addEventListener('container_remove', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Removing ${data.container_name}...`, 'info');
+            });
+
+            sseEventSource.addEventListener('container_create', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Creating ${data.container_name}...`, 'info');
+            });
+
+            sseEventSource.addEventListener('container_start', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Starting ${data.container_name}...`, 'info');
+            });
+
+            sseEventSource.addEventListener('update_complete', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`${data.container_name} updated successfully!`, 'success');
+
+                // Update the UI - remove update button and show check button
+                const row = findContainerRow(data.container_id);
+                if (row) {
+                    updateContainerButtons(row, data.container_id, false);
+                    row.classList.remove('status-update-available');
+                    row.classList.add('status-up-to-date');
+                }
+
+                // Refresh the container list to get updated state
+                setTimeout(() => refreshData(), 2000);
+            });
+
+            sseEventSource.addEventListener('update_error', function(e) {
+                const data = JSON.parse(e.data);
+                showNotification(`Error updating ${data.container_name}: ${data.message}`, 'error');
+
+                // Update UI to show error status
+                const row = findContainerRow(data.container_id);
+                if (row) {
+                    row.classList.remove('status-update-available', 'status-up-to-date', 'status-latest');
+                    row.classList.add('status-error');
+                }
+            });
+
+            sseEventSource.onerror = function(e) {
+                console.log('SSE connection error, reconnecting in 5 seconds...');
+                setTimeout(connectSSE, 5000);
+            };
+        }
+
         // Start auto-refresh when page loads
         document.addEventListener('DOMContentLoaded', function() {
             startAutoRefresh();
+            connectSSE(); // Start SSE connection
         });
 
         // Stop auto-refresh when page is not visible
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 stopAutoRefresh();
+                // Close SSE connection when page is hidden
+                if (sseEventSource) {
+                    sseEventSource.close();
+                    sseEventSource = null;
+                }
             } else {
                 startAutoRefresh();
+                // Reconnect SSE when page becomes visible
+                connectSSE();
                 // Refresh immediately when page becomes visible again
                 refreshData();
             }
