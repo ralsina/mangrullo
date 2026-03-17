@@ -268,7 +268,16 @@ module Mangrullo
         container_config.image = image_name
 
         if host_config_json
+          Log.debug { "HostConfig JSON: #{host_config_json.to_json}" }
           host_config = Docr::Types::HostConfig.from_json(host_config_json.to_json)
+          Log.debug { "Parsed NetworkMode: #{host_config.network_mode.inspect}" }
+
+          # Ensure network mode is preserved
+          if network_mode = host_config_json["NetworkMode"]?.try(&.as_s)
+            Log.info { "Preserving network mode: #{network_mode}" }
+            host_config.network_mode = network_mode
+          end
+
           container_config.host_config = host_config
         end
 
@@ -306,7 +315,16 @@ module Mangrullo
         container_config.image = image_name
 
         if host_config_json
+          Log.debug { "HostConfig JSON: #{host_config_json.to_json}" }
           host_config = Docr::Types::HostConfig.from_json(host_config_json.to_json)
+          Log.debug { "Parsed NetworkMode: #{host_config.network_mode.inspect}" }
+
+          # Ensure network mode is preserved
+          if network_mode = host_config_json["NetworkMode"]?.try(&.as_s)
+            Log.info { "Preserving network mode: #{network_mode}" }
+            host_config.network_mode = network_mode
+          end
+
           container_config.host_config = host_config
         end
 

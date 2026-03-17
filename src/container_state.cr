@@ -50,8 +50,7 @@ module Mangrullo
     # Get all containers thread-safely, sorted with those needing updates first
     def containers : Array(ContainerData)
       @mutex.synchronize do
-        # ameba:disable Performance/ChainedCallWithNoBang
-        @containers.values.sort do |container_a, container_b|
+        @containers.values.sort! do |container_a, container_b|
           # First, compare by needs_update (descending - needing updates first)
           a_needs = container_a.update_info.try(&.[:needs_update]) == true
           b_needs = container_b.update_info.try(&.[:needs_update]) == true
