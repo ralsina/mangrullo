@@ -39,7 +39,14 @@
       "Bash(docker-compose config:*)",
       "Bash(bash scripts/build-docker.sh)",
       "Bash(shards version:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(bash /tmp/build-branch-images.sh)",
+      "Bash(/tmp/build-branch-images.sh:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git tag:*)",
+      "Bash(docker tag:*)",
+      "Bash(docker push:*)"
     ],
     "deny": [],
     "ask": []

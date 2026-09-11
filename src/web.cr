@@ -7,12 +7,13 @@ require "./docker_client"
 require "./image_checker"
 require "./update_manager"
 require "./constants"
+require "./version"
 
 module Mangrullo
-  VERSION = "0.6.0"
-
-  # Web server entry point
-  Kemal.config.port = Mangrullo::Constants::Web::DEFAULT_PORT
+  # Web server entry point.
+  # The listen port can be overridden with the PORT environment variable,
+  # so the UI can run alongside other services on the default port.
+  Kemal.config.port = ENV["PORT"]?.try(&.to_i?) || Mangrullo::Constants::Web::DEFAULT_PORT
   Kemal.config.host_binding = Mangrullo::Constants::Web::DEFAULT_HOST
 
   # Add handler for static files

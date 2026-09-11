@@ -1,4 +1,5 @@
 site_name: Mangrullo Documentation
+site_url: https://ralsina.github.io/mangrullo/docs/
 theme:
   name: material
 nav:

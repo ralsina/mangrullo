@@ -3,15 +3,21 @@
 const fs = require('fs');
 const path = require('path');
 
-// Extract JavaScript from ECR template
+// Extract JavaScript from ECR template (all <script> blocks, joined)
 function extractJavaScriptFromECR(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
-    const jsMatch = content.match(/<script[^>]*>([\s\S]*?)<\/script>/);
-    
-    if (jsMatch) {
-        return jsMatch[1];
+    const blocks = [];
+    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+    let match;
+
+    while ((match = scriptRegex.exec(content)) !== null) {
+        blocks.push(match[1]);
     }
-    return null;
+
+    if (blocks.length === 0) {
+        return null;
+    }
+    return blocks.join('\n');
 }
 
 // Write extracted JavaScript to a temporary file

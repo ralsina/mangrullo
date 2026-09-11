@@ -4,35 +4,28 @@ require "http/client"
 
 # Start the baked server in background
 puts "Starting baked server..."
-Process.run("./bin/mangrullo-web-baked", output: Process::Redirect::Pipe, error: Process::Redirect::Pipe)
+server = Process.new("./bin/mangrullo-web-baked", output: Process::Redirect::Pipe, error: Process::Redirect::Pipe)
 
 # Give it time to start
 sleep 2
 
+def check_response(response, path)
+  puts "Status: #{response.status_code}"
+  puts "Content-Type: #{response.headers["Content-Type"]?}"
+  puts "Content-Length: #{response.headers["Content-Length"]?}"
+  puts "First 100 chars: #{response.body[0..Math.min(100, response.body.size - 1)]}"
+end
+
 begin
-  # Test CSS file
+  # Test Pico CSS
+  puts "\nTesting /css/pico.min.css..."
+  response = HTTP::Client.get("http://localhost:3000/css/pico.min.css")
+  check_response(response, "/css/pico.min.css")
+
+  # Test dashboard CSS
   puts "\nTesting /css/dashboard.css..."
   response = HTTP::Client.get("http://localhost:3000/css/dashboard.css")
-  puts "Status: #{response.status_code}"
-  puts "Content-Type: #{response.headers["Content-Type"]?}"
-  puts "Content-Length: #{response.headers["Content-Length"]?}"
-  puts "First 100 chars: #{response.body[0..100]}"
-
-  # Test JS file
-  puts "\nTesting /js/dashboard.js..."
-  response = HTTP::Client.get("http://localhost:3000/js/dashboard.js")
-  puts "Status: #{response.status_code}"
-  puts "Content-Type: #{response.headers["Content-Type"]?}"
-  puts "Content-Length: #{response.headers["Content-Length"]?}"
-  puts "First 100 chars: #{response.body[0..100]}"
-
-  # Test auto-refresh JS
-  puts "\nTesting /js/auto-refresh.js..."
-  response = HTTP::Client.get("http://localhost:3000/js/auto-refresh.js")
-  puts "Status: #{response.status_code}"
-  puts "Content-Type: #{response.headers["Content-Type"]?}"
-  puts "Content-Length: #{response.headers["Content-Length"]?}"
-  puts "First 100 chars: #{response.body[0..100]}"
+  check_response(response, "/css/dashboard.css")
 
   # Test main page
   puts "\nTesting /..."
@@ -40,12 +33,12 @@ begin
   puts "Status: #{response.status_code}"
   puts "Content-Type: #{response.headers["Content-Type"]?}"
   puts "Contains 'Auto-refresh: ON': #{response.body.includes?("Auto-refresh: ON")}"
-  puts "Contains '/js/dashboard.js': #{response.body.includes?("/js/dashboard.js")}"
-  puts "Contains '/js/auto-refresh.js': #{response.body.includes?("/js/auto-refresh.js")}"
+  puts "Contains '/css/dashboard.css': #{response.body.includes?("/css/dashboard.css")}"
+  puts "Contains '/css/pico.min.css': #{response.body.includes?("/css/pico.min.css")}"
 rescue ex
   puts "Error: #{ex.message}"
 ensure
   # Kill the server
-  `pkill -f mangrullo-web-baked`
+  server.kill
   puts "\nServer stopped"
 end

@@ -1,228 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <title>Mangrullo - Docker Container Updates</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.colors.min.css">
+    <link rel="stylesheet" href="/css/pico.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&family=Chivo+Mono:ital,wght@0,100..900;1,100..900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <style>
-        /* Override Pico.css fonts with Chivo */
-        :root {
-            --font-family: "Chivo", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-            --font-family-mono: "Chivo Mono", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
-        }
-        
-        body {
-            font-family: var(--font-family);
-        }
-        
-        code, pre, kbd, samp {
-            font-family: var(--font-family-mono);
-        }
-        
-        /* Fix modal close button positioning */
-        dialog article header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        
-        dialog article header h3 {
-            margin: 0;
-            padding: 0;
-            flex-grow: 1;
-        }
-        
-        dialog article header button.close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            margin: 0;
-            margin-top: -0.25rem;
-            flex-shrink: 0;
-        }
-        
-        dialog article header button.close:before {
-            content: "×";
-            line-height: 1;
-        }
-        
-        dialog article header button.close:hover {
-            background-color: var(--secondary-hover);
-        }
-        
-        /* Brand styling with cell tower icon and larger text */
-        .brand-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5em;
-            text-decoration: none;
-        }
-        
-        .brand-link .material-icons {
-            font-size: 1.2em;
-            vertical-align: middle;
-        }
-        
-        /* Dry run results modal styling */
-        #dryRunResultsModal article {
-            max-width: 800px;
-            width: 90vw;
-        }
-        
-        .results-summary {
-            background: var(--card-background-color);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--card-border-color);
-            margin-bottom: 1rem;
-        }
-        
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            table-layout: fixed;
-        }
-        
-        .results-table th,
-        .results-table td {
-            padding: 0.5rem;
-            text-align: left;
-            border-bottom: 1px solid var(--card-border-color);
-            overflow: hidden;
-        }
-        
-        .results-table th {
-            background: var(--secondary);
-            font-weight: 600;
-        }
-        
-        .results-table th:nth-child(1),
-        .results-table td:nth-child(1) {
-            width: 25%;
-        }
-        
-        .results-table th:nth-child(2),
-        .results-table td:nth-child(2) {
-            width: 35%;
-            word-wrap: break-word;
-        }
-        
-        .results-table th:nth-child(3),
-        .results-table td:nth-child(3) {
-            width: 15%;
-        }
-        
-        .results-table th:nth-child(4),
-        .results-table td:nth-child(4) {
-            width: 25%;
-        }
-        
-        .results-table .image-cell {
-            font-size: 0.85rem;
-            word-break: break-all;
-        }
-        
-        .status-needs-update {
-            color: #856404;
-            font-weight: 500;
-        }
-        
-        .status-up-to-date-table {
-            color: #28a745;
-            font-weight: 500;
-        }
-        
-        .status-up-to-date { color: #28a745; }
-        .status-update-available { color: #856404; }
-        .status-error { color: #dc3545; }
-        .status-latest { color: #17a2b8; }
-        .header-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
-        .stat-card { background: var(--card-background-color); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--card-border-color); }
-        .container-table th:nth-child(1),
-        .container-table td:nth-child(1) {
-            min-width: 120px;
-            max-width: 250px;
-            width: 30%;
-        }
-        .container-table th:nth-child(2),
-        .container-table td:nth-child(2) {
-            min-width: 150px;
-            width: 45%;
-        }
-        .container-table th:nth-child(3),
-        .container-table td:nth-child(3) {
-            min-width: 150px;
-            width: 25%;
-        }
-        .container-table td {
-            vertical-align: middle;
-        }
-        .loading { opacity: 0.6; pointer-events: none; }
-        .hidden { display: none; }
-
-        /* Sortable table styling */
-        .container-table th {
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-            padding-right: 1.5rem;
-        }
-        .container-table th:hover {
-            background-color: var(--secondary-hover);
-        }
-        .container-table th.sort-asc::after {
-            content: "▲";
-            position: absolute;
-            right: 0.5rem;
-            font-size: 0.7rem;
-            opacity: 0.7;
-        }
-        .container-table th.sort-desc::after {
-            content: "▼";
-            position: absolute;
-            right: 0.5rem;
-            font-size: 0.7rem;
-            opacity: 0.7;
-        }
-        .container-table th.sort-none::after {
-            content: "▼▲";
-            position: absolute;
-            right: 0.5rem;
-            font-size: 0.5rem;
-            opacity: 0.3;
-        }
-        @media (max-width: 768px) {
-            .header-stats { flex-direction: column; gap: 1rem; }
-            table { font-size: 0.875rem; }
-        }
-    </style>
+    <script>
+        // Apply the saved theme before first paint (default: dark)
+        (function () {
+            try {
+                var saved = localStorage.getItem('mangrullo-theme');
+                if (saved === 'light' || saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', saved);
+                }
+            } catch {
+                // localStorage unavailable; keep the default dark theme
+            }
+        }());
+    </script>
 </head>
+
 <body>
     <nav class="container-fluid">
         <ul>
-            <li><strong><a href="/" class="brand-link"><span class="material-icons">cell_tower</span> Mangrullo</a></strong></li>
-            <li><small style="color: #666;" id="autoRefreshStatus">Auto-refresh: ON</small></li>
+            <li><a href="/" class="brand-link"><span class="material-icons">cell_tower</span> Mangrullo</a></li>
+            <li><small id="autoRefreshStatus">Auto-refresh: ON</small></li>
         </ul>
         <ul>
+            <li><button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light theme" title="Toggle theme"><span class="material-icons" id="themeToggleIcon">light_mode</span></button></li>
             <li><a href="#" role="button" class="secondary" onclick="checkAllUpdates()">Check for Updates</a></li>
             <li><a href="#" role="button" class="primary" onclick="updateAllContainers()">Update All</a></li>
         </ul>
@@ -232,11 +45,11 @@
         <div class="header-stats">
             <div class="stat-card">
                 <h4>Total Containers</h4>
-                <p style="font-size: 2rem; margin: 0; font-weight: bold;"><%= total_containers %></p>
+                <p class="stat-value"><%= total_containers %></p>
             </div>
             <div class="stat-card">
                 <h4>Updates Available</h4>
-                <p style="font-size: 2rem; margin: 0; font-weight: bold; color: #ffc107;"><%= updates_available %></p>
+                <p class="stat-value warn"><%= updates_available %></p>
             </div>
         </div>
 
@@ -255,34 +68,28 @@
                       container_state = Mangrullo::ContainerState.instance
                       data = container_state.container(container.id)
                       needs_update = data ? data.update_info.try(&.[:needs_update]) == true : false
-                      
+
                       if container.image.includes?("latest")
                         status_class = "status-latest"
-                        status_text = "Latest Tag"
                       elsif needs_update
                         status_class = "status-update-available"
-                        status_text = "Update Available"
                       else
                         status_class = "status-up-to-date"
-                        status_text = "Up to Date"
                       end
-                      
+
                       # If no data or error, show as error
-                      if data.nil?
-                        status_class = "status-error"
-                        status_text = "No Data"
-                      end
+                      status_class = "status-error" if data.nil?
                     %>
                     <tr class="<%= status_class %>" data-container-id="<%= container.id %>">
                         <td title="<%= container.name.lchop('/') %>"><%= container.name.lchop('/').size > 30 ? container.name.lchop('/')[0..27] + "..." : container.name.lchop('/') %></td>
                         <td title="<%= container.image %>"><code><%= container.image.size > 50 ? container.image[0..47] + "..." : container.image %></code></td>
                         <td>
-                            <div style="display: flex; gap: 0.5rem; align-items: center; height: 100%;">
+                            <div class="actions-cell">
                                 <% if !needs_update %>
-                                <button onclick="checkUpdate('<%= container.id %>')" class="secondary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Check</button>
+                                <button onclick="checkUpdate('<%= container.id %>')" class="secondary btn-sm">Check</button>
                                 <% end %>
                                 <% if needs_update %>
-                                <button onclick="showUpdateModal('<%= container.id %>')" class="primary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Update</button>
+                                <button onclick="showUpdateModal('<%= container.id %>')" class="primary btn-sm">Update</button>
                                 <% end %>
                             </div>
                         </td>
@@ -367,6 +174,30 @@
     <script>
         let currentContainerId = null;
 
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const themeToggleIcon = document.getElementById('themeToggleIcon');
+            if (themeToggleIcon) {
+                themeToggleIcon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+            }
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            try {
+                localStorage.setItem('mangrullo-theme', next);
+            } catch {
+                // localStorage unavailable; theme resets on reload
+            }
+        }
+
+        // Keep the toggle icon in sync with the theme applied before paint
+        document.addEventListener('DOMContentLoaded', function () {
+            applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
+        });
+
         function showUpdateModal(containerId) {
             currentContainerId = containerId;
             document.getElementById('updateModal').showModal();
@@ -388,11 +219,11 @@
         function showDryRunResultsModal(results) {
             const modal = document.getElementById('dryRunResultsModal');
             const resultsDiv = document.getElementById('dryRunResults');
-            
+
             // Count results
             const needingUpdate = results.filter(r => r.needs_update);
             const upToDate = results.filter(r => !r.needs_update);
-            
+
             // Generate summary
             const summaryHtml = `
                 <div class="results-summary">
@@ -402,7 +233,7 @@
                     <p><strong>Already up-to-date:</strong> ${upToDate.length}</p>
                 </div>
             `;
-            
+
             // Generate table
             let tableHtml = `
                 <table class="results-table">
@@ -416,16 +247,16 @@
                     </thead>
                     <tbody>
             `;
-            
+
             results.forEach(result => {
-                const containerName = result.container.name.startsWith('/') ? 
+                const containerName = result.container.name.startsWith('/') ?
                     result.container.name.substring(1) : result.container.name;
                 const fullImage = result.container.image;
                 const displayImage = fullImage.length > 40 ? fullImage.substring(0, 37) + '...' : fullImage;
                 const statusClass = result.needs_update ? 'status-needs-update' : 'status-up-to-date-table';
                 const statusText = result.needs_update ? 'Needs Update' : 'Up to Date';
                 const reason = result.reason || (result.needs_update ? 'Update available' : 'Already current');
-                
+
                 tableHtml += `
                     <tr>
                         <td title="${containerName}">${containerName}</td>
@@ -435,12 +266,12 @@
                     </tr>
                 `;
             });
-            
+
             tableHtml += `
                     </tbody>
                 </table>
             `;
-            
+
             resultsDiv.innerHTML = summaryHtml + tableHtml;
             modal.showModal();
         }
@@ -452,15 +283,15 @@
         async function checkUpdate(containerId) {
             const row = findContainerRow(containerId);
             if (!row) return;
-            
+
             const button = row.querySelector('button[onclick*="checkUpdate"]');
             const originalText = button.textContent;
             const originalOnclick = button.getAttribute('onclick');
-            
+
             button.textContent = 'Checking...';
             button.disabled = true;
             button.removeAttribute('onclick'); // Remove onclick to prevent accidental clicks
-            
+
             try {
                 const response = await fetch(`/containers/${containerId}/check-update`, {
                     method: 'POST',
@@ -468,15 +299,15 @@
                         'Content-Type': 'application/json',
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.has_update) {
                     updateContainerStatus(containerId, 'update-available', data.local_version, data.remote_version);
                 } else {
                     updateContainerStatus(containerId, 'up-to-date', data.local_version, data.remote_version);
                 }
-                
+
                 showNotification('Update check completed', 'success');
             } catch (error) {
                 console.error('Error checking update:', error);
@@ -495,23 +326,23 @@
                 showNotification('Error: No container selected', 'error');
                 return;
             }
-            
+
             const allowMajor = document.getElementById('allowMajor').checked;
             const row = findContainerRow(currentContainerId);
             if (!row) return;
-            
+
             const button = row.querySelector('button[onclick*="showUpdateModal"]');
             const originalText = button.textContent;
             const originalOnclick = button.getAttribute('onclick');
-            
+
             button.textContent = 'Updating...';
             button.disabled = true;
             button.removeAttribute('onclick'); // Remove onclick to prevent accidental clicks
-            
+
             // Close modal AFTER saving the ID
             const savedContainerId = currentContainerId;
             closeModal();
-            
+
             // Use the saved ID since closeModal() nullifies it
             try {
                 const response = await fetch(`/containers/${savedContainerId}/update`, {
@@ -521,9 +352,9 @@
                     },
                     body: JSON.stringify({ allow_major: allowMajor })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.job_id) {
                     // Update is queued
                     showNotification('Update job queued successfully', 'info');
@@ -550,17 +381,17 @@
                 button.setAttribute('onclick', originalOnclick); // Restore onclick
             }
         }
-        
+
         // Poll for job status
         async function pollJobStatus(containerId, jobId, button, originalButtonText) {
             const maxPolls = 60; // Poll for up to 5 minutes (60 * 5 seconds)
             let pollCount = 0;
             const originalOnclick = `showUpdateModal('${containerId}')`;
-            
+
             const pollInterval = setInterval(async () => {
                 try {
                     const response = await fetch(`/api/jobs/${jobId}`);
-                    
+
                     // Handle 404 - job was cleaned up, assume it completed successfully
                     if (response.status === 404) {
                         clearInterval(pollInterval);
@@ -571,9 +402,9 @@
                         setTimeout(() => location.reload(), 1500);
                         return;
                     }
-                    
+
                     const job = await response.json();
-                    
+
                     // Update button text with progress
                     switch (job.status) {
                         case 'pending':
@@ -584,12 +415,12 @@
                             break;
                         case 'completed':
                             clearInterval(pollInterval);
-                            
+
                             if (job.result && job.result.updated) {
                                 // Update was successful - update status first, then clean up button
                                 updateContainerStatus(containerId, 'up-to-date', null, null);
                                 showNotification('Container updated successfully!', 'success');
-                                
+
                                 // Check if container was recreated
                                 if (job.result.new_container_id && job.result.new_container_id !== containerId) {
                                     // Container has a new ID, reload the page
@@ -615,7 +446,7 @@
                             showNotification(`Update failed: ${job.error || 'Unknown error'}`, 'error');
                             break;
                     }
-                    
+
                     pollCount++;
                     if (pollCount >= maxPolls) {
                         clearInterval(pollInterval);
@@ -630,7 +461,7 @@
                     button.textContent = originalButtonText;
                     button.disabled = false;
                     button.setAttribute('onclick', originalOnclick);
-                    
+
                     // If it's a JSON parsing error and we're near the end, assume success
                     if (error.name === 'SyntaxError' && pollCount > maxPolls * 0.8) {
                         // Update status first - this will handle button changes properly
@@ -654,21 +485,21 @@
                         'Content-Type': 'application/json',
                     }
                 });
-                
+
                 const refreshData = await refreshResponse.json();
-                
+
                 if (!refreshData.success) {
                     showNotification(refreshData.message || 'Refresh already in progress', 'warning');
                     return;
                 }
-                
+
                 // Show single notification after successful refresh initiation
                 showNotification('Checking all containers for updates...', 'info');
-                
+
                 // Poll every 2 seconds, up to 10 times (20 seconds total)
                 let attempts = 0;
                 const maxAttempts = 10;
-                
+
                 const pollUpdates = async () => {
                     try {
                         // Fetch both containers and status
@@ -676,16 +507,16 @@
                             fetch('/api/containers'),
                             fetch('/api/status')
                         ]);
-                        
+
                         const containers = await containersResponse.json();
                         const status = await statusResponse.json();
-                        
+
                         // Update the UI with fresh data
-                        updateHeaderStats(containers, status);
+                        updateHeaderStats(containers);
                         updateContainerTable(containers);
-                        
+
                         attempts++;
-                        
+
                         // Check if updates are still in progress
                         if (status.update_in_progress && attempts < maxAttempts) {
                             // Still updating, continue polling
@@ -706,10 +537,10 @@
                         }
                     }
                 };
-                
+
                 // Start polling after a short delay
                 setTimeout(pollUpdates, 1000);
-                
+
             } catch (error) {
                 console.error('Error checking all updates:', error);
                 showNotification('Failed to check updates', 'error');
@@ -723,24 +554,23 @@
         async function confirmBulkUpdate() {
             const allowMajor = document.getElementById('bulkAllowMajor').checked;
             const dryRun = document.getElementById('dryRun').checked;
-            
+
             // Disable the "Update All" button in navbar to prevent double-clicks
             const updateAllBtn = document.querySelector('a[onclick="updateAllContainers()"]');
             const originalUpdateAllText = updateAllBtn.textContent;
             updateAllBtn.textContent = dryRun ? 'Dry Running...' : 'Updating All...';
-            updateAllBtn.style.pointerEvents = 'none';
-            updateAllBtn.style.opacity = '0.6';
-            
+            updateAllBtn.classList.add('btn-busy');
+
             closeBulkModal();
-            
+
             try {
                 // Show notification about the operation starting
                 showNotification(dryRun ? 'Starting dry run...' : 'Starting bulk update...', 'info');
-                
+
                 // Set a longer timeout for bulk operations (5 minutes)
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
-                
+
                 const response = await fetch('/api/updates', {
                     method: 'POST',
                     headers: {
@@ -749,14 +579,14 @@
                     body: JSON.stringify({ allow_major: allowMajor, dry_run: dryRun }),
                     signal: controller.signal
                 });
-                
+
                 clearTimeout(timeoutId);
-                
+
                 const data = await response.json();
-                
+
                 let successCount = 0;
                 let failureCount = 0;
-                
+
                 if (dryRun) {
                     // Dry run results have different structure: {container, needs_update, reason}
                     data.forEach(result => {
@@ -765,11 +595,11 @@
                         }
                     });
                     failureCount = data.length - successCount; // Containers that don't need updates
-                    
+
                     // Show detailed results in modal for dry run
                     showDryRunResultsModal(data);
                     showNotification('Dry run completed - see detailed results in modal', 'success');
-                    
+
                     // Refresh data to show any status changes
                     refreshData();
                 } else {
@@ -783,16 +613,16 @@
                             updateContainerStatus(result.container.id, 'error', null, null);
                         }
                     });
-                    
+
                     const message = `Update completed: ${successCount} successful, ${failureCount} failed`;
                     showNotification(message, successCount > 0 ? 'success' : 'info');
-                    
+
                     // Always reload after bulk update to ensure fresh state (containers may have new IDs)
                     setTimeout(() => location.reload(), 1500);
                 }
             } catch (error) {
                 console.error('Error in bulk update:', error);
-                
+
                 if (error.name === 'AbortError') {
                     showNotification('Bulk update timed out - some containers may have been updated. Please refresh to see current status.', 'warning');
                     // Force refresh after timeout
@@ -803,8 +633,7 @@
             } finally {
                 // Always restore the "Update All" button
                 updateAllBtn.textContent = originalUpdateAllText;
-                updateAllBtn.style.pointerEvents = '';
-                updateAllBtn.style.opacity = '';
+                updateAllBtn.classList.remove('btn-busy');
             }
         }
 
@@ -821,11 +650,11 @@
         function updateContainerStatus(containerId, status, _localVersion, _remoteVersion) {
             const row = findContainerRow(containerId);
             if (!row) return;
-            
+
             // Remove all status classes
             row.classList.remove('status-up-to-date', 'status-update-available', 'status-error', 'status-latest');
             row.classList.add(`status-${status}`);
-            
+
             // Update actions cell to show/hide update button
             const actionsCell = row.cells[2];
             if (actionsCell && status === 'update-available') {
@@ -836,9 +665,8 @@
                     if (checkBtn) {
                         updateBtn = document.createElement('button');
                         updateBtn.textContent = '📥 Update';
-                        updateBtn.className = 'primary';
-                        updateBtn.style.cssText = 'padding: 0.25rem 0.75rem; font-size: 0.875rem; line-height: 1.25;';
-                        updateBtn.setAttribute('onclick', `showUpdateModal(\"${containerId}\")`);
+                        updateBtn.className = 'primary btn-sm';
+                        updateBtn.setAttribute('onclick', `showUpdateModal('${containerId}')`);
                         checkBtn.insertAdjacentElement('afterend', updateBtn);
                     }
                 }
@@ -853,48 +681,22 @@
 
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem;
-                background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
-                color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
-                border-radius: 0.5rem;
-                border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
-                z-index: 1000;
-                max-width: 300px;
-                animation: slideIn 0.3s ease-out;
-            `;
+            notification.className = `toast ${type}`;
             notification.textContent = message;
-            
+
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease-out';
+                notification.classList.add('toast-out');
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
-
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 
     <script>
         // Auto-refresh functionality
         let refreshInterval;
-        
+
         function startAutoRefresh() {
             // Refresh every 30 seconds
             refreshInterval = setInterval(refreshData, 30000);
@@ -905,13 +707,13 @@
                 clearInterval(refreshInterval);
             }
         }
-        
+
         function refreshData() {
             // Show refreshing status
             const statusElement = document.getElementById('autoRefreshStatus');
             if (statusElement) {
                 statusElement.textContent = 'Auto-refresh: UPDATING...';
-                statusElement.style.color = '#007bff';
+                statusElement.className = 'refresh-updating';
             }
 
             // Fetch updated container data
@@ -925,17 +727,17 @@
                     // Updates in progress, keep showing updating status
                     if (statusElement) {
                         statusElement.textContent = 'Auto-refresh: UPDATING...';
-                        statusElement.style.color = '#007bff';
+                        statusElement.className = 'refresh-updating';
                     }
                 } else {
                     // Updates complete, update the UI
-                    updateHeaderStats(containers, status);
+                    updateHeaderStats(containers);
                     updateContainerTable(containers);
 
                     // Reset status
                     if (statusElement) {
                         statusElement.textContent = 'Auto-refresh: ON';
-                        statusElement.style.color = '#666';
+                        statusElement.className = '';
                     }
                 }
             })
@@ -946,19 +748,19 @@
                     // Network error - might be due to server restarting during updates
                     if (statusElement) {
                         statusElement.textContent = 'Auto-refresh: RETRYING...';
-                        statusElement.style.color = '#ffc107';
+                        statusElement.className = 'refresh-retrying';
                     }
                 } else {
                     // Other error
                     if (statusElement) {
                         statusElement.textContent = 'Auto-refresh: ERROR';
-                        statusElement.style.color = '#dc3545';
+                        statusElement.className = 'refresh-error';
                     }
                 }
             });
         }
 
-        function updateHeaderStats(containers, status) {
+        function updateHeaderStats(containers) {
             // Update the stats cards
             const totalElement = document.querySelector('.header-stats .stat-card:first-child p');
             const updatesElement = document.querySelector('.header-stats .stat-card:nth-child(2) p');
@@ -968,7 +770,7 @@
             }
             if (updatesElement) {
                 // Count containers needing updates
-                const updatesAvailable = containers.filter(container => 
+                const updatesAvailable = containers.filter(container =>
                     container.update_info && container.update_info.needs_update
                 ).length;
                 updatesElement.textContent = updatesAvailable;
@@ -993,29 +795,29 @@
                 let row = currentRows[container.id];
                 const needsUpdate = container.update_info ? container.update_info.needs_update : false;
                 const statusClass = getStatusClass(container, needsUpdate);
-                
+
                 if (row) {
                     // Update existing row
                     // Remove all status classes first
                     row.classList.remove('status-up-to-date', 'status-update-available', 'status-error', 'status-latest');
                     row.classList.add(statusClass);
-                    
+
                     // Update cells
                     const nameCell = row.cells[0];
                     const imageCell = row.cells[1];
-                    
+
                     if (nameCell) {
                         const name = container.name.startsWith('/') ? container.name.substring(1) : container.name;
                         nameCell.textContent = name.length > 30 ? name.substring(0, 27) + '...' : name;
                         nameCell.setAttribute('title', name);
                     }
-                    
+
                     if (imageCell) {
                         const image = container.image;
                         imageCell.innerHTML = `<code>${image.length > 50 ? image.substring(0, 47) + '...' : image}</code>`;
                         imageCell.setAttribute('title', container.image);
                     }
-                    
+
                     // Update action buttons
                     updateContainerButtons(row, container.id, needsUpdate);
                 } else {
@@ -1047,46 +849,44 @@
             const row = document.createElement('tr');
             row.className = statusClass;
             row.setAttribute('data-container-id', container.id);
-            
+
             const name = container.name.startsWith('/') ? container.name.substring(1) : container.name;
             const image = container.image;
-            
+
             row.innerHTML = `
                 <td title="${name}">${name.length > 30 ? name.substring(0, 27) + '...' : name}</td>
                 <td title="${image}"><code>${image.length > 50 ? image.substring(0, 47) + '...' : image}</code></td>
                 <td>
-                    <div style="display: flex; gap: 0.5rem; align-items: center; height: 100%;">
-                        ${!needsUpdate ? `<button onclick="checkUpdate(\"${container.id}\")" class="secondary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Check</button>` : ''}
-                        ${needsUpdate ? `<button onclick="showUpdateModal(\"${container.id}\")" class="primary" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">Update</button>` : ''}
+                    <div class="actions-cell">
+                        ${!needsUpdate ? `<button onclick="checkUpdate('${container.id}')" class="secondary btn-sm">Check</button>` : ''}
+                        ${needsUpdate ? `<button onclick="showUpdateModal('${container.id}')" class="primary btn-sm">Update</button>` : ''}
                     </div>
                 </td>
             `;
-            
+
             return row;
         }
 
         function updateContainerButtons(row, containerId, needsUpdate) {
             const actionsCell = row.cells[2];
             if (!actionsCell) return;
-            
+
             // Clear all buttons first
             actionsCell.innerHTML = '';
-            
+
             if (needsUpdate) {
                 // Show only update button
                 const updateBtn = document.createElement('button');
                 updateBtn.textContent = 'Update';
-                updateBtn.className = 'primary';
-                updateBtn.style.cssText = 'padding: 0.375rem 0.75rem; font-size: 0.875rem;';
-                updateBtn.setAttribute('onclick', `showUpdateModal(\"${containerId}\")`);
+                updateBtn.className = 'primary btn-sm';
+                updateBtn.setAttribute('onclick', `showUpdateModal('${containerId}')`);
                 actionsCell.appendChild(updateBtn);
             } else {
                 // Show only check button
                 const checkBtn = document.createElement('button');
                 checkBtn.textContent = 'Check';
-                checkBtn.className = 'secondary';
-                checkBtn.style.cssText = 'padding: 0.375rem 0.75rem; font-size: 0.875rem;';
-                checkBtn.setAttribute('onclick', `checkUpdate(\"${containerId}\")`);
+                checkBtn.className = 'secondary btn-sm';
+                checkBtn.setAttribute('onclick', `checkUpdate('${containerId}')`);
                 actionsCell.appendChild(checkBtn);
             }
         }
@@ -1168,7 +968,7 @@
                 }
             });
 
-            sseEventSource.onerror = function(e) {
+            sseEventSource.onerror = function() {
                 console.log('SSE connection error, reconnecting in 5 seconds...');
                 setTimeout(connectSSE, 5000);
             };
@@ -1301,6 +1101,22 @@
         // Initialize sorting on page load
         document.addEventListener('DOMContentLoaded', function() {
             setupTableSorting();
+        });
+
+        // Handlers referenced by inline onclick attributes in the markup.
+        // Top-level function declarations already land on window; this keeps
+        // that contract explicit (and the linter honest about the references).
+        Object.assign(window, {
+            toggleTheme,
+            checkAllUpdates,
+            updateAllContainers,
+            showUpdateModal,
+            checkUpdate,
+            confirmUpdate,
+            closeModal,
+            confirmBulkUpdate,
+            closeBulkModal,
+            closeDryRunResultsModal
         });
     </script>
 </body>

@@ -1,4 +1,5 @@
 require "spec"
+require "../src/version"
 require "../src/types"
 require "../src/docker_client"
 require "../src/image_checker"
@@ -8,9 +9,6 @@ require "../src/cli"
 
 # Setup logging for tests
 Log.setup(:none)
-
-# Define VERSION for tests
-VERSION = "0.1.0"
 
 # Test helper module
 module TestHelper

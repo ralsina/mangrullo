@@ -14,10 +14,14 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Build documentation
-        run: mkdocs build
+      - name: Build documentation (docs under /docs/)
+        run: mkdocs build --site-dir _stage/docs
+      - name: Assemble site (handcrafted landing at root)
+        run: |
+          cp site/index.html _stage/
+          cp site/favicon.svg _stage/
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+          publish_dir: ./_stage

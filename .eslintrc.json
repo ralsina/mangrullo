@@ -16,7 +16,7 @@
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
     "no-console": "warn",
-    "no-unused-vars": ["error", { "vars": "all", "args": "all", "ignoreRestSiblings": false }],
+    "no-unused-vars": ["error", { "vars": "all", "args": "all", "argsIgnorePattern": "^_", "ignoreRestSiblings": false }],
     "no-undef": "error"
   },
   "globals": {
@@ -25,7 +25,6 @@
     "document": "readonly",
     "window": "readonly",
     "console": "readonly",
-    "alert": "readonly",
-    "currentContainerId": "writable"
+    "alert": "readonly"
   }
 }
