@@ -34,8 +34,9 @@ module Mangrullo
 
     # Version parsing constants
     module Version
-      SEMVER_MAX_PARTS       =  3
-      SEMVER_MIN_PARTS       =  2
+      SEMVER_MAX_PARTS = 3
+      # Single-component tags (postgres:16, redis:7) parse as major-only
+      SEMVER_MIN_PARTS       =  1
       SHA256_TRUNCATE_LENGTH = 12
     end
 

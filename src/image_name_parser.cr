@@ -1,13 +1,16 @@
 module Mangrullo
   # Utility class for parsing and manipulating Docker image names
   class ImageNameParser
-    # Parse image name into repository and tag parts
+    # Parse image name into repository and tag parts.
+    # A colon only separates the tag when it appears after the last slash —
+    # otherwise it belongs to a registry port (e.g. localhost:5000/my-app).
     def self.parse(image_name : String) : NamedTuple(repository: String, tag: String)
-      parts = image_name.split(":")
-      if parts.size > 1
-        # Handle cases like registry:port/image:tag
-        tag = parts.last
-        repository = parts[0..-2].join(":")
+      last_slash = image_name.rindex('/')
+      last_colon = image_name.rindex(':')
+
+      if last_colon && (last_slash.nil? || last_colon > last_slash)
+        repository = image_name[0...last_colon]
+        tag = image_name[(last_colon + 1)..]
       else
         repository = image_name
         tag = Constants::Docker::DEFAULT_IMAGE_TAG

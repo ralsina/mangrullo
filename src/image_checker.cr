@@ -14,8 +14,9 @@ module Mangrullo
     end
 
     def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false) : Bool
-      # If using 'latest' tag, use the enhanced update status check
-      if container.image.includes?("latest")
+      # Moving tags (latest, single-component like postgres:16, digest pins,
+      # or non-version tags) are compared by digest, not by version
+      if moving_tag?(container)
         status = get_update_status(container)
         return status[:needs_pull] || status[:needs_restart]
       end
@@ -26,6 +27,31 @@ module Mangrullo
 
       target_version = find_target_update_version(container.image, current_version, allow_major_upgrade)
       target_version != nil
+    end
+
+    # The image reference an update should pull and recreate the container
+    # with. Versioned images get the newer tag; moving tags (latest,
+    # postgres:16, digest pins) stay on the same reference and pick up the
+    # newly pushed digest instead.
+    def target_image_for_update(container : ContainerInfo, allow_major_upgrade : Bool = false) : String?
+      return container.image if moving_tag?(container)
+
+      current_version = extract_version_from_image(container.image)
+      return container.image unless current_version
+
+      target_tag = find_target_update_tag(container.image, current_version, allow_major_upgrade)
+      return container.image unless target_tag
+
+      repository = ImageNameParser.parse(container.image)[:repository]
+      ImageNameParser.format_with_tag(repository, target_tag)
+    end
+
+    # A tag that tracks a moving ref rather than a fixed version
+    private def moving_tag?(container : ContainerInfo) : Bool
+      return true if container.image.includes?("sha256:")
+
+      tag = ImageNameParser.get_tag(container.image)
+      !tag.includes?(".")
     end
 
     private def parse_registry_info(image_name : String) : NamedTuple(registry_host: String, repository_path: String)
@@ -72,46 +98,52 @@ module Mangrullo
     end
 
     def find_target_update_version(image_name : String, current_version : Version, allow_major_upgrade : Bool) : Version?
-      # Get all available versions from the registry
-      all_versions = get_all_versions(image_name)
-      return if all_versions.empty?
-
-      # Filter versions that are newer than current version
-      newer_versions = all_versions.select { |v| v > current_version }
-
-      # Filter by major upgrade preference
-      if allow_major_upgrade
-        # Allow any newer version
-        target_version = newer_versions.max?
-      else
-        # Only allow minor/patch updates within the same major version
-        same_major_versions = newer_versions.select { |v| v.major == current_version.major }
-        target_version = same_major_versions.max?
-      end
-
-      target_version
+      target_tag = find_target_update_tag(image_name, current_version, allow_major_upgrade)
+      Version.parse(target_tag) if target_tag
     end
 
-    def get_all_versions(image_name : String) : Array(Version)
+    # Like find_target_update_version, but returns the actual registry tag
+    # string for the target — the tag must exist upstream to be pullable.
+    def find_target_update_tag(image_name : String, current_version : Version, allow_major_upgrade : Bool) : String?
+      candidates = registry_version_tags(image_name).select do |pair|
+        pair[:version] > current_version &&
+          (allow_major_upgrade || pair[:version].major == current_version.major)
+      end
+
+      best = candidates.max_by? { |pair| pair[:version] }
+      best.try &.[:tag]
+    end
+
+    # Registry tags paired with their parsed versions
+    private def registry_version_tags(image_name : String) : Array(NamedTuple(tag: String, version: Version))
       registry_info = parse_registry_info(image_name)
       registry_host = registry_info[:registry_host]
       repository_path = registry_info[:repository_path]
 
       begin
         response = fetch_registry_tags(registry_host, repository_path)
-        return [] of Version unless response && response.status_code == 200
+        return [] of NamedTuple(tag: String, version: Version) unless response && response.status_code == 200
 
-        parse_versions_from_response(response)
+        json = JSON.parse(response.body)
+        tags = json["tags"].as_a.map(&.as_s)
+        tags.compact_map do |tag|
+          version = Version.parse(tag)
+          version ? {tag: tag, version: version} : nil
+        end
       rescue ex : Socket::Error | IO::Error
-        Log.error { "Network error getting all versions for #{image_name} from #{registry_host}: #{ex.message}" }
-        [] of Version
+        Log.error { "Network error getting tags for #{image_name} from #{registry_host}: #{ex.message}" }
+        [] of NamedTuple(tag: String, version: Version)
       rescue ex : JSON::ParseException
-        Log.error { "JSON parsing error getting all versions for #{image_name} from #{registry_host}: #{ex.message}" }
-        [] of Version
+        Log.error { "JSON parsing error getting tags for #{image_name} from #{registry_host}: #{ex.message}" }
+        [] of NamedTuple(tag: String, version: Version)
       rescue ex
-        Log.error { "Unexpected error getting all versions for #{image_name} from #{registry_host}: #{ex.message}" }
-        [] of Version
+        Log.error { "Unexpected error getting tags for #{image_name} from #{registry_host}: #{ex.message}" }
+        [] of NamedTuple(tag: String, version: Version)
       end
+    end
+
+    def get_all_versions(image_name : String) : Array(Version)
+      registry_version_tags(image_name).map(&.[:version]).sort!
     end
 
     private def fetch_registry_tags(registry_host : String, repository_path : String) : HTTP::Client::Response?

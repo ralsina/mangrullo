@@ -60,22 +60,25 @@ module Mangrullo
       Log.debug { "  Container image: #{container.image}" }
       Log.debug { "  Container image_id: #{container.image_id}" }
 
+      # Decide which image reference the update should move to. Versioned
+      # images get the newer tag; moving tags (latest, postgres:16) re-pull
+      # the same reference for its newly pushed digest.
+      target_image = @image_checker.target_image_for_update(container, allow_major_upgrade) || container.image
+
       # Get current digest information for debugging
-      local_digest_before = @image_checker.get_local_image_digest(container.image)
-      remote_digest_before = @image_checker.get_remote_image_digest(container.image)
+      local_digest_before = @image_checker.get_local_image_digest(target_image)
+      remote_digest_before = @image_checker.get_remote_image_digest(target_image)
       Log.debug { "  Local digest before: #{local_digest_before}" }
       Log.debug { "  Remote digest before: #{remote_digest_before}" }
 
       # Extract image name and tag
-      parsed_image = ImageNameParser.parse(container.image)
-      image_name = parsed_image[:repository]
-      image_tag = parsed_image[:tag]
+      parsed_target = ImageNameParser.parse(target_image)
 
       # Pull the new image
-      Log.info { "Pulling new image: #{container.image}" }
-      broadcast_sse_event(container, Mangrullo::SSE::EventType::ImagePullStart, "Pulling new image: #{container.image}")
+      Log.info { "Pulling new image: #{target_image}" }
+      broadcast_sse_event(container, Mangrullo::SSE::EventType::ImagePullStart, "Pulling new image: #{target_image}")
 
-      unless @docker_client.pull_image(image_name, image_tag)
+      unless @docker_client.pull_image(parsed_target[:repository], parsed_target[:tag])
         broadcast_sse_event(container, Mangrullo::SSE::EventType::UpdateError, "Failed to pull image")
         return {container: container, new_container_id: nil, updated: false, error: "Failed to pull image"}
       end
@@ -84,7 +87,7 @@ module Mangrullo
 
       # Debug: Show state after pull
       Log.debug { "Container state after pull:" }
-      local_digest_after_pull = @image_checker.get_local_image_digest(container.image)
+      local_digest_after_pull = @image_checker.get_local_image_digest(target_image)
       Log.debug { "  Local digest after pull: #{local_digest_after_pull}" }
       Log.debug { "  Remote digest: #{remote_digest_before}" }
       Log.debug { "  Digests match after pull? #{local_digest_after_pull == remote_digest_before}" }
@@ -95,9 +98,9 @@ module Mangrullo
       # Use the specific image digest to ensure we get the correct image
       image_to_use = if local_digest_after_pull && local_digest_after_pull == remote_digest_before
                        # Use the digest format: redis@sha256:...
-                       "#{container.image.split(':')[0]}@#{local_digest_after_pull}"
+                       "#{parsed_target[:repository]}@#{local_digest_after_pull}"
                      else
-                       container.image
+                       target_image
                      end
 
       Log.debug { "Using image: #{image_to_use}" }
@@ -126,8 +129,8 @@ module Mangrullo
         Log.debug { "  Image ID changed from original? #{updated_container.image_id != container.image_id}" }
 
         # Verify the new container is actually using the new image
-        local_digest_after = @image_checker.get_local_image_digest(container.image)
-        remote_digest = @image_checker.get_remote_image_digest(container.image)
+        local_digest_after = @image_checker.get_local_image_digest(target_image)
+        remote_digest = @image_checker.get_remote_image_digest(target_image)
         if local_digest_after && remote_digest && local_digest_after == remote_digest
           Log.debug { "✅ Verification successful: new container is using the updated image" }
         else

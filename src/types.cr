@@ -62,15 +62,16 @@ module Mangrullo
       version_part = parts[0]
       prerelease_part = parts.size > 1 ? parts[1] : nil
 
-      # Parse semantic version
+      # Parse semantic version; missing minor/patch default to zero so
+      # single-component tags (e.g. "16") parse as 16.0.0
       parts = version_part.split('.')
       return unless parts.size >= Mangrullo::Constants::Version::SEMVER_MIN_PARTS && parts.size <= Mangrullo::Constants::Version::SEMVER_MAX_PARTS
 
       major = parts[0].to_i?
-      minor = parts[1].to_i?
-      patch = parts[2]?.try(&.to_i?) || 0
+      return unless major
 
-      return unless major && minor
+      minor = parts[1]?.try(&.to_i?) || 0
+      patch = parts[2]?.try(&.to_i?) || 0
 
       Version.new(major, minor, patch, prerelease_part, build_part)
     end

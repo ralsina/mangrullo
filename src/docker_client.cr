@@ -15,6 +15,8 @@ module Mangrullo
 
   class DockerClient
     @api : Docr::API
+    # Raw API access for endpoints docr does not implement (e.g. rename)
+    @raw_client : Docr::Client
 
     # Global mutex to prevent concurrent Docker API access across all instances
     @@api_mutex = Mutex.new
@@ -27,6 +29,7 @@ module Mangrullo
     def initialize(socket_path : String = Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH)
       client = CustomDockerClient.new(socket_path)
       @api = Docr::API.new(client)
+      @raw_client = client
     end
 
     private def handle_docker_errors(operation : String, context : String? = nil, &)
@@ -290,53 +293,6 @@ module Mangrullo
         .value || nil
     end
 
-    def create_container_with_config(image_name : String, container_name : String, config : Hash(String, JSON::Any)) : String?
-      handle_docker_errors_typed("creating container with config", "container=#{container_name}, image=#{image_name}") do
-        # Get the original container's configuration using docker inspect
-        inspect_data = inspect_container(container_name)
-
-        unless inspect_data
-          Log.error { "Failed to inspect container #{container_name} for configuration" }
-          return
-        end
-
-        # Parse the container inspection output
-        container_info = JSON.parse(inspect_data)
-
-        # Extract the container configuration
-        config_data = container_info.as_h
-        host_config_json = config_data["HostConfig"]?.try(&.as_h)
-        config_json = config_data["Config"]?.try(&.as_h)
-
-        return unless config_json
-
-        # Build the container config
-        container_config = Docr::Types::CreateContainerConfig.from_json(config_json.to_json)
-        container_config.image = image_name
-
-        if host_config_json
-          Log.debug { "HostConfig JSON: #{host_config_json.to_json}" }
-          host_config = Docr::Types::HostConfig.from_json(host_config_json.to_json)
-          Log.debug { "Parsed NetworkMode: #{host_config.network_mode.inspect}" }
-
-          # Ensure network mode is preserved
-          if network_mode = host_config_json["NetworkMode"]?.try(&.as_s)
-            Log.info { "Preserving network mode: #{network_mode}" }
-            host_config.network_mode = network_mode
-          end
-
-          container_config.host_config = host_config
-        end
-
-        # Create the container
-        with_retry_and_lock("create container") do
-          response = @api.containers.create(container_name, container_config)
-          response.id
-        end
-      end
-        .value || nil
-    end
-
     def start_container(container_id : String) : Bool
       result = handle_docker_errors("starting container", "container_id=#{container_id}") do
         with_retry_and_lock("start container") do
@@ -344,6 +300,21 @@ module Mangrullo
         end
       end
       result.success?
+    end
+
+    # Rename a container via the Docker API (docr does not implement rename).
+    # The container ID is stable across renames.
+    def rename_container(container_id : String, new_name : String) : Bool
+      with_docker_api_lock("rename container to #{new_name}") do
+        @raw_client.call("POST", "/containers/#{container_id}/rename?name=#{URI.encode_path(new_name)}") { }
+      end
+      true
+    rescue ex : Docr::Errors::DockerAPIError
+      Log.error { "Failed to rename container #{container_id} to #{new_name}: #{ex.message}" }
+      false
+    rescue ex
+      Log.error { "Error renaming container #{container_id} to #{new_name}: #{ex.message}" }
+      false
     end
 
     def recreate_container_with_new_image(container_id : String, new_image : String) : String?
@@ -356,10 +327,8 @@ module Mangrullo
 
       Log.info { "Recreating container #{container_name} with image #{new_image}" }
 
-      # Capture container configuration BEFORE removing it
+      # Capture container configuration BEFORE touching the container
       Log.debug { "Capturing container configuration for #{container_name}" }
-
-      # Get the container configuration using docker inspect BEFORE removing it
       config_output = inspect_container(container_name)
 
       unless config_output
@@ -373,24 +342,53 @@ module Mangrullo
         return
       end
 
-      # Remove the old container FIRST to free up the name
-      unless remove_container(container_id)
-        Log.error { "Failed to remove old container #{container_name}" }
+      # Park the old container under a backup name instead of removing it, so a
+      # failed create or start can be rolled back. The original name must be
+      # free before the replacement container can claim it.
+      backup_name = "#{container_name}_mangrullo_backup_#{Time.utc.to_unix}"
+      unless rename_container(container_id, backup_name)
+        Log.error { "Failed to rename stopped container #{container_name} to #{backup_name}" }
+        start_container(container_id)
         return
       end
 
-      # Create new container with the captured configuration and new image
+      # Create the replacement under the original name
       new_container_id = create_container_from_inspect_data(new_image, container_name, config_output.to_s)
-      return unless new_container_id
-
-      # Start the new container
-      unless start_container(new_container_id)
-        Log.error { "Failed to start new container #{container_name}" }
+      unless new_container_id
+        Log.error { "Failed to create replacement container #{container_name}; rolling back to previous container" }
+        rollback_container(container_id, container_name)
         return
+      end
+
+      # Start the replacement
+      unless start_container(new_container_id)
+        Log.error { "Failed to start replacement container #{container_name}; rolling back to previous container" }
+        remove_container(new_container_id)
+        rollback_container(container_id, container_name)
+        return
+      end
+
+      # Success: the backup is now obsolete. Its ID is still container_id.
+      unless remove_container(container_id)
+        Log.warn { "Failed to remove backup container #{backup_name}; please remove it manually" }
       end
 
       Log.info { "Successfully recreated container #{container_name} with new image" }
       new_container_id
+    end
+
+    # Restore a backed-up container to its original name and start it again.
+    # Best effort: if anything fails, the backup container is left stopped but
+    # preserved so the user can recover it manually.
+    private def rollback_container(backup_container_id : String, original_name : String) : Nil
+      unless rename_container(backup_container_id, original_name)
+        Log.error { "CRITICAL: could not rename backup container back to #{original_name}; it is preserved stopped under its backup name" }
+        return
+      end
+
+      unless start_container(backup_container_id)
+        Log.error { "CRITICAL: rolled back container #{original_name} could not be started; it is preserved stopped" }
+      end
     end
 
     def get_container_logs(container_id : String, tail : Int32 = Mangrullo::Constants::Docker::DEFAULT_LOG_TAIL) : String

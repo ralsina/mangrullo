@@ -80,8 +80,23 @@ describe Mangrullo::Version do
     it "returns nil for invalid versions" do
       Mangrullo::Version.parse("invalid").should be_nil
       Mangrullo::Version.parse("").should be_nil
-      Mangrullo::Version.parse("1").should be_nil
       Mangrullo::Version.parse("1.2.3.4").should be_nil
+    end
+
+    it "parses single-component tags as major-only versions" do
+      version = Mangrullo::Version.parse("16")
+      version.should_not be_nil
+      version = version.as(Mangrullo::Version)
+      version.major.should eq(16)
+      version.minor.should eq(0)
+      version.patch.should eq(0)
+
+      version = Mangrullo::Version.parse("7")
+      version.should_not be_nil
+      version = version.as(Mangrullo::Version)
+      version.major.should eq(7)
+      version.minor.should eq(0)
+      version.patch.should eq(0)
     end
 
     it "returns nil for blank input" do
