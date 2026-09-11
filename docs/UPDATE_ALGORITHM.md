@@ -2,19 +2,26 @@
 
 ## Overview
 
-Mangrullo uses a simplified, efficient approach to detect when Docker container images need updates. The algorithm clearly separates handling for "latest" tags versus versioned tags, optimizing for performance and maintainability.
+Mangrullo detects when Docker container images need updates and decides which
+image reference an update should move to. The algorithm separates **moving
+tags** (which are compared by digest) from **versioned tags** (which are
+compared by semantic version), and detection is paired with execution: the
+same logic that detects an update also computes the target image reference to
+pull and recreate the container with.
 
 ## Update Decision Flow
 
 ### 1. Tag Type Detection
 
-The algorithm first determines the type of image tag:
+The algorithm first determines whether the tag is a *moving tag*:
 
 ```crystal
 def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false) : Bool
-  # If using 'latest' tag, use simple digest comparison
-  if container.image.includes?("latest")
-    return image_has_update?(container.image)
+  # Moving tags (latest, single-component like postgres:16, digest pins,
+  # or non-version tags) are compared by digest, not by version
+  if moving_tag?(container)
+    status = get_update_status(container)
+    return status[:needs_pull] || status[:needs_restart]
   end
 
   # For versioned tags, find available updates based on version
@@ -24,27 +31,41 @@ def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false)
   target_version = find_target_update_version(container.image, current_version, allow_major_upgrade)
   target_version != nil
 end
+
+# A tag that tracks a moving ref rather than a fixed version
+private def moving_tag?(container : ContainerInfo) : Bool
+  return true if container.image.includes?("sha256:")
+
+  tag = ImageNameParser.get_tag(container.image)
+  !tag.includes?(".")
+end
 ```
+
+Moving tags are: `latest`, single-component tags (`postgres:16`, `redis:7`),
+digest pins (`image@sha256:…`), and non-version tags (`stable`, `alpine`). All
+of them are compared by digest.
 
 ### 1.1 Enhanced Update Status Detection
 
-For more granular update detection, the algorithm provides detailed status:
+For moving tags, the algorithm compares local and remote digests:
 
 ```crystal
-def get_update_status(container : ContainerInfo) : NamedTuple(needs_pull: Bool, needs_restart: Bool)
+def get_update_status(container : ContainerInfo) :
+    NamedTuple(needs_pull: Bool, needs_restart: Bool,
+               local_digest: String?, remote_digest: String?)
   local_digest = get_local_image_digest(container.image)
   remote_digest = get_remote_image_digest(container.image)
-  
+
   {
-    needs_pull: local_digest != remote_digest,
+    needs_pull:    local_digest != remote_digest,
     needs_restart: local_digest == remote_digest && container.image.includes?("latest")
   }
 end
 ```
 
-### 2. Latest Tag Handling
+### 2. Moving Tag Handling
 
-For images using `:latest` tags, the algorithm uses simple digest comparison:
+For moving tags, the update is a re-pull of the same reference:
 
 ```crystal
 def image_has_update?(image_name : String) : Bool
@@ -63,6 +84,8 @@ end
 - Single API call to get remote manifest digest
 - No need to parse hundreds or thousands of tags
 - Fast and efficient
+- Rolling tags (`postgres:16`) keep following their major instead of being
+  "upgraded" to a different tag
 
 ### 3. Versioned Tag Handling
 
@@ -83,42 +106,76 @@ def extract_version_from_image(image_name : String) : Version?
 end
 ```
 
-#### 3.2 Target Version Discovery
+Single-component tags parse as major-only versions (`16` → `16.0.0`), but
+since they are moving tags they never reach the version path — they are
+handled by digest comparison instead.
+
+#### 3.2 Target Tag Discovery
+
+`find_target_update_version` delegates to `find_target_update_tag`, which
+returns the **actual registry tag string** for the target (the tag must exist
+upstream to be pullable — version objects alone would lose spellings like a
+`v` prefix):
 
 ```crystal
-def find_target_update_version(image_name : String, current_version : Version, allow_major_upgrade : Bool) : Version?
-  # Get all available versions from the registry
-  all_versions = get_all_versions(image_name)
-  return nil if all_versions.empty?
-
-  # Filter versions that are newer than current version
-  newer_versions = all_versions.select { |v| v > current_version }
-  
-  # Filter by major upgrade preference
-  if allow_major_upgrade
-    # Allow any newer version
-    newer_versions.max?
-  else
-    # Only allow minor/patch updates within the same major version
-    same_major_versions = newer_versions.select { |v| v.major == current_version.major }
-    same_major_versions.max?
+def find_target_update_tag(image_name : String, current_version : Version,
+                           allow_major_upgrade : Bool) : String?
+  candidates = registry_version_tags(image_name).select do |pair|
+    pair[:version] > current_version &&
+      (allow_major_upgrade || pair[:version].major == current_version.major)
   end
+
+  best = candidates.max_by? { |pair| pair[:version] }
+  best.try &.[:tag]
 end
 ```
 
 #### 3.3 Version Collection
 
 ```crystal
-def get_all_versions(image_name : String) : Array(Version)
+def registry_version_tags(image_name : String) : Array(NamedTuple(tag: String, version: Version))
   # Single API call to get all tags
-  response = registry_client.get("/v2/#{repository_path}/tags/list")
-  
-  # Parse and filter semantic versions
+  response = fetch_registry_tags(registry_host, repository_path)
+
+  json = JSON.parse(response.body)
   tags = json["tags"].as_a.map(&.as_s)
-  versions = tags.compact_map { |tag| Version.parse(tag) }
-  versions.sort!
+  tags.compact_map { |tag|
+    version = Version.parse(tag)
+    version ? {tag: tag, version: version} : nil
+  }
 end
 ```
+
+## From Detection to Update
+
+Detection alone is not enough — the update must know *which reference to
+pull*. `ImageChecker#target_image_for_update` mirrors the detection logic:
+
+```crystal
+def target_image_for_update(container : ContainerInfo,
+                            allow_major_upgrade : Bool = false) : String?
+  return container.image if moving_tag?(container)
+
+  current_version = extract_version_from_image(container.image)
+  return container.image unless current_version
+
+  target_tag = find_target_update_tag(container.image, current_version, allow_major_upgrade)
+  return container.image unless target_tag
+
+  repository = ImageNameParser.parse(container.image)[:repository]
+  ImageNameParser.format_with_tag(repository, target_tag)
+end
+```
+
+`UpdateManager#update_container` then:
+
+1. Pulls `repository:target_tag` (name and tag passed **separately** to the
+   Docker API so the registry port cannot be mistaken for a tag)
+2. Recreates the container with the pulled image — digest-pinned
+   (`repo@sha256:…`) when the local digest matches the remote, otherwise the
+   target reference
+3. Rolls back safely if recreation fails: the old container is renamed to a
+   backup and restored if the replacement cannot be created or started
 
 ## Data Sources
 
@@ -165,17 +222,25 @@ The algorithm generates clean, user-friendly messages:
 
 Main entry point - routes to appropriate detection strategy based on tag type
 
-#### `image_has_update?(image_name)`
+#### `moving_tag?(container)`
 
-Handles latest tag updates via digest comparison
+Decides whether a tag tracks a moving ref (digest comparison) or a fixed version (semver comparison)
+
+#### `target_image_for_update(container, allow_major_upgrade)`
+
+Computes the image reference an update should pull and recreate with: the newer tag for versioned images, the same reference for moving tags
+
+#### `find_target_update_tag(image_name, current_version, allow_major_upgrade)`
+
+Returns the actual registry tag string of the best available update
 
 #### `find_target_update_version(image_name, current_version, allow_major_upgrade)`
 
-Finds the best available update version based on current version and upgrade preferences
+Parses the target tag into a `Version` (a thin wrapper over `find_target_update_tag`)
 
-#### `get_all_versions(image_name)`
+#### `registry_version_tags(image_name)`
 
-Performs single API call to get all available versions from registry
+Performs a single API call to get all registry tags paired with their parsed versions
 
 #### `extract_version_from_image(image_name)`
 
@@ -202,13 +267,22 @@ Creates HTTP client with proper authorization headers
 ### Registry Detection
 
 ```crystal
-# Automatic registry host detection
-if base_name.includes?("/")
-  parts = base_name.split("/")
-  if parts[0].includes?(".") || parts[0].includes?(":")
-    registry_host = parts[0]
-    repository_path = parts[1..-1].join("/")
-  end
+# Automatic registry host detection: a first path segment containing "." or
+# ":" marks a custom registry host (e.g. ghcr.io/user/image, localhost:5000/app)
+first_slash = base_name.index('/')
+prefix = first_slash ? base_name[0...first_slash] : nil
+
+if prefix && (prefix.includes?(".") || prefix.includes?(":"))
+  registry_host = prefix
+  repository_path = base_name[(prefix.size + 1)..]
+elsif prefix
+  # Docker Hub namespace/image (e.g. user/nginx)
+  registry_host = "registry-1.docker.io"
+  repository_path = base_name
+else
+  # Simple image name, assume Docker Hub library
+  registry_host = "registry-1.docker.io"
+  repository_path = "library/#{base_name}"
 end
 ```
 
@@ -236,15 +310,18 @@ end
 ### Supported Formats
 
 - Standard semver: `1.2.3`
+- Two-component versions: `1.2` (patch defaults to 0)
+- Single-component tags: `16` (parsed as `16.0.0`, but treated as a moving tag)
 - Prereleases: `1.2.3-alpha`, `1.2.3-beta.1`
 - Build metadata: `1.2.3+build.123` (ignored in comparison)
 - 'v' prefix: `v1.2.3`
 
-### Exclusions
+### Digest-Based Handling
 
-- `latest` tags (handled separately)
-- SHA256 digests (image IDs)
-- Non-semantic version strings
+- `latest` tags (handled by digest comparison)
+- SHA256 digest pins (handled by digest comparison)
+- Non-semantic version tags like `stable` (handled by digest comparison)
+- Rolling single-number tags like `postgres:16` (handled by digest comparison)
 
 ## Major Upgrade Control
 
@@ -294,6 +371,10 @@ The `allow_major_upgrade` parameter controls upgrade behavior:
 
 - JWT tokens from official registry endpoints
 - Token caching with proper expiration
+- Credentials from the user's `~/.docker/config.json` are used when an entry
+  matches the registry (including the legacy `https://index.docker.io/v1/`
+  spelling), enabling private images and avoiding Docker Hub anonymous rate
+  limits; `credsStore`-delegated entries are skipped
 - No hardcoded credentials
 
 ### Registry Communication

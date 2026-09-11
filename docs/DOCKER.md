@@ -4,14 +4,19 @@ This guide explains how to deploy Mangrullo using Docker containers.
 
 ## Quick Start
 
-### Option 1: One-shot Mode (Recommended)
+The official images are published on GitHub Container Registry:
+`ghcr.io/ralsina/mangrullo:latest` (multi-architecture: amd64 + arm64).
+
+The image ships an entrypoint that understands the commands `daemon` (default), `web`, `check`, `dry-run` and `help`.
+
+### Option 1: One-shot Mode
 
 Run a single update check:
 
 ```bash
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --once
+  ghcr.io/ralsina/mangrullo:latest check
 ```
 
 ### Option 2: Daemon Mode
@@ -22,8 +27,10 @@ Run Mangrullo as a background daemon that periodically checks for updates:
 docker run -d \
   --name mangrullo \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --interval=300
+  ghcr.io/ralsina/mangrullo:latest
 ```
+
+The daemon checks every `MANGRULLO_INTERVAL` seconds (entrypoint default: 3600).
 
 ### Option 3: Dry Run Mode
 
@@ -32,17 +39,20 @@ See what would be updated without making changes:
 ```bash
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --dry-run
+  ghcr.io/ralsina/mangrullo:latest dry-run
 ```
 
 ### Option 4: Check Specific Containers
 
-Check only specific containers:
+The entrypoint commands don't take container names; bypass the entrypoint to
+filter by name:
 
 ```bash
 docker run --rm \
+  --entrypoint mangrullo \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --once flatnotes atuin
+  ghcr.io/ralsina/mangrullo:latest \
+  --once flatnotes atuin
 ```
 
 ## Docker Compose
@@ -75,37 +85,34 @@ All configuration options can be set via environment variables with the `MANGRUL
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MANGRULLO_INTERVAL` | Check interval in seconds | `3600` |
+| `MANGRULLO_INTERVAL` | Check interval in seconds | `3600` (entrypoint) |
 | `MANGRULLO_ALLOW_MAJOR` | Allow major version upgrades | `false` |
 | `MANGRULLO_SOCKET` | Docker socket path | `/var/run/docker.sock` |
 | `MANGRULLO_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `MANGRULLO_RUN_ONCE` | Run once and exit | `false` |
 | `MANGRULLO_DRY_RUN` | Show what would be updated without changes | `false` |
 
+Web mode honors these additional variables (set them for the `web` service):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MANGRULLO_WEB_PORT` | Web interface port | `3000` |
+| `MANGRULLO_WEB_HOST` | Web interface bind address | `0.0.0.0` |
+| `MANGRULLO_WEB_USER` | HTTP Basic auth user (optional) | unset |
+| `MANGRULLO_WEB_PASSWORD` | HTTP Basic auth password (optional) | unset |
+
+**Note:** Setting both `MANGRULLO_WEB_USER` and `MANGRULLO_WEB_PASSWORD` enables
+HTTP Basic authentication on every route except `/health` (so Docker health
+checks keep working). With either unset the UI is open.
+
 **Note:** The old environment variable `MANGRULLO_DOCKER_SOCKET` has been renamed to `MANGRULLO_SOCKET` for consistency.
 
 ### Configuration File
 
-You can also use a YAML configuration file by mounting it into the container:
-
-```bash
-docker run -d \
-  --name mangrullo \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /path/to/config.yml:/config.yml:ro \
-  mangrullo --config=/config.yml
-```
-
-Example `config.yml`:
-
-```yaml
-interval: 3600
-allow_major: false
-socket: "/var/run/docker.sock"
-log_level: "info"
-run_once: false
-dry_run: false
-```
+YAML configuration file support is *not currently enabled*: the plumbing
+exists (via `docopt-config`) but no CLI flag passes a config file path, and
+`--config=/config.yml` is not a valid option. Use environment variables
+instead.
 
 ### Example with Custom Configuration
 
@@ -116,7 +123,7 @@ docker run -d \
   -e MANGRULLO_LOG_LEVEL=debug \
   -e MANGRULLO_INTERVAL=1800 \
   -e MANGRULLO_ALLOW_MAJOR=true \
-  mangrullo daemon
+  ghcr.io/ralsina/mangrullo:latest daemon
 ```
 
 ## Building the Image
@@ -167,10 +174,16 @@ docker logs -f mangrullo  # Follow logs
 
 ### Health Checks
 
-Basic container health can be checked with:
+The image defines a Docker `HEALTHCHECK` that curls the web endpoint
+(`http://localhost:${MANGRULLO_WEB_PORT:-3000}/`). That means:
+
+- **Web mode** (`command: web`): the container reports `healthy` while the UI answers.
+- **Daemon mode**: there is no HTTP server, so the built-in healthcheck reports
+  `unhealthy` even though the daemon works. Check the daemon with:
 
 ```bash
 docker inspect mangrullo --format='{{.State.Status}}'
+docker logs -f mangrullo
 ```
 
 ## Production Deployment

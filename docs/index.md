@@ -109,10 +109,11 @@ mangrullo --dry-run
 ```text
 Usage:
   mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
-           [--log-level=<level>] [--once] [--dry-run] [--help] [--version]
+           [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
+           [--help] [--version]
 
 Options:
-  --interval=<seconds>   Check interval in seconds [default: 21600]
+  --interval=<seconds>   Check interval in seconds [default: 300]
   --allow-major          Allow major version upgrades
   --socket=<path>        Docker socket path [default: /var/run/docker.sock]
   --log-level=<level>    Log level (debug, info, warn, error) [default: info]
@@ -125,7 +126,9 @@ Arguments:
   <container-name>       Specific container names to check (if not specified, checks all containers)
 ```
 
-**Note**: The default check interval is 21600 seconds (6 hours) to avoid Docker Hub registry rate limiting.
+**Note**: The CLI default check interval is 300 seconds (5 minutes). The
+Docker entrypoint defaults to a gentler 3600 seconds (1 hour) via
+`MANGRULLO_INTERVAL` to stay friendly to registry rate limits.
 
 ### Examples
 
@@ -180,23 +183,35 @@ shards build mangrullo-web
 The web interface starts on `http://localhost:3000` and provides:
 
 - **Dashboard**: Real-time overview of all containers and their update status
-- **Auto-refresh**: Automatic updates every 30 seconds
+- **Auto-refresh**: Automatic updates every 30 seconds, plus live SSE events
 - **Container Management**: Check for updates and update individual containers
-- **Bulk Operations**: Update multiple containers at once with dry-run support
+- **Bulk Operations**: Updates are queued through a job queue with dry-run support
 - **Dry Run Modal**: Comprehensive results display showing what would be updated
-- **Modern UI**: Clean, responsive design using Pico.css with Chivo fonts
+- **Mission Control Theme**: Token-driven dark (default) and light modes with a toggle
 - **Brand Identity**: Custom cell tower icon and favicon integration
 
 ### Key Features
 
 - **Auto-refresh Dashboard**: Container status automatically updates without manual refresh
+- **Live Events**: Server-Sent Events push update progress (pull/stop/create/start) to the dashboard
+- **Dark/Light Theme**: Toggle in the navbar, persisted in `localStorage`
 - **Embedded Static Assets**: All CSS, JavaScript, and images are baked into the binary for easy deployment
 - **Responsive Design**: Works on desktop and mobile devices with proper scaling
 - **Real-time Status**: Live indicators for update checks and container operations
 - **Dry Run Support**: Comprehensive dry run results with detailed tables showing update status
 - **Bulk Update Operations**: Update all containers with major version control and dry run options
-- **Custom Branding**: Cell tower icon throughout interface with 50% larger text
+- **Optional HTTP Basic Auth**: Set `MANGRULLO_WEB_USER` and `MANGRULLO_WEB_PASSWORD` to protect the UI
+- **Custom Branding**: Cell tower icon throughout the interface
 - **Favicon Support**: Both SVG and ICO favicons with cell tower branding
+
+### Web Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MANGRULLO_WEB_PORT` | Web interface port | `3000` |
+| `MANGRULLO_WEB_HOST` | Bind address | `0.0.0.0` |
+| `MANGRULLO_WEB_USER` | Basic auth user (both auth vars required) | unset |
+| `MANGRULLO_WEB_PASSWORD` | Basic auth password | unset |
 
 ### Web Interface Architecture
 
@@ -206,7 +221,9 @@ The web interface uses:
 - **Baked File System**: Static assets embedded in the binary for zero-dependency deployment
 - **State Manager**: Shared state between web requests and background operations
 - **Auto-refresh**: JavaScript-based periodic updates every 30 seconds
-- **Google Fonts**: Chivo and Chivo Mono fonts for enhanced typography
+- **Server-Sent Events**: Live update progress pushed from the update flow
+- **Pico.css v2** (self-hosted) reskinned by a token-driven stylesheet
+- **Google Fonts**: Chivo, Chivo Mono and Space Grotesk
 - **Material Icons**: Google Material Icons for consistent iconography
 
 ## Configuration
@@ -252,17 +269,9 @@ All options can be set via environment variables with the `MANGRULLO_` prefix:
 
 ### Configuration File
 
-You can also use a YAML configuration file (`config.yml`):
-
-```yaml
-# Mangrullo configuration
-interval: 600
-allow_major: false
-socket: "/var/run/docker.sock"
-log_level: "info"
-run_once: false
-dry_run: false
-```
+Configuration-file plumbing exists via `docopt-config`, but no CLI flag
+passes a config file path yet, so YAML configuration files are **not
+currently available** — use environment variables instead.
 
 ### Docker Socket
 
@@ -281,14 +290,27 @@ Mangrullo uses semantic versioning to determine when updates are available:
 Mangrullo works with:
 
 - Standard image tags (nginx:1.2.3)
+- Rolling single-number tags (postgres:16, redis:7 — compared by digest)
 - Registry prefixes (docker.io/library/nginx:1.2.3)
-- SHA256 digests (skipped for version comparison)
-- Latest tags (always check for updates)
+- Registry ports (localhost:5000/my-app)
+- SHA256 digest pins (compared by digest)
+- Latest tags (compared by digest)
 - Multiple registries:
   - Docker Hub (registry-1.docker.io)
   - GitHub Container Registry (ghcr.io)
   - LinuxServer.io (lscr.io - maps to ghcr.io/linuxserver/)
   - Other standard Docker registry v2 implementations
+
+### Update Execution
+
+When an update is detected, Mangrullo:
+
+1. Pulls the **target** image (for versioned tags, the newer tag; for moving
+   tags like `latest` or `postgres:16`, the same reference with its new digest)
+2. Stops the container and renames it to a temporary backup name
+3. Creates the replacement with the original configuration under the original name
+4. Starts it — and if anything fails, renames the backup back and restarts it
+5. Removes the backup once the replacement is confirmed running
 
 ## Development
 
@@ -370,12 +392,15 @@ Mangrullo is built with a modular architecture:
 - **Docker Client** (`src/docker_client.cr`): Docker API wrapper and container recreation
 - **Image Checker** (`src/image_checker.cr`): Version checking and update detection
 - **Update Manager** (`src/update_manager.cr`): Coordinates the update process with container filtering
+- **Job Queue** (`src/update_job_queue.cr`): Background update jobs with status polling
 - **Configuration** (`src/config.cr`): Command-line argument parsing
 - **CLI** (`src/cli.cr`): Main command-line interface
-- **Web Server** (`src/web_server_baked.cr`): Web interface with baked static assets (optional)
-- **Web Views** (`src/web_views.cr`): Web interface templates with auto-refresh
-- **Static Assets** (`src/static_assets.cr`): Embedded CSS, JavaScript, and images
+- **Web Server** (`src/web.cr` + `src/web_server.cr`): Kemal web interface (optional)
+- **Web Views** (`src/web_views.cr` + `src/templates/dashboard.ecr`): Dashboard template
+- **Static Assets** (`src/static_assets.cr`, `public/`): Embedded CSS, JavaScript, and images
 - **State Manager** (`src/state_manager.cr`): Shared state management for web interface
+- **SSE** (`src/sse.cr`): Server-Sent Events streaming for live updates
+- **Web Auth** (`src/web_auth.cr`): Optional HTTP Basic authentication
 - **Error Handling** (`src/error_handling.cr`): Centralized error management
 
 ## Contributing
@@ -411,6 +436,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### v0.8.0
+
+- Grafito-style facelift: CRT terminal marketing site and a Mission Control dashboard theme (dark/light)
+- Updates pull the correct newer target tag (previously re-pulled the stale tag), with rollback-safe container recreation
+- `pull_image` no longer silently pulls `:latest`; Docker socket connections reconnect after idle timeouts
+- Real SSE streaming, async bulk updates through the job queue, honest job status (no more 404-as-success)
+- Optional HTTP Basic auth, registry credentials from `~/.docker/config.json`, `MANGRULLO_WEB_PORT`/`MANGRULLO_WEB_HOST` support
+- Single-number tags (`postgres:16`) and registry ports (`localhost:5000/app`) parsed correctly
+
 ### v0.1.0
 
 - Initial release
@@ -418,7 +452,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Semantic version comparison
 - Major version upgrade control
 - Dry run mode
-- Comprehensive unit tests
 - Command-line interface
 - Container-specific filtering (check only specified containers)
 - Container recreation (properly updates containers with new images)
@@ -426,18 +459,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Web interface framework (Kemal-based)
 - Flexible container name matching (handles both "name" and "/name")
 - Comprehensive error handling and logging
-
-### Recent Updates
-
-- **Comprehensive Web Interface**: Full-featured dashboard with auto-refresh and bulk operations
-- **Dry Run Modal**: Detailed results display showing what would be updated with CLI-like output
-- **Custom Branding**: Cell tower icons throughout interface with favicon support
-- **Typography Enhancement**: Chivo and Chivo Mono Google Fonts integration
-- **Bulk Update Operations**: Update multiple containers with dry run and major version controls
-- **Button State Management**: Proper onclick handling to prevent double-clicks during operations
-- **Critical JSON Fix**: Fixed dry run checkbox being ignored due to form vs JSON parameter parsing
-- **Embedded Static Assets**: All web interface assets (CSS, JS, images) baked into binary
-- **Auto-refresh Dashboard**: Web interface automatically updates every 30 seconds
-- **Rate Limiting Protection**: Default 6-hour check interval to avoid Docker Hub rate limits
-- **Multi-architecture Builds**: Static binaries available for Linux AMD64 and ARM64
-- **CI Workflow Improvements**: Added Ameba as development dependency for proper linting

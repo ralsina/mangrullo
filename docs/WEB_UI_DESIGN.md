@@ -20,35 +20,34 @@ The web interface is fully implemented with comprehensive functionality:
 
 ### ✅ Completed Features
 
-- **Basic Web Server**: Kemal-based HTTP server running on port 3000
+- **Basic Web Server**: Kemal-based HTTP server running on port 3000 (configurable via `MANGRULLO_WEB_PORT`/`MANGRULLO_WEB_HOST`)
 - **Dashboard Page**: Overview of all running containers and their update status
 - **Container List**: Display of containers with update status indicators
-- **Container Details**: Individual container management pages
 - **Update Checking**: Web-based update detection functionality
 - **Container Updates**: Web-triggered container recreation and updates
-- **HTML Templates**: Pico.css-based responsive design with custom fonts
+- **HTML Templates**: ECR template with a token-driven "Mission Control" theme
 - **Error Handling**: Graceful error handling and user-friendly messages
-- **Real-time Updates**: Auto-refresh functionality for live status updates (every 30 seconds)
-- **Bulk Operations**: Multi-container update functionality with dry run support
+- **Real-time Updates**: Auto-refresh (every 30 seconds) plus live Server-Sent Events
+- **Bulk Operations**: Multi-container updates queued through the job queue, with dry run support
 - **Embedded Static Assets**: All CSS, JavaScript, and images baked into binary
-- **Auto-refresh Dashboard**: Automatic status updates without manual refresh
+- **Theme Toggle**: Dark (default) and light modes, persisted in `localStorage`
 - **State Management**: Shared state between web requests and background operations
 - **Custom Branding**: Cell tower icons and favicons throughout interface
-- **Typography**: Chivo and Chivo Mono Google Fonts integration
+- **Typography**: Chivo, Chivo Mono and Space Grotesk Google Fonts
 - **Dry Run Modal**: Comprehensive results display with CLI-like output
 - **Modal Improvements**: Proper close button positioning and responsive design
 - **Bulk Update Modal**: Dry run checkbox and major version upgrade controls
 - **Button State Management**: Proper onclick attribute handling during operations
-- **Notification System**: Toast notifications for user feedback
+- **Notification System**: Token-colored toast notifications for user feedback
+- **Container Restart**: Direct container restart via the API
+- **Optional HTTP Basic Auth**: Enabled via `MANGRULLO_WEB_USER`/`MANGRULLO_WEB_PASSWORD`
 
 ### 🚧 In Progress
 
 - **Log Viewing**: Container log viewing
-- **Container Restart**: Direct container restart functionality
 
 ### 📋 Planned Features
 
-- **Authentication**: User authentication and access control
 - **Metrics**: Performance and usage metrics
 - **Scheduling**: Web-based update scheduling
 - **Notifications**: Email/webhook notifications
@@ -59,19 +58,24 @@ The web interface is fully implemented with comprehensive functionality:
 ### Backend
 
 - **Kemal**: Fast, lightweight web framework for Crystal
-- **Kilt**: Template engine for HTML rendering
+- **ECR**: Crystal's built-in template engine for HTML rendering
 - **Crystal**: High-performance programming language
 - **Baked File System**: Embedded static assets for easy deployment
+- **Server-Sent Events**: Live update progress pushed to connected dashboards
+- **Job Queue**: Bulk updates are enqueued and polled instead of blocking requests
 - **State Manager**: Shared state management for web operations
 - **Existing Mangrullo modules**: Docker client, image checker, update manager
 
 ### Frontend
 
-- **Pico.css**: Lightweight, semantic CSS framework
-- **Vanilla JavaScript**: No heavy framework dependencies
+- **Pico.css v2** (self-hosted): reskinned through `--pico-*` custom properties
+- **Token-driven theme**: `data-theme="dark|light"` selects a CSS custom
+  property set (Mission Control palette: dark navy panels, teal accent)
+- **Vanilla JavaScript**: served as a baked `/js/dashboard.js` asset; only the
+  pre-paint theme bootstrap stays inline
 - **HTML5**: Modern, semantic markup
 - **Auto-refresh**: Periodic status updates (every 30 seconds)
-- **External JavaScript Files**: Modular and maintainable code structure
+- **Server-Sent Events**: `EventSource` connection to `/api/events`
 
 ### Architecture
 
@@ -117,140 +121,126 @@ The web interface is fully implemented with comprehensive functionality:
 
 ### 2. Container Details Page
 
-**URL**: `/containers/:id`
-
-**Purpose**: Detailed view and management of individual containers
-
-**Components**:
-
-- Container information (name, ID, image, status)
-- Version comparison (current vs available)
-- Update history
-- Action buttons:
-  - Check for updates
-  - Update container
-  - Restart container
-  - View logs
-- Logs viewer with real-time updates
-- Configuration summary
+**Status**: Not implemented (planned). The dashboard is a single page;
+per-container actions (check, update) live in the container table, and
+restart is available through the API (`POST /containers/:id/restart`).
 
 ### 3. API Endpoints
 
+#### Pages
+
+- `GET /` - Dashboard
+- `GET /health` - Health check (kept open when Basic auth is enabled)
+
 #### Container Management
 
-- `GET /api/containers` - List all containers
-- `GET /api/containers/:id` - Get container details
-- `POST /api/containers/:id/check-update` - Check for updates
-- `POST /api/containers/:id/update` - Update container
-- `POST /api/containers/:id/restart` - Restart container
-- `GET /api/containers/:id/logs` - Get container logs
+- `POST /containers/:id/check-update` - Force an update check for one container
+- `POST /containers/:id/update` - Queue an update job for one container
+- `POST /containers/:id/restart` - Restart container
 
 #### Bulk Operations
 
-- `GET /api/updates` - Check all containers for updates
-- `POST /api/updates` - Update multiple containers
+- `GET /api/updates` - Update info for all containers
+- `POST /api/updates` - Dry runs execute synchronously; real updates enqueue
+  one job per container and answer `202` with `{queued, count, job_ids}`
+
+#### Job Status
+
+- `GET /api/jobs/:job_id` - Job status (retained ~10 minutes after finishing)
+- `GET /api/containers/:container_id/jobs` - Jobs for one container
 
 #### System
 
-- `GET /health` - Health check
+- `GET /api/status` - State manager status (includes `update_in_progress`)
+- `GET /api/containers` - All containers with update info
+- `POST /api/refresh` - Force a refresh of all containers (409 if in progress)
+- `GET /api/events` - SSE stream of live update events
 
-### 4. Real-time Features (Optional)
+All routes are protected by HTTP Basic auth when `MANGRULLO_WEB_USER` and
+`MANGRULLO_WEB_PASSWORD` are set (`/health` excepted).
 
-#### WebSocket Support
+### 4. Real-time Features (Implemented)
 
-- Live status updates
-- Progress notifications for long-running operations
-- Log streaming
+#### Server-Sent Events
+
+The dashboard opens an `EventSource` on `/api/events`. The endpoint registers
+the client, streams keep-alive comments, and the update flow broadcasts
+events: `image_pull_start`, `image_pull_complete`, `container_stop`,
+`container_remove`, `container_create`, `container_start`, `update_complete`,
+`update_error`, `status_update`.
 
 #### Auto-refresh
 
-- Periodic status checks
-- Manual refresh button
+- Periodic status checks every 30 seconds (paused while the tab is hidden)
+- SSE events trigger targeted UI updates and refreshes
 
 ## User Interface Design
 
 ### Color Scheme
 
-Using Pico.css default color scheme:
+Token-driven, selected by `<html data-theme="dark|light">` (Mission Control
+palette, grafito-style):
 
-- **Primary**: #007bff (blue for actions)
-- **Success**: #28a745 (green for up-to-date)
-- **Warning**: #ffc107 (yellow for updates available)
-- **Danger**: #dc3545 (red for errors)
-- **Light**: #f8f9fa (backgrounds)
-- **Dark**: #343a40 (text)
+| Token | Dark | Light |
+|-------|------|-------|
+| `--bg` | `#101418` | `#f2f5f4` |
+| `--panel` | `#161b22` | `#ffffff` |
+| `--line` | `#29313c` | `#d3dcda` |
+| `--txt` | `#dfe6ee` | `#1d2530` |
+| `--accent` | `#4cc2a9` (teal) | `#178f77` |
+| `--ok` | `#7ec9a1` | `#3e7d5c` |
+| `--warn` | `#e9a23b` | `#b07414` |
+| `--err` | `#f0635a` | `#c73e34` |
+| `--info` | `#58a6ff` | `#2b6cb0` |
+
+Pico.css v2 is reskinned through its `--pico-*` custom properties, and
+container status is conveyed with severity-colored left borders on table rows.
 
 ### Layout Structure
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mangrullo - Docker Container Updates</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-</head>
-<body>
-  <header>
-    <nav>
-      <!-- Navigation -->
-    </nav>
-  </header>
-  
-  <main>
-    <!-- Main content -->
-  </main>
-  
-  <footer>
-    <!-- Footer -->
-  </footer>
-  
-  <script>
-    // JavaScript for interactivity
-  </script>
-</body>
-</html>
-```
+The dashboard is a single ECR template (`src/templates/dashboard.ecr`) with a
+sticky topbar (brand, auto-refresh indicator, theme toggle, Check/Update
+actions), two stat cards, a sortable container table, dialogs for update and
+dry-run confirmations, and a footer. JavaScript lives in
+`public/js/dashboard.js` (baked into the binary); only a small pre-paint
+theme bootstrap remains inline in `<head>`.
 
 ### Component Templates
 
-#### Container Card
+#### Container Table Row
 
 ```html
-<div class="card">
-  <article>
-    <header>
-      <h3>Container Name</h3>
-      <span class="status-badge status-update-available">Update Available</span>
-    </header>
-    <p><strong>Image:</strong> nginx:1.2.3</p>
-    <p><strong>Status:</strong> Running</p>
-    <footer>
-      <button onclick="checkUpdate('container-id')">Check Update</button>
-      <button onclick="updateContainer('container-id')">Update</button>
-    </footer>
-  </article>
-</div>
+<tr class="status-update-available" data-container-id="abc123">
+  <td title="my-app">my-app</td>
+  <td title="nginx:1.2.3"><code>nginx:1.2.3</code></td>
+  <td>
+    <div class="actions-cell">
+      <button onclick="showUpdateModal('abc123')" class="primary btn-sm">Update</button>
+    </div>
+  </td>
+</tr>
 ```
+
+Row status (`status-up-to-date`, `status-update-available`, `status-latest`,
+`status-error`) drives a severity-colored left border on the first cell.
 
 #### Update Modal
 
 ```html
-<dialog id="update-modal">
+<dialog id="updateModal">
   <article>
     <header>
       <h3>Update Container</h3>
-      <button aria-label="Close" rel="prev"></button>
+      <button aria-label="Close" class="close" onclick="closeModal()"></button>
     </header>
     <p>Are you sure you want to update this container?</p>
     <label>
-      <input type="checkbox" name="allow-major" />
+      <input type="checkbox" id="allowMajor" name="allow_major" />
       Allow major version upgrades
     </label>
     <footer>
-      <button onclick="confirmUpdate()">Update</button>
-      <button onclick="closeModal()" aria-label="Close">Cancel</button>
+      <button onclick="confirmUpdate()" class="primary">Update Container</button>
+      <button onclick="closeModal()" aria-label="Close" class="secondary">Cancel</button>
     </footer>
   </article>
 </dialog>
@@ -275,10 +265,10 @@ Using Pico.css default color scheme:
 
 ### Phase 3: Advanced Features ✅
 
-1. [x] Add bulk operations
-2. [x] Implement real-time updates (Auto-refresh every 30 seconds)
-3. [ ] Add log viewing
-4. [ ] Add container restart functionality
+1. [x] Add bulk operations (queued through the job queue)
+2. [x] Implement real-time updates (auto-refresh every 30 seconds + SSE)
+3. [x] Add container restart functionality
+4. [ ] Add log viewing
 
 ### Phase 4: Polish and Documentation ✅
 
@@ -293,7 +283,7 @@ Using Pico.css default color scheme:
 
 ## Security Considerations
 
-1. **Authentication**: Currently runs locally, consider adding auth for remote access
+1. **Authentication**: Implemented as optional HTTP Basic auth (`MANGRULLO_WEB_USER`/`MANGRULLO_WEB_PASSWORD`), constant-time credential comparison, `/health` exempt
 2. **Authorization**: Container operations require appropriate permissions
 3. **Input Validation**: All user input should be validated
 4. **CSRF Protection**: Use tokens for state-changing operations
@@ -317,16 +307,25 @@ Using Pico.css default color scheme:
 
 ```text
 src/
-├── web_baked.cr          # Web server entry point with baked assets
-├── web_server_baked.cr   # Main web server class with embedded static files
-├── web_views.cr          # View templates and rendering with auto-refresh
-├── static_assets.cr      # Embedded CSS, JavaScript, and images
+├── web.cr                # Web server entry point (Kemal.run)
+├── web_server.cr         # Routes, auth middleware, SSE endpoint, error handlers
+├── web_views.cr          # Dashboard rendering (ECR)
+├── templates/
+│   └── dashboard.ecr     # Dashboard template
+├── static_assets.cr      # Bakes public/ into the binary
+├── sse.cr                # Server-Sent Events registry and broadcast
+├── web_auth.cr           # Optional HTTP Basic authentication
+├── update_job_queue.cr   # Background update jobs with status retention
 ├── state_manager.cr      # Shared state management
 ├── container_state.cr    # Container state data structures
-└── public/              # Source static assets (baked into binary)
+└── public/               # Source static assets (baked into binary)
     ├── css/
+    │   ├── pico.min.css  # Pico v2, self-hosted
+    │   └── dashboard.css # Token-driven theme
     ├── js/
-    └── images/
+    │   └── dashboard.js  # Dashboard behavior
+    ├── favicon.svg
+    └── favicon.ico
 ```
 
 **Note**: Static assets are now baked directly into the binary using the `baked_file_system` and `baked_file_handler` libraries, eliminating the need for separate static file deployment.
@@ -341,14 +340,13 @@ src/
 
 ## Future Enhancements
 
-1. **User Authentication**: Multi-user support with permissions
-2. **Scheduled Updates**: Web-based scheduling configuration
-3. **Notifications**: Email/webhook notifications
-4. **Container Metrics**: Resource usage graphs
-5. **Image History**: View image update history
-6. **Export/Import**: Configuration backup and restore
-7. **Themes**: Dark/light mode toggle
-8. **API Documentation**: Swagger/OpenAPI documentation
+1. **Scheduled Updates**: Web-based scheduling configuration
+2. **Notifications**: Email/webhook notifications
+3. **Container Metrics**: Resource usage graphs
+4. **Image History**: View image update history
+5. **Export/Import**: Configuration backup and restore
+6. **Log Viewing**: Container log viewer
+7. **API Documentation**: Swagger/OpenAPI documentation
 
 ## Conclusion
 

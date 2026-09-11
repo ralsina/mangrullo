@@ -20,9 +20,9 @@ manage container updates.
 ### Dependencies
 
 - `marghidanu/docr` - Docker API client for Crystal
-- `ralsina/docopt.cr` - Command line argument parsing
+- `ralsina/docopt.cr` + `ralsina/docopt-config` - Command line argument parsing
 - `kemalcr/kemal` - Web framework (for web interface)
-- `jeromegn/kilt` - Template engine (for web interface)
+- `ralsina/baked_file_system` + `ralsina/baked_file_handler` - Embedded static assets (for web interface)
 - Standard Crystal library for HTTP, JSON, logging
 
 ### Core Modules
@@ -107,13 +107,11 @@ manage container updates.
 
 - **Purpose**: Web interface for monitoring and management
 - **Responsibilities**:
-  - HTTP server using Kemal
-  - Container status dashboard
-  - API endpoints for container operations
-- **Key Methods**:
-  - `start_server`
-  - Container management endpoints
-  - Status monitoring
+  - HTTP server using Kemal (started via `src/web.cr` → `Kemal.run`)
+  - Optional HTTP Basic authentication
+  - Container status dashboard and API endpoints
+  - SSE streaming of live update events
+  - Background update job queue
 
 #### 7. Mangrullo::ErrorHandling
 
@@ -139,11 +137,13 @@ manage container updates.
      - If update needed: pull image → recreate container with new image
 
 3. **Container Recreation Process**:
-   - Stop the running container
-   - Remove the old container to free up the name
    - Capture container configuration using `docker inspect`
-   - Create new container with same configuration but new image
-   - Start the new container
+   - Stop the running container
+   - Rename it to a temporary backup name (the container ID is stable)
+   - Create the replacement with the same configuration but new image
+   - Start the replacement
+   - On any failure: rename the backup back to the original name and restart it (rollback)
+   - On success: remove the backup container
    - Verify the recreation worked
 
 4. **Container Name Matching**:
@@ -195,7 +195,7 @@ manage container updates.
 
 ### Phase 7: Testing ✓
 
-1. Unit tests for all modules (56 examples)
+1. Unit tests for all modules (184 examples)
 2. Integration tests for critical functionality
 3. Test edge cases and error conditions
 
@@ -227,8 +227,9 @@ manage container updates.
 Mangrullo - Docker container update automation tool
 
 Usage:
-  mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>] 
-           [--log-level=<level>] [--once] [--help] [--version]
+  mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
+           [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
+           [--help] [--version]
 
 Options:
   --interval=<seconds>   Check interval in seconds [default: 300]
@@ -236,6 +237,7 @@ Options:
   --socket=<path>        Docker socket path [default: /var/run/docker.sock]
   --log-level=<level>    Log level (debug, info, warn, error) [default: info]
   --once                 Run once and exit
+  --dry-run              Show what would be updated without actually updating
   --help                 Show this help message
   --version              Show version information
 ```
