@@ -86,7 +86,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Labels (version should match shard.yml / src/version.cr; override with
 # --build-arg MANGRULLO_VERSION=... when building releases)
-ARG MANGRULLO_VERSION="0.7.1"
+ARG MANGRULLO_VERSION="0.8.0"
 LABEL org.opencontainers.image.title="Mangrullo" \
       org.opencontainers.image.description="Docker container update manager" \
       org.opencontainers.image.version="${MANGRULLO_VERSION}" \
