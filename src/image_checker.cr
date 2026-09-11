@@ -32,45 +32,37 @@ module Mangrullo
       # Parse the image name to extract registry and repository
       base_name = image_name.split(":").first
 
-      # Handle different registry formats
-      registry_host = "registry-1.docker.io" # Default to Docker Hub
-      repository_path = base_name
+      # A first path segment containing "." or ":" marks a custom registry
+      # host (e.g. ghcr.io/user/image, registry.example.com:5000/app)
+      first_slash = base_name.index('/')
+      prefix = first_slash ? base_name[0...first_slash] : nil
 
-      if base_name.includes?("/")
-        parts = base_name.split("/")
-        if parts[0].includes?(".") || parts[0].includes?(":")
-          # This looks like a registry host (e.g., ghcr.io, registry.example.com:5000)
-          registry_host = parts[0]
-          repository_path = parts[1..-1].join("/")
+      if prefix && (prefix.includes?(".") || prefix.includes?(":"))
+        registry_host = prefix
+        repository_path = base_name[(prefix.size + 1)..]
 
-          # Handle special registry mappings
-          if registry_host == "lscr.io"
-            # lscr.io is a vanity URL that redirects to ghcr.io
-            # Images are actually hosted at ghcr.io/linuxserver
-            registry_host = "ghcr.io"
-            # Don't double-prepend linuxserver if it's already there
-            if repository_path.starts_with?("linuxserver/")
-            else
-              repository_path = "linuxserver/#{repository_path}"
-            end
+        # Handle special registry mappings: lscr.io is a vanity URL that
+        # redirects to ghcr.io, images are hosted at ghcr.io/linuxserver
+        if registry_host == "lscr.io"
+          registry_host = "ghcr.io"
+          unless repository_path.starts_with?("linuxserver/")
+            repository_path = "linuxserver/#{repository_path}"
           end
-        else
-          # This is a Docker Hub namespace/image (e.g., library/nginx)
-          registry_host = "registry-1.docker.io"
-          repository_path = base_name
         end
+
+        {registry_host: registry_host, repository_path: repository_path}
+      elsif prefix
+        # This is a Docker Hub namespace/image (e.g., library/nginx)
+        {registry_host: "registry-1.docker.io", repository_path: base_name}
       else
         # Simple image name, assume Docker Hub library
-        registry_host = "registry-1.docker.io"
-        repository_path = "library/#{base_name}"
+        {registry_host: "registry-1.docker.io", repository_path: "library/#{base_name}"}
       end
-
-      {registry_host: registry_host, repository_path: repository_path}
     end
 
     def extract_version_from_image(image_name : String) : Version?
       # Skip SHA256 digests (they are image IDs, not versioned images)
-      return nil if image_name.starts_with?("sha256:")
+      return if image_name.starts_with?("sha256:")
 
       # Extract tag from image name (format: name:tag or name)
       parts = image_name.split(":")
@@ -82,7 +74,7 @@ module Mangrullo
     def find_target_update_version(image_name : String, current_version : Version, allow_major_upgrade : Bool) : Version?
       # Get all available versions from the registry
       all_versions = get_all_versions(image_name)
-      return nil if all_versions.empty?
+      return if all_versions.empty?
 
       # Filter versions that are newer than current version
       newer_versions = all_versions.select { |v| v > current_version }
@@ -143,7 +135,7 @@ module Mangrullo
 
     def get_latest_version(image_name : String) : Version?
       # Skip SHA256 digests (they are image IDs, not versioned images)
-      return nil if image_name.starts_with?("sha256:")
+      return if image_name.starts_with?("sha256:")
 
       registry_info = parse_registry_info(image_name)
       registry_host = registry_info[:registry_host]
@@ -151,7 +143,7 @@ module Mangrullo
 
       begin
         response = fetch_registry_tags(registry_host, repository_path)
-        return nil unless response && response.status_code == 200
+        return unless response && response.status_code == 200
 
         versions = parse_versions_from_response(response)
         versions.last?
@@ -169,7 +161,7 @@ module Mangrullo
 
     def get_remote_image_digest(image_name : String) : String?
       # Skip SHA256 digests (they are image IDs, not versioned images)
-      return nil if image_name.starts_with?("sha256:")
+      return if image_name.starts_with?("sha256:")
 
       registry_info = parse_registry_info(image_name)
       registry_host = registry_info[:registry_host]
@@ -181,7 +173,7 @@ module Mangrullo
 
       begin
         response = fetch_registry_digest(registry_host, repository_path, tag)
-        return nil unless response && response.status_code == 200
+        return unless response && response.status_code == 200
 
         # The digest is in the Docker-Content-Digest header
         digest = response.headers["Docker-Content-Digest"]?
@@ -189,7 +181,7 @@ module Mangrullo
 
         unless digest
           Log.error { "No Docker-Content-Digest header found for #{image_name}" }
-          Log.debug { "Available headers: #{response.headers.keys}" }
+          Log.debug { "Available headers: #{response.headers.map(&.first).join(", ")}" }
         end
 
         digest
@@ -250,7 +242,7 @@ module Mangrullo
       if response.status_code != 200
         Log.error { "Registry returned status #{response.status_code} fetching #{endpoint} for #{registry_host}/#{repository_path}" }
         Log.debug { "Response body: #{response.body}" }
-        return nil
+        return
       end
 
       response
@@ -512,7 +504,7 @@ module Mangrullo
           response = registry_client.get("/v2/#{repository_path}/manifests/#{tag}", headers)
         end
 
-        return nil unless response.status_code == 200
+        return unless response.status_code == 200
 
         # Extract digest from response headers
         response.headers["Docker-Content-Digest"]?
@@ -543,7 +535,7 @@ module Mangrullo
                     else
                       # For other registries, try common patterns or return nil
                       Log.debug { "Unknown registry auth pattern for #{registry_host}" }
-                      return nil
+                      return
                     end
 
         Log.debug { "Getting token from: #{token_url}" }
@@ -551,11 +543,11 @@ module Mangrullo
         response = HTTP::Client.get(token_url)
         Log.debug { "Token response status: #{response.status_code}" }
         Log.debug { "Token response body: #{response.body}" }
-        return nil unless response.status_code == 200
+        return unless response.status_code == 200
 
         json = JSON.parse(response.body)
         token = json["token"]?.try(&.as_s)
-        return nil unless token
+        return unless token
 
         # Cache the token (tokens typically expire in 5 minutes, be conservative)
         @auth_cache[cache_key] = {token: token, expires_at: Time.utc + 4.minutes}
@@ -576,7 +568,7 @@ module Mangrullo
 
     private def create_authenticated_client(registry_host : String, repository_path : String) : HTTP::Client?
       token = get_registry_token(registry_host, repository_path)
-      return nil unless token
+      return unless token
 
       client = HTTP::Client.new(registry_host, 443, tls: true)
       client.before_request do |request|
