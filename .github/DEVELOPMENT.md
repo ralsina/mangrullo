@@ -35,11 +35,20 @@ If the hook fails:
 2. Address any linting issues reported by ameba
 3. Stage your changes again and retry the commit
 
+Note: the hook invokes the `ameba` binary from your PATH (install it with your
+package manager, e.g. `pacman -S ameba` or build it from the `lib/ameba`
+checkout that `shards install` provides). Use a version compatible with your
+Crystal compiler.
+
 ## CI/CD Pipeline
 
 The CI pipeline runs on every push and pull request to the main branch. It includes:
-- Crystal installation
+- Crystal installation (tracks `crystal: latest`)
 - Dependency installation (`shards install`)
 - Format check (`crystal tool format --check`)
 - Tests (`crystal spec`)
-- Linting (`ameba`)
+- Linting (`ameba`, built from the locked `lib/ameba` checkout)
+
+A separate workflow deploys the project site on every push to `main`: the
+handcrafted landing page at the root of GitHub Pages and the mkdocs
+documentation under `/docs/`.
