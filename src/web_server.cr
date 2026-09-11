@@ -330,9 +330,15 @@ class WebServer
   end
 
   private def setup_error_handlers
-    # 404 handler
-    error 404 do
-      "Page not found"
+    # 404 handler. This also catches JSON API responses that answered 404
+    # via halt (e.g. "job not found"), so API paths must stay JSON.
+    error 404 do |env|
+      if env.request.path.starts_with?("/api/")
+        env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
+        {error: "Not found"}.to_json
+      else
+        "Page not found"
+      end
     end
 
     # 500 handler

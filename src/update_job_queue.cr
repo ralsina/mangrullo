@@ -96,7 +96,8 @@ module Mangrullo
     # Get jobs for a specific container
     def get_container_jobs(container_id : String) : Array(UpdateJob)
       @mutex.synchronize do
-        all_jobs.select { |job| job.container_id == container_id }
+        (@pending_jobs.to_a + @active_jobs.values + @completed_jobs.values)
+          .select { |job| job.container_id == container_id }
       end
     end
 
