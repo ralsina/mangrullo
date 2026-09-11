@@ -392,14 +392,16 @@
                 try {
                     const response = await fetch(`/api/jobs/${jobId}`);
 
-                    // Handle 404 - job was cleaned up, assume it completed successfully
+                    // Handle 404 - the job expired or was lost (e.g. server
+                    // restart). The outcome is unknown, so fail safe: restore
+                    // the button and refresh the real state from the server.
                     if (response.status === 404) {
                         clearInterval(pollInterval);
-                        // Update status first - this will remove the update button and add check button
-                        updateContainerStatus(containerId, 'up-to-date', null, null);
-                        showNotification('Container updated successfully!', 'success');
-                        // Container may have new ID, reload to be safe
-                        setTimeout(() => location.reload(), 1500);
+                        button.textContent = originalButtonText;
+                        button.disabled = false;
+                        button.setAttribute('onclick', originalOnclick);
+                        showNotification('Update job status lost or expired - refresh to see the actual state', 'warning');
+                        refreshData();
                         return;
                     }
 
@@ -462,12 +464,15 @@
                     button.disabled = false;
                     button.setAttribute('onclick', originalOnclick);
 
-                    // If it's a JSON parsing error and we're near the end, assume success
+                    // If it's a JSON parsing error near the end of polling the
+                    // server may have restarted mid-update: the outcome is
+                    // unknown, so restore the button and refresh the state.
                     if (error.name === 'SyntaxError' && pollCount > maxPolls * 0.8) {
-                        // Update status first - this will handle button changes properly
-                        updateContainerStatus(containerId, 'up-to-date', null, null);
-                        showNotification('Container update completed (status unclear)', 'warning');
-                        setTimeout(() => location.reload(), 1500);
+                        button.textContent = originalButtonText;
+                        button.disabled = false;
+                        button.setAttribute('onclick', originalOnclick);
+                        showNotification('Update finished but status is unclear - refreshing current state', 'warning');
+                        refreshData();
                     } else {
                         // Only restore button on actual errors, not assumed success
                         showNotification('Error checking update status', 'error');

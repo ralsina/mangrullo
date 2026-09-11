@@ -57,6 +57,8 @@ module Mangrullo
     def initialize
       @pending_jobs = Deque(UpdateJob).new
       @active_jobs = Hash(String, UpdateJob).new # For tracking active jobs by ID
+      # Finished jobs are kept briefly so status polls don't 404
+      @completed_jobs = Hash(String, UpdateJob).new
       @mutex = Mutex.new
       @worker_running = false
       start_worker
@@ -71,20 +73,23 @@ module Mangrullo
         Log.info { "Update job queued for container #{container_name} (ID: #{job.id})" }
       end
 
+      # Opportunistic cleanup of stale finished jobs
+      cleanup_old_jobs
+
       job.id
     end
 
     # Get job status
     def get_job(job_id : String) : UpdateJob?
       @mutex.synchronize do
-        @active_jobs[job_id]? || @pending_jobs.find { |job| job.id == job_id }
+        @active_jobs[job_id]? || @pending_jobs.find { |job| job.id == job_id } || @completed_jobs[job_id]?
       end
     end
 
     # Get all jobs
     def all_jobs : Array(UpdateJob)
       @mutex.synchronize do
-        (@pending_jobs.to_a + @active_jobs.values).to_a
+        (@pending_jobs.to_a + @active_jobs.values + @completed_jobs.values).to_a
       end
     end
 
@@ -95,28 +100,28 @@ module Mangrullo
       end
     end
 
-    # Cancel a pending job
+    # Cancel a pending job. Running jobs cannot be cancelled.
     def cancel_job(job_id : String) : Bool
       @mutex.synchronize do
-        if job = @jobs[job_id]?
-          if job.status == JobStatus::Pending
-            job.status = JobStatus::Failed
-            job.error = "Job cancelled"
-            job.completed_at = Time.utc
-            Log.info { "Update job cancelled for container #{job.container_name} (ID: #{job.id})" }
-            return true
-          end
+        if job = @pending_jobs.find { |candidate| candidate.id == job_id }
+          job.status = JobStatus::Failed
+          job.error = "Job cancelled"
+          job.completed_at = Time.utc
+          @pending_jobs.reject! { |candidate| candidate.id == job_id }
+          @completed_jobs[job.id] = job
+          Log.info { "Update job cancelled for container #{job.container_name} (ID: #{job.id})" }
+          true
+        else
+          false
         end
-        false
       end
     end
 
-    # Clean up completed jobs older than specified seconds
-    def cleanup_old_jobs(older_than_seconds : Int = 3600)
+    # Clean up finished jobs older than specified seconds
+    def cleanup_old_jobs(older_than_seconds : Int = 600)
+      cutoff = Time.utc - older_than_seconds.seconds
       @mutex.synchronize do
-        # Note: With deque-based implementation, jobs are automatically removed
-        # when completed/failed, so this method is now a no-op
-        # Kept for API compatibility
+        @completed_jobs.reject! { |_, job| (job.completed_at || job.created_at) < cutoff }
       end
     end
 
@@ -161,8 +166,8 @@ module Mangrullo
           job.completed_at = Time.utc
           job.result = result
           Log.info { "Update job completed for container #{job.container_name} (ID: #{job.id})" }
-          # Remove completed job from active tracking
           @active_jobs.delete(job.id)
+          @completed_jobs[job.id] = job
         end
       rescue ex
         @mutex.synchronize do
@@ -170,8 +175,8 @@ module Mangrullo
           job.completed_at = Time.utc
           job.error = ex.message
           Log.error { "Update job failed for container #{job.container_name} (ID: #{job.id}): #{ex.message}" }
-          # Remove failed job from active tracking
           @active_jobs.delete(job.id)
+          @completed_jobs[job.id] = job
         end
       end
     end
@@ -200,11 +205,13 @@ module Mangrullo
       end
 
       # Convert to JSON-friendly format
+      new_container_id = result[:new_container_id]
+      error = result[:error]
       {
         "container_id"     => JSON::Any.new(result[:container].id),
-        "new_container_id" => result[:new_container_id] ? JSON::Any.new(result[:new_container_id].not_nil!) : JSON::Any.new(nil),
+        "new_container_id" => JSON::Any.new(new_container_id),
         "updated"          => JSON::Any.new(result[:updated]),
-        "error"            => result[:error] ? JSON::Any.new(result[:error].not_nil!) : JSON::Any.new(nil),
+        "error"            => JSON::Any.new(error),
       }
     end
 

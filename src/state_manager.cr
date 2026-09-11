@@ -69,9 +69,12 @@ module Mangrullo
       Log.info { "StateManager: Stop signal sent" }
     end
 
-    # Force an immediate update (for manual refresh)
+    # Force an immediate update (for manual refresh). The in-progress flag is
+    # raised synchronously BEFORE spawning, so rapid concurrent callers cannot
+    # all slip past the check and spawn duplicate update fibers.
     def force_update : Bool
       return false if ContainerState.instance.update_in_progress?
+      ContainerState.instance.update_in_progress = true
 
       begin
         # Run update in a separate fiber to avoid blocking
@@ -80,6 +83,7 @@ module Mangrullo
         end
         true
       rescue ex
+        ContainerState.instance.update_in_progress = false
         Log.error { "StateManager: Failed to start forced update: #{ex.message}" }
         false
       end
@@ -88,6 +92,7 @@ module Mangrullo
     # Force update for a specific container
     def force_update_container(container_id : String) : Bool
       return false if ContainerState.instance.update_in_progress?
+      ContainerState.instance.update_in_progress = true
 
       begin
         # Run update in a separate fiber
@@ -96,6 +101,7 @@ module Mangrullo
         end
         true
       rescue ex
+        ContainerState.instance.update_in_progress = false
         Log.error { "StateManager: Failed to start container update: #{ex.message}" }
         false
       end
@@ -103,44 +109,49 @@ module Mangrullo
 
     private def update_all_containers
       Log.info { "StateManager: Starting full container update" }
+      # Already raised by force_update; keep it raised for direct callers too
       ContainerState.instance.update_in_progress = true
 
-      # Get all running containers
-      containers = @docker_client.running_containers
+      begin
+        # Get all running containers
+        containers = @docker_client.running_containers
 
-      if containers.empty?
-        Log.info { "StateManager: No running containers found" }
-        ContainerState.instance.update_containers([] of ContainerInfo)
+        if containers.empty?
+          Log.info { "StateManager: No running containers found" }
+          ContainerState.instance.update_containers([] of ContainerInfo)
+          return
+        end
+
+        Log.info { "StateManager: Found #{containers.size} running containers" }
+
+        # Update the container list first
+        ContainerState.instance.update_containers(containers)
+
+        # Now check each container for updates
+        containers.each do |container|
+          update_info = get_container_update_info(container)
+          ContainerState.instance.update_container_update_info(container.id, update_info)
+        rescue ex
+          Log.error { "StateManager: Failed to check updates for #{container.name}: #{ex.message}" }
+          # Set error state for this container
+          ContainerState.instance.update_container_update_info(
+            container.id,
+            {
+              needs_update:   false,
+              reason:         "Error checking for updates",
+              local_version:  nil,
+              remote_version: nil,
+              last_checked:   Time.utc,
+            }
+          )
+        end
+
+        Log.info { "StateManager: Completed update for #{containers.size} containers" }
+      ensure
+        # Always lower the flag, even when the update run crashed midway —
+        # otherwise every future update would be blocked as "in progress"
         ContainerState.instance.update_in_progress = false
-        return
       end
-
-      Log.info { "StateManager: Found #{containers.size} running containers" }
-
-      # Update the container list first
-      ContainerState.instance.update_containers(containers)
-
-      # Now check each container for updates
-      containers.each do |container|
-        update_info = get_container_update_info(container)
-        ContainerState.instance.update_container_update_info(container.id, update_info)
-      rescue ex
-        Log.error { "StateManager: Failed to check updates for #{container.name}: #{ex.message}" }
-        # Set error state for this container
-        ContainerState.instance.update_container_update_info(
-          container.id,
-          {
-            needs_update:   false,
-            reason:         "Error checking for updates",
-            local_version:  nil,
-            remote_version: nil,
-            last_checked:   Time.utc,
-          }
-        )
-      end
-
-      Log.info { "StateManager: Completed update for #{containers.size} containers" }
-      ContainerState.instance.update_in_progress = false
     end
 
     private def update_single_container(container_id : String)
