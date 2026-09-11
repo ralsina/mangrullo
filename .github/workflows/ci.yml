@@ -20,6 +20,6 @@ jobs:
     - name: Run tests
       run: crystal spec
     - name: Build linter
-      run: crystal build lib/ameba/src/cli.cr -o bin/ameba
+      run: mkdir -p bin && crystal build lib/ameba/src/cli.cr -o bin/ameba
     - name: Run linter
       run: bin/ameba
