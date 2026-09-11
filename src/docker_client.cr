@@ -5,11 +5,30 @@ require "./constants"
 require "./container_name_utils"
 
 module Mangrullo
-  # Custom Docker client that supports configurable socket paths
+  # Custom Docker client that supports configurable socket paths.
+  #
+  # docr rides a single HTTP::Client bound to one UNIXSocket connection;
+  # the Docker daemon closes idle connections and a socket-bound client
+  # cannot reconnect ("This HTTP::Client cannot be reconnected"), so the
+  # connection is rebuilt and the request retried once when that happens.
   class CustomDockerClient < Docr::Client
+    @socket_path : String
+
     def initialize(socket_path : String = Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH)
-      socket = UNIXSocket.new(socket_path)
-      @client = HTTP::Client.new(socket)
+      @socket_path = socket_path
+      @client = HTTP::Client.new(UNIXSocket.new(socket_path))
+    end
+
+    def call(method : String, url : String | URI, headers : HTTP::Headers? = nil, body : (IO | Slice(UInt8) | String)? = nil, &)
+      super(method, url, headers, body) { |response| yield response }
+    rescue ex : Exception
+      # "This HTTP::Client cannot be reconnected" (raised as a plain
+      # RuntimeError by HTTP::Client) happens before the request is sent,
+      # so retrying it once on a fresh connection cannot duplicate effects
+      raise ex unless ex.message.try(&.includes?("cannot be reconnected"))
+      Log.warn { "Docker socket connection lost; reconnecting" }
+      @client = HTTP::Client.new(UNIXSocket.new(@socket_path))
+      super(method, url, headers, body) { |response| yield response }
     end
   end
 
@@ -209,7 +228,10 @@ module Mangrullo
     def pull_image(image_name : String, tag : String = Mangrullo::Constants::Docker::DEFAULT_IMAGE_TAG) : Bool
       result = handle_docker_errors("pulling image", "image=#{image_name}:#{tag}") do
         with_retry_and_lock("pull image") do
-          @api.images.create("#{image_name}:#{tag}")
+          # Pass name and tag separately: folding the tag into the image
+          # reference makes docr default tag to "latest" and pull the wrong
+          # image (fromImage=busybox:1.38&tag=latest pulls :latest!)
+          @api.images.create(image_name, tag)
         end
       end
       result.success?
