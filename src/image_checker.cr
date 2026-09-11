@@ -1,13 +1,16 @@
 require "http"
 require "json"
+require "base64"
 require "./types"
 require "./docker_client"
+require "./docker_config_auth"
 
 module Mangrullo
   class ImageChecker
     @docker_client : DockerClient
     @registry_client : HTTP::Client
     @auth_cache = Hash(String, NamedTuple(token: String, expires_at: Time)).new
+    @config_credentials : Hash(String, DockerConfigAuth::Record?) = Hash(String, DockerConfigAuth::Record?).new
 
     def initialize(@docker_client : DockerClient)
       @registry_client = HTTP::Client.new("registry-1.docker.io", 443, tls: true)
@@ -550,6 +553,18 @@ module Mangrullo
     end
 
     # Authentication helper methods
+
+    # Credentials for a registry from the user's docker config, memoized.
+    # nil means "no credentials found" (cached as well).
+    private def docker_config_credentials(registry_host : String) : DockerConfigAuth::Record?
+      return @config_credentials[registry_host] if @config_credentials.has_key?(registry_host)
+
+      @config_credentials[registry_host] = DockerConfigAuth.credentials_for(
+        registry_host,
+        DockerConfigAuth.default_config_path
+      )
+    end
+
     private def get_registry_token(registry_host : String, repository_path : String) : String?
       cache_key = "#{registry_host}:#{repository_path}"
 
@@ -572,7 +587,16 @@ module Mangrullo
 
         Log.debug { "Getting token from: #{token_url}" }
         Log.debug { "For repository: #{repository_path}" }
-        response = HTTP::Client.get(token_url)
+
+        # Authenticated registries (and Docker Hub rate limits) need the
+        # user's credentials from their docker config, when present
+        headers = HTTP::Headers.new
+        if credentials = docker_config_credentials(registry_host)
+          Log.debug { "Using docker config credentials for #{registry_host}" }
+          headers["Authorization"] = "Basic #{Base64.strict_encode("#{credentials[:user]}:#{credentials[:password]}")}"
+        end
+
+        response = HTTP::Client.get(token_url, headers)
         Log.debug { "Token response status: #{response.status_code}" }
         Log.debug { "Token response body: #{response.body}" }
         return unless response.status_code == 200
