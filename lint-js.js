@@ -3,7 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Extract JavaScript from ECR template (all <script> blocks, joined)
+// Build the lint source: all <script> blocks left in the ECR template
+// (the early theme bootstrap) plus the extracted dashboard JS asset
 function extractJavaScriptFromECR(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     const blocks = [];
@@ -12,6 +13,11 @@ function extractJavaScriptFromECR(filePath) {
 
     while ((match = scriptRegex.exec(content)) !== null) {
         blocks.push(match[1]);
+    }
+
+    const dashboardJsPath = 'public/js/dashboard.js';
+    if (fs.existsSync(dashboardJsPath)) {
+        blocks.push(fs.readFileSync(dashboardJsPath, 'utf8'));
     }
 
     if (blocks.length === 0) {

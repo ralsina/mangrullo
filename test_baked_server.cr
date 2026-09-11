@@ -27,6 +27,11 @@ begin
   response = HTTP::Client.get("http://localhost:3000/css/dashboard.css")
   check_response(response, "/css/dashboard.css")
 
+  # Test dashboard JS
+  puts "\nTesting /js/dashboard.js..."
+  response = HTTP::Client.get("http://localhost:3000/js/dashboard.js")
+  check_response(response, "/js/dashboard.js")
+
   # Test main page
   puts "\nTesting /..."
   response = HTTP::Client.get("http://localhost:3000/")
