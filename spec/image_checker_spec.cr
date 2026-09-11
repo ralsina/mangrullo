@@ -234,7 +234,7 @@ class MockImageChecker < Mangrullo::ImageChecker
 
   def find_target_update_version(image_name : String, current_version : Mangrullo::Version, allow_major_upgrade : Bool) : Mangrullo::Version?
     all_versions = get_all_versions(image_name)
-    return nil if all_versions.empty?
+    return if all_versions.empty?
 
     # Filter versions that are newer than current version
     newer_versions = all_versions.select { |v| v > current_version }

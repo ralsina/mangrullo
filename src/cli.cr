@@ -116,12 +116,12 @@ module Mangrullo
     end
 
     private def setup_signal_handlers
-      Signal::INT.trap do
+      Process.on_terminate do
         Log.info { "Received SIGINT, shutting down gracefully..." }
         @running = false
       end
 
-      Signal::TERM.trap do
+      Process.on_terminate do
         Log.info { "Received SIGTERM, shutting down gracefully..." }
         @running = false
       end

@@ -122,23 +122,21 @@ module Mangrullo
 
       # Now check each container for updates
       containers.each do |container|
-        begin
-          update_info = get_container_update_info(container)
-          ContainerState.instance.update_container_update_info(container.id, update_info)
-        rescue ex
-          Log.error { "StateManager: Failed to check updates for #{container.name}: #{ex.message}" }
-          # Set error state for this container
-          ContainerState.instance.update_container_update_info(
-            container.id,
-            {
-              needs_update:   false,
-              reason:         "Error checking for updates",
-              local_version:  nil,
-              remote_version: nil,
-              last_checked:   Time.utc,
-            }
-          )
-        end
+        update_info = get_container_update_info(container)
+        ContainerState.instance.update_container_update_info(container.id, update_info)
+      rescue ex
+        Log.error { "StateManager: Failed to check updates for #{container.name}: #{ex.message}" }
+        # Set error state for this container
+        ContainerState.instance.update_container_update_info(
+          container.id,
+          {
+            needs_update:   false,
+            reason:         "Error checking for updates",
+            local_version:  nil,
+            remote_version: nil,
+            last_checked:   Time.utc,
+          }
+        )
       end
 
       Log.info { "StateManager: Completed update for #{containers.size} containers" }

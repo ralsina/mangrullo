@@ -44,7 +44,7 @@ module Mangrullo
     end
 
     def self.parse(tag : String) : Version?
-      return nil if tag.blank?
+      return if tag.blank?
 
       # Remove registry prefix if present
       tag = tag.split("/").last
@@ -64,19 +64,19 @@ module Mangrullo
 
       # Parse semantic version
       parts = version_part.split('.')
-      return nil unless parts.size >= Mangrullo::Constants::Version::SEMVER_MIN_PARTS && parts.size <= Mangrullo::Constants::Version::SEMVER_MAX_PARTS
+      return unless parts.size >= Mangrullo::Constants::Version::SEMVER_MIN_PARTS && parts.size <= Mangrullo::Constants::Version::SEMVER_MAX_PARTS
 
       major = parts[0].to_i?
       minor = parts[1].to_i?
       patch = parts[2]?.try(&.to_i?) || 0
 
-      return nil unless major && minor
+      return unless major && minor
 
       Version.new(major, minor, patch, prerelease_part, build_part)
     end
 
     def major_upgrade?(other : Version) : Bool
-      self.major != other.major
+      major != other.major
     end
 
     def <=>(other : Version) : Int32
