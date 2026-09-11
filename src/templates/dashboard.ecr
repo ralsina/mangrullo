@@ -570,9 +570,9 @@
 
             try {
                 // Show notification about the operation starting
-                showNotification(dryRun ? 'Starting dry run...' : 'Starting bulk update...', 'info');
+                showNotification(dryRun ? 'Starting dry run...' : 'Queuing container updates...', 'info');
 
-                // Set a longer timeout for bulk operations (5 minutes)
+                // Dry runs inspect every container and can take a while
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
 
@@ -589,41 +589,22 @@
 
                 const data = await response.json();
 
-                let successCount = 0;
-                let failureCount = 0;
-
                 if (dryRun) {
-                    // Dry run results have different structure: {container, needs_update, reason}
-                    data.forEach(result => {
-                        if (result.needs_update) {
-                            successCount++;
-                        }
-                    });
-                    failureCount = data.length - successCount; // Containers that don't need updates
-
-                    // Show detailed results in modal for dry run
-                    showDryRunResultsModal(data);
-                    showNotification('Dry run completed - see detailed results in modal', 'success');
-
-                    // Refresh data to show any status changes
-                    refreshData();
+                    if (Array.isArray(data)) {
+                        // Dry run results: {container, needs_update, reason}
+                        showDryRunResultsModal(data);
+                        showNotification('Dry run completed - see detailed results in modal', 'success');
+                        refreshData();
+                    } else {
+                        showNotification('Unexpected dry run response', 'error');
+                    }
+                } else if (data.queued && Array.isArray(data.job_ids)) {
+                    // Updates were queued (202): poll the jobs instead of
+                    // holding an HTTP request open for the whole bulk run
+                    showNotification(`${data.count} update${data.count === 1 ? '' : 's'} queued`, 'info');
+                    await pollBulkJobs(data.job_ids);
                 } else {
-                    // Regular update results: {container, updated, error}
-                    data.forEach(result => {
-                        if (result.updated) {
-                            successCount++;
-                            updateContainerStatus(result.container.id, 'up-to-date', null, null);
-                        } else if (result.error) {
-                            failureCount++;
-                            updateContainerStatus(result.container.id, 'error', null, null);
-                        }
-                    });
-
-                    const message = `Update completed: ${successCount} successful, ${failureCount} failed`;
-                    showNotification(message, successCount > 0 ? 'success' : 'info');
-
-                    // Always reload after bulk update to ensure fresh state (containers may have new IDs)
-                    setTimeout(() => location.reload(), 1500);
+                    showNotification('Unexpected bulk update response', 'error');
                 }
             } catch (error) {
                 console.error('Error in bulk update:', error);
@@ -640,6 +621,49 @@
                 updateAllBtn.textContent = originalUpdateAllText;
                 updateAllBtn.classList.remove('btn-busy');
             }
+        }
+
+        // Poll queued bulk-update jobs until every one settles, then reload.
+        // A job that can no longer be found (server restart) is counted as
+        // unknown and excluded from the summary.
+        async function pollBulkJobs(jobIds) {
+            const outstanding = new Set(jobIds);
+            let failedCount = 0;
+            const pollInterval = 5000;
+            const maxPolls = 90; // ~7.5 minutes
+            let polls = 0;
+
+            while (outstanding.size > 0 && polls < maxPolls) {
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+                polls++;
+
+                for (const jobId of [...outstanding]) {
+                    try {
+                        const response = await fetch(`/api/jobs/${jobId}`);
+                        if (!response.ok) {
+                            outstanding.delete(jobId);
+                            continue;
+                        }
+                        const job = await response.json();
+                        if (job.status === 'completed') {
+                            outstanding.delete(jobId);
+                        } else if (job.status === 'failed') {
+                            failedCount++;
+                            outstanding.delete(jobId);
+                            showNotification(`Update failed for ${job.container_name}`, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error polling bulk update job:', error);
+                    }
+                }
+            }
+
+            const succeeded = jobIds.length - failedCount - outstanding.size;
+            const summary = outstanding.size > 0
+                ? `Bulk update timed out tracking ${succeeded} succeeded, ${failedCount} failed, ${outstanding.size} unknown`
+                : `Bulk update finished: ${succeeded} succeeded, ${failedCount} failed`;
+            showNotification(summary, failedCount > 0 || outstanding.size > 0 ? 'warning' : 'success');
+            setTimeout(() => location.reload(), 1500);
         }
 
         function findContainerRow(containerId) {

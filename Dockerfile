@@ -84,9 +84,11 @@ CMD ["daemon"]
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${MANGRULLO_WEB_PORT:-3000}/ || exit 1
 
-# Labels
+# Labels (version should match shard.yml / src/version.cr; override with
+# --build-arg MANGRULLO_VERSION=... when building releases)
+ARG MANGRULLO_VERSION="0.7.1"
 LABEL org.opencontainers.image.title="Mangrullo" \
       org.opencontainers.image.description="Docker container update manager" \
-      org.opencontainers.image.version="0.6.0" \
+      org.opencontainers.image.version="${MANGRULLO_VERSION}" \
       org.opencontainers.image.authors="Roberto Alsina <roberto.alsina@gmail.com>" \
       org.opencontainers.image.source="https://github.com/ralsina/mangrullo"

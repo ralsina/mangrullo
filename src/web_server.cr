@@ -162,14 +162,25 @@ class WebServer
       allow_major = json_body["allow_major"]?.try(&.as_bool?) || false
       dry_run = json_body["dry_run"]?.try(&.as_bool?) || false
 
-      if dry_run
-        results = @update_manager.dry_run(allow_major)
-      else
-        results = @update_manager.check_and_update_containers(allow_major)
-      end
-
       env.response.content_type = Mangrullo::Constants::HTTP::JSON_CONTENT_TYPE
-      results.to_json
+
+      if dry_run
+        # Dry runs are read-only and quick: execute synchronously
+        @update_manager.dry_run(allow_major).to_json
+      else
+        # Real updates can take minutes: enqueue one job per container and
+        # let the client poll the queue instead of holding the request open
+        # until every update finishes (which triggers gateway timeouts)
+        candidates = @update_manager.get_containers_needing_update(allow_major)
+        job_queue = Mangrullo::UpdateJobQueue.instance
+        job_ids = candidates.map do |container|
+          container_name = Mangrullo::ContainerNameUtils.normalize_name_string(container.name)
+          job_queue.enqueue_update(container.id, container_name, allow_major)
+        end
+
+        env.response.status_code = 202
+        {queued: true, count: job_ids.size, job_ids: job_ids}.to_json
+      end
     rescue ex
       handle_web_error("updating all containers", env, ex)
     end

@@ -11,10 +11,14 @@ require "./version"
 
 module Mangrullo
   # Web server entry point.
-  # The listen port can be overridden with the PORT environment variable,
-  # so the UI can run alongside other services on the default port.
-  Kemal.config.port = ENV["PORT"]?.try(&.to_i?) || Mangrullo::Constants::Web::DEFAULT_PORT
-  Kemal.config.host_binding = Mangrullo::Constants::Web::DEFAULT_HOST
+  # The listen address follows the documented MANGRULLO_WEB_PORT and
+  # MANGRULLO_WEB_HOST variables; PORT is kept as a generic fallback so the
+  # UI can run alongside other services on the default port.
+  Kemal.config.port = ENV["MANGRULLO_WEB_PORT"]?.try(&.to_i?) ||
+                      ENV["PORT"]?.try(&.to_i?) ||
+                      Mangrullo::Constants::Web::DEFAULT_PORT
+  Kemal.config.host_binding = ENV["MANGRULLO_WEB_HOST"]? ||
+                              Mangrullo::Constants::Web::DEFAULT_HOST
 
   # Add handler for static files
   add_handler BakedFileHandler::BakedFileHandler.new(StaticAssets)
