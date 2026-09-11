@@ -43,12 +43,12 @@ module Mangrullo
       end
     end
 
-    # Active SSE connections
-    @@clients = Hash(String, IO::Memory).new
+    # Active SSE connections (live HTTP response streams)
+    @@clients = Hash(String, IO).new
     @@client_mutex = Mutex.new
 
     # Register a new SSE client
-    def self.register_client(client_id : String, io : IO::Memory)
+    def self.register_client(client_id : String, io : IO)
       @@client_mutex.synchronize do
         @@clients[client_id] = io
       end
@@ -98,7 +98,9 @@ module Mangrullo
       io << "event: #{event.type.to_s.underscore}\n"
       io << "data: #{event.to_sse_json}\n"
       io << "\n"
-      io.flush
+      # Response streams must be flushed so events reach the client at once;
+      # other IOs (e.g. IO::Memory in tests) have no flush to call
+      io.flush if io.is_a?(HTTP::Server::Response)
     end
 
     # Call next handler in chain

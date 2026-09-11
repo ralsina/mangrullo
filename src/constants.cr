@@ -52,6 +52,8 @@ module Mangrullo
       DEFAULT_HOST        = "0.0.0.0"
       REFRESH_INTERVAL    = 30 # seconds
       MAX_CONTAINER_CARDS = 50
+      # How often the SSE endpoint sends a keep-alive comment
+      SSE_HEARTBEAT_INTERVAL = 15 # seconds
     end
 
     # Registry constants

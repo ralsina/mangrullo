@@ -288,7 +288,9 @@ class WebServer
       "OK"
     end
 
-    # SSE endpoint for real-time updates
+    # SSE endpoint for real-time updates. The handler stays open, streaming
+    # heartbeat comments, until the client disconnects; broadcasts from the
+    # update flow reach the client through Mangrullo::SSE.
     get "/api/events" do |env|
       # Set SSE headers
       env.response.content_type = "text/event-stream"
@@ -308,16 +310,22 @@ class WebServer
         data: {"client_id" => client_id} of String => Int32 | Bool | String
       )
 
-      # Send the event directly to the response
-      env.response << "event: #{initial_event.type.to_s.underscore}\n"
-      env.response << "data: #{initial_event.to_sse_json}\n"
-      env.response << "\n"
-      env.response.flush
+      Mangrullo::SSE.register_client(client_id, env.response)
+      begin
+        Mangrullo::SSE.send_to_client(client_id, initial_event)
 
-      # Keep the connection alive with periodic comments
-      # Note: In Kemal, the response will be closed when the handler returns
-      # For proper SSE, we'd need to stream asynchronously
-      # This is a simplified version that shows the concept
+        # Hold the connection open; heartbeats double as disconnect detection —
+        # writing to a gone client raises and we clean up in the rescue below
+        loop do
+          sleep Mangrullo::Constants::Web::SSE_HEARTBEAT_INTERVAL.seconds
+          env.response << ": keep-alive\n\n"
+          env.response.flush
+        end
+      rescue ex : IO::Error | Socket::Error
+        Log.info { "SSE client #{client_id} disconnected: #{ex.message}" }
+      ensure
+        Mangrullo::SSE.unregister_client(client_id)
+      end
     end
   end
 
