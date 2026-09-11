@@ -534,6 +534,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#container-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -549,6 +560,17 @@
     <span class="md-ellipsis">
       
         Bulk Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Status
       
     </span>
   </a>
@@ -572,22 +594,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-real-time-features-optional" class="md-nav__link">
+  <a href="#4-real-time-features-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Real-time Features (Optional)
+        4. Real-time Features (Implemented)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4. Real-time Features (Optional)">
+    <nav class="md-nav" aria-label="4. Real-time Features (Implemented)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#websocket-support" class="md-nav__link">
+  <a href="#server-sent-events" class="md-nav__link">
     <span class="md-ellipsis">
       
-        WebSocket Support
+        Server-Sent Events
       
     </span>
   </a>
@@ -662,10 +684,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#container-card" class="md-nav__link">
+  <a href="#container-table-row" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Container Card
+        Container Table Row
       
     </span>
   </a>
@@ -1061,6 +1083,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#container-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1076,6 +1109,17 @@
     <span class="md-ellipsis">
       
         Bulk Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Status
       
     </span>
   </a>
@@ -1099,22 +1143,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-real-time-features-optional" class="md-nav__link">
+  <a href="#4-real-time-features-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Real-time Features (Optional)
+        4. Real-time Features (Implemented)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4. Real-time Features (Optional)">
+    <nav class="md-nav" aria-label="4. Real-time Features (Implemented)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#websocket-support" class="md-nav__link">
+  <a href="#server-sent-events" class="md-nav__link">
     <span class="md-ellipsis">
       
-        WebSocket Support
+        Server-Sent Events
       
     </span>
   </a>
@@ -1189,10 +1233,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#container-card" class="md-nav__link">
+  <a href="#container-table-row" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Container Card
+        Container Table Row
       
     </span>
   </a>
@@ -1392,35 +1436,34 @@ and managing Docker container updates through a browser interface.</p>
 <p>The web interface is fully implemented with comprehensive functionality:</p>
 <h3 id="completed-features">✅ Completed Features</h3>
 <ul>
-<li><strong>Basic Web Server</strong>: Kemal-based HTTP server running on port 3000</li>
+<li><strong>Basic Web Server</strong>: Kemal-based HTTP server running on port 3000 (configurable via <code>MANGRULLO_WEB_PORT</code>/<code>MANGRULLO_WEB_HOST</code>)</li>
 <li><strong>Dashboard Page</strong>: Overview of all running containers and their update status</li>
 <li><strong>Container List</strong>: Display of containers with update status indicators</li>
-<li><strong>Container Details</strong>: Individual container management pages</li>
 <li><strong>Update Checking</strong>: Web-based update detection functionality</li>
 <li><strong>Container Updates</strong>: Web-triggered container recreation and updates</li>
-<li><strong>HTML Templates</strong>: Pico.css-based responsive design with custom fonts</li>
+<li><strong>HTML Templates</strong>: ECR template with a token-driven "Mission Control" theme</li>
 <li><strong>Error Handling</strong>: Graceful error handling and user-friendly messages</li>
-<li><strong>Real-time Updates</strong>: Auto-refresh functionality for live status updates (every 30 seconds)</li>
-<li><strong>Bulk Operations</strong>: Multi-container update functionality with dry run support</li>
+<li><strong>Real-time Updates</strong>: Auto-refresh (every 30 seconds) plus live Server-Sent Events</li>
+<li><strong>Bulk Operations</strong>: Multi-container updates queued through the job queue, with dry run support</li>
 <li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images baked into binary</li>
-<li><strong>Auto-refresh Dashboard</strong>: Automatic status updates without manual refresh</li>
+<li><strong>Theme Toggle</strong>: Dark (default) and light modes, persisted in <code>localStorage</code></li>
 <li><strong>State Management</strong>: Shared state between web requests and background operations</li>
 <li><strong>Custom Branding</strong>: Cell tower icons and favicons throughout interface</li>
-<li><strong>Typography</strong>: Chivo and Chivo Mono Google Fonts integration</li>
+<li><strong>Typography</strong>: Chivo, Chivo Mono and Space Grotesk Google Fonts</li>
 <li><strong>Dry Run Modal</strong>: Comprehensive results display with CLI-like output</li>
 <li><strong>Modal Improvements</strong>: Proper close button positioning and responsive design</li>
 <li><strong>Bulk Update Modal</strong>: Dry run checkbox and major version upgrade controls</li>
 <li><strong>Button State Management</strong>: Proper onclick attribute handling during operations</li>
-<li><strong>Notification System</strong>: Toast notifications for user feedback</li>
+<li><strong>Notification System</strong>: Token-colored toast notifications for user feedback</li>
+<li><strong>Container Restart</strong>: Direct container restart via the API</li>
+<li><strong>Optional HTTP Basic Auth</strong>: Enabled via <code>MANGRULLO_WEB_USER</code>/<code>MANGRULLO_WEB_PASSWORD</code></li>
 </ul>
 <h3 id="in-progress">🚧 In Progress</h3>
 <ul>
 <li><strong>Log Viewing</strong>: Container log viewing</li>
-<li><strong>Container Restart</strong>: Direct container restart functionality</li>
 </ul>
 <h3 id="planned-features">📋 Planned Features</h3>
 <ul>
-<li><strong>Authentication</strong>: User authentication and access control</li>
 <li><strong>Metrics</strong>: Performance and usage metrics</li>
 <li><strong>Scheduling</strong>: Web-based update scheduling</li>
 <li><strong>Notifications</strong>: Email/webhook notifications</li>
@@ -1430,19 +1473,24 @@ and managing Docker container updates through a browser interface.</p>
 <h3 id="backend">Backend</h3>
 <ul>
 <li><strong>Kemal</strong>: Fast, lightweight web framework for Crystal</li>
-<li><strong>Kilt</strong>: Template engine for HTML rendering</li>
+<li><strong>ECR</strong>: Crystal's built-in template engine for HTML rendering</li>
 <li><strong>Crystal</strong>: High-performance programming language</li>
 <li><strong>Baked File System</strong>: Embedded static assets for easy deployment</li>
+<li><strong>Server-Sent Events</strong>: Live update progress pushed to connected dashboards</li>
+<li><strong>Job Queue</strong>: Bulk updates are enqueued and polled instead of blocking requests</li>
 <li><strong>State Manager</strong>: Shared state management for web operations</li>
 <li><strong>Existing Mangrullo modules</strong>: Docker client, image checker, update manager</li>
 </ul>
 <h3 id="frontend">Frontend</h3>
 <ul>
-<li><strong>Pico.css</strong>: Lightweight, semantic CSS framework</li>
-<li><strong>Vanilla JavaScript</strong>: No heavy framework dependencies</li>
+<li><strong>Pico.css v2</strong> (self-hosted): reskinned through <code>--pico-*</code> custom properties</li>
+<li><strong>Token-driven theme</strong>: <code>data-theme="dark|light"</code> selects a CSS custom
+  property set (Mission Control palette: dark navy panels, teal accent)</li>
+<li><strong>Vanilla JavaScript</strong>: served as a baked <code>/js/dashboard.js</code> asset; only the
+  pre-paint theme bootstrap stays inline</li>
 <li><strong>HTML5</strong>: Modern, semantic markup</li>
 <li><strong>Auto-refresh</strong>: Periodic status updates (every 30 seconds)</li>
-<li><strong>External JavaScript Files</strong>: Modular and maintainable code structure</li>
+<li><strong>Server-Sent Events</strong>: <code>EventSource</code> connection to <code>/api/events</code></li>
 </ul>
 <h3 id="architecture">Architecture</h3>
 <pre><code class="language-text">┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -1480,125 +1528,151 @@ and managing Docker container updates through a browser interface.</p>
 <li>⚪ Latest tag (always check)</li>
 </ul>
 <h3 id="2-container-details-page">2. Container Details Page</h3>
-<p><strong>URL</strong>: <code>/containers/:id</code></p>
-<p><strong>Purpose</strong>: Detailed view and management of individual containers</p>
-<p><strong>Components</strong>:</p>
-<ul>
-<li>Container information (name, ID, image, status)</li>
-<li>Version comparison (current vs available)</li>
-<li>Update history</li>
-<li>Action buttons:</li>
-<li>Check for updates</li>
-<li>Update container</li>
-<li>Restart container</li>
-<li>View logs</li>
-<li>Logs viewer with real-time updates</li>
-<li>Configuration summary</li>
-</ul>
+<p><strong>Status</strong>: Not implemented (planned). The dashboard is a single page;
+per-container actions (check, update) live in the container table, and
+restart is available through the API (<code>POST /containers/:id/restart</code>).</p>
 <h3 id="3-api-endpoints">3. API Endpoints</h3>
+<h4 id="pages">Pages</h4>
+<ul>
+<li><code>GET /</code> - Dashboard</li>
+<li><code>GET /health</code> - Health check (kept open when Basic auth is enabled)</li>
+</ul>
 <h4 id="container-management">Container Management</h4>
 <ul>
-<li><code>GET /api/containers</code> - List all containers</li>
-<li><code>GET /api/containers/:id</code> - Get container details</li>
-<li><code>POST /api/containers/:id/check-update</code> - Check for updates</li>
-<li><code>POST /api/containers/:id/update</code> - Update container</li>
-<li><code>POST /api/containers/:id/restart</code> - Restart container</li>
-<li><code>GET /api/containers/:id/logs</code> - Get container logs</li>
+<li><code>POST /containers/:id/check-update</code> - Force an update check for one container</li>
+<li><code>POST /containers/:id/update</code> - Queue an update job for one container</li>
+<li><code>POST /containers/:id/restart</code> - Restart container</li>
 </ul>
 <h4 id="bulk-operations">Bulk Operations</h4>
 <ul>
-<li><code>GET /api/updates</code> - Check all containers for updates</li>
-<li><code>POST /api/updates</code> - Update multiple containers</li>
+<li><code>GET /api/updates</code> - Update info for all containers</li>
+<li><code>POST /api/updates</code> - Dry runs execute synchronously; real updates enqueue
+  one job per container and answer <code>202</code> with <code>{queued, count, job_ids}</code></li>
+</ul>
+<h4 id="job-status">Job Status</h4>
+<ul>
+<li><code>GET /api/jobs/:job_id</code> - Job status (retained ~10 minutes after finishing)</li>
+<li><code>GET /api/containers/:container_id/jobs</code> - Jobs for one container</li>
 </ul>
 <h4 id="system">System</h4>
 <ul>
-<li><code>GET /health</code> - Health check</li>
+<li><code>GET /api/status</code> - State manager status (includes <code>update_in_progress</code>)</li>
+<li><code>GET /api/containers</code> - All containers with update info</li>
+<li><code>POST /api/refresh</code> - Force a refresh of all containers (409 if in progress)</li>
+<li><code>GET /api/events</code> - SSE stream of live update events</li>
 </ul>
-<h3 id="4-real-time-features-optional">4. Real-time Features (Optional)</h3>
-<h4 id="websocket-support">WebSocket Support</h4>
-<ul>
-<li>Live status updates</li>
-<li>Progress notifications for long-running operations</li>
-<li>Log streaming</li>
-</ul>
+<p>All routes are protected by HTTP Basic auth when <code>MANGRULLO_WEB_USER</code> and
+<code>MANGRULLO_WEB_PASSWORD</code> are set (<code>/health</code> excepted).</p>
+<h3 id="4-real-time-features-implemented">4. Real-time Features (Implemented)</h3>
+<h4 id="server-sent-events">Server-Sent Events</h4>
+<p>The dashboard opens an <code>EventSource</code> on <code>/api/events</code>. The endpoint registers
+the client, streams keep-alive comments, and the update flow broadcasts
+events: <code>image_pull_start</code>, <code>image_pull_complete</code>, <code>container_stop</code>,
+<code>container_remove</code>, <code>container_create</code>, <code>container_start</code>, <code>update_complete</code>,
+<code>update_error</code>, <code>status_update</code>.</p>
 <h4 id="auto-refresh">Auto-refresh</h4>
 <ul>
-<li>Periodic status checks</li>
-<li>Manual refresh button</li>
+<li>Periodic status checks every 30 seconds (paused while the tab is hidden)</li>
+<li>SSE events trigger targeted UI updates and refreshes</li>
 </ul>
 <h2 id="user-interface-design">User Interface Design</h2>
 <h3 id="color-scheme">Color Scheme</h3>
-<p>Using Pico.css default color scheme:</p>
-<ul>
-<li><strong>Primary</strong>: #007bff (blue for actions)</li>
-<li><strong>Success</strong>: #28a745 (green for up-to-date)</li>
-<li><strong>Warning</strong>: #ffc107 (yellow for updates available)</li>
-<li><strong>Danger</strong>: #dc3545 (red for errors)</li>
-<li><strong>Light</strong>: #f8f9fa (backgrounds)</li>
-<li><strong>Dark</strong>: #343a40 (text)</li>
-</ul>
+<p>Token-driven, selected by <code>&lt;html data-theme="dark|light"&gt;</code> (Mission Control
+palette, grafito-style):</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Dark</th>
+<th>Light</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--bg</code></td>
+<td><code>#101418</code></td>
+<td><code>#f2f5f4</code></td>
+</tr>
+<tr>
+<td><code>--panel</code></td>
+<td><code>#161b22</code></td>
+<td><code>#ffffff</code></td>
+</tr>
+<tr>
+<td><code>--line</code></td>
+<td><code>#29313c</code></td>
+<td><code>#d3dcda</code></td>
+</tr>
+<tr>
+<td><code>--txt</code></td>
+<td><code>#dfe6ee</code></td>
+<td><code>#1d2530</code></td>
+</tr>
+<tr>
+<td><code>--accent</code></td>
+<td><code>#4cc2a9</code> (teal)</td>
+<td><code>#178f77</code></td>
+</tr>
+<tr>
+<td><code>--ok</code></td>
+<td><code>#7ec9a1</code></td>
+<td><code>#3e7d5c</code></td>
+</tr>
+<tr>
+<td><code>--warn</code></td>
+<td><code>#e9a23b</code></td>
+<td><code>#b07414</code></td>
+</tr>
+<tr>
+<td><code>--err</code></td>
+<td><code>#f0635a</code></td>
+<td><code>#c73e34</code></td>
+</tr>
+<tr>
+<td><code>--info</code></td>
+<td><code>#58a6ff</code></td>
+<td><code>#2b6cb0</code></td>
+</tr>
+</tbody>
+</table>
+<p>Pico.css v2 is reskinned through its <code>--pico-*</code> custom properties, and
+container status is conveyed with severity-colored left borders on table rows.</p>
 <h3 id="layout-structure">Layout Structure</h3>
-<pre><code class="language-html">&lt;!DOCTYPE html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-&lt;head&gt;
-  &lt;meta charset=&quot;UTF-8&quot;&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
-  &lt;title&gt;Mangrullo - Docker Container Updates&lt;/title&gt;
-  &lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css&quot;&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;header&gt;
-    &lt;nav&gt;
-      &lt;!-- Navigation --&gt;
-    &lt;/nav&gt;
-  &lt;/header&gt;
-
-  &lt;main&gt;
-    &lt;!-- Main content --&gt;
-  &lt;/main&gt;
-
-  &lt;footer&gt;
-    &lt;!-- Footer --&gt;
-  &lt;/footer&gt;
-
-  &lt;script&gt;
-    // JavaScript for interactivity
-  &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
+<p>The dashboard is a single ECR template (<code>src/templates/dashboard.ecr</code>) with a
+sticky topbar (brand, auto-refresh indicator, theme toggle, Check/Update
+actions), two stat cards, a sortable container table, dialogs for update and
+dry-run confirmations, and a footer. JavaScript lives in
+<code>public/js/dashboard.js</code> (baked into the binary); only a small pre-paint
+theme bootstrap remains inline in <code>&lt;head&gt;</code>.</p>
 <h3 id="component-templates">Component Templates</h3>
-<h4 id="container-card">Container Card</h4>
-<pre><code class="language-html">&lt;div class=&quot;card&quot;&gt;
-  &lt;article&gt;
-    &lt;header&gt;
-      &lt;h3&gt;Container Name&lt;/h3&gt;
-      &lt;span class=&quot;status-badge status-update-available&quot;&gt;Update Available&lt;/span&gt;
-    &lt;/header&gt;
-    &lt;p&gt;&lt;strong&gt;Image:&lt;/strong&gt; nginx:1.2.3&lt;/p&gt;
-    &lt;p&gt;&lt;strong&gt;Status:&lt;/strong&gt; Running&lt;/p&gt;
-    &lt;footer&gt;
-      &lt;button onclick=&quot;checkUpdate('container-id')&quot;&gt;Check Update&lt;/button&gt;
-      &lt;button onclick=&quot;updateContainer('container-id')&quot;&gt;Update&lt;/button&gt;
-    &lt;/footer&gt;
-  &lt;/article&gt;
-&lt;/div&gt;
+<h4 id="container-table-row">Container Table Row</h4>
+<pre><code class="language-html">&lt;tr class=&quot;status-update-available&quot; data-container-id=&quot;abc123&quot;&gt;
+  &lt;td title=&quot;my-app&quot;&gt;my-app&lt;/td&gt;
+  &lt;td title=&quot;nginx:1.2.3&quot;&gt;&lt;code&gt;nginx:1.2.3&lt;/code&gt;&lt;/td&gt;
+  &lt;td&gt;
+    &lt;div class=&quot;actions-cell&quot;&gt;
+      &lt;button onclick=&quot;showUpdateModal('abc123')&quot; class=&quot;primary btn-sm&quot;&gt;Update&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/td&gt;
+&lt;/tr&gt;
 </code></pre>
+<p>Row status (<code>status-up-to-date</code>, <code>status-update-available</code>, <code>status-latest</code>,
+<code>status-error</code>) drives a severity-colored left border on the first cell.</p>
 <h4 id="update-modal">Update Modal</h4>
-<pre><code class="language-html">&lt;dialog id=&quot;update-modal&quot;&gt;
+<pre><code class="language-html">&lt;dialog id=&quot;updateModal&quot;&gt;
   &lt;article&gt;
     &lt;header&gt;
       &lt;h3&gt;Update Container&lt;/h3&gt;
-      &lt;button aria-label=&quot;Close&quot; rel=&quot;prev&quot;&gt;&lt;/button&gt;
+      &lt;button aria-label=&quot;Close&quot; class=&quot;close&quot; onclick=&quot;closeModal()&quot;&gt;&lt;/button&gt;
     &lt;/header&gt;
     &lt;p&gt;Are you sure you want to update this container?&lt;/p&gt;
     &lt;label&gt;
-      &lt;input type=&quot;checkbox&quot; name=&quot;allow-major&quot; /&gt;
+      &lt;input type=&quot;checkbox&quot; id=&quot;allowMajor&quot; name=&quot;allow_major&quot; /&gt;
       Allow major version upgrades
     &lt;/label&gt;
     &lt;footer&gt;
-      &lt;button onclick=&quot;confirmUpdate()&quot;&gt;Update&lt;/button&gt;
-      &lt;button onclick=&quot;closeModal()&quot; aria-label=&quot;Close&quot;&gt;Cancel&lt;/button&gt;
+      &lt;button onclick=&quot;confirmUpdate()&quot; class=&quot;primary&quot;&gt;Update Container&lt;/button&gt;
+      &lt;button onclick=&quot;closeModal()&quot; aria-label=&quot;Close&quot; class=&quot;secondary&quot;&gt;Cancel&lt;/button&gt;
     &lt;/footer&gt;
   &lt;/article&gt;
 &lt;/dialog&gt;
@@ -1621,10 +1695,10 @@ and managing Docker container updates through a browser interface.</p>
 </ol>
 <h3 id="phase-3-advanced-features">Phase 3: Advanced Features ✅</h3>
 <ol>
-<li>[x] Add bulk operations</li>
-<li>[x] Implement real-time updates (Auto-refresh every 30 seconds)</li>
+<li>[x] Add bulk operations (queued through the job queue)</li>
+<li>[x] Implement real-time updates (auto-refresh every 30 seconds + SSE)</li>
+<li>[x] Add container restart functionality</li>
 <li>[ ] Add log viewing</li>
-<li>[ ] Add container restart functionality</li>
 </ol>
 <h3 id="phase-4-polish-and-documentation">Phase 4: Polish and Documentation ✅</h3>
 <ol>
@@ -1639,7 +1713,7 @@ and managing Docker container updates through a browser interface.</p>
 </ol>
 <h2 id="security-considerations">Security Considerations</h2>
 <ol>
-<li><strong>Authentication</strong>: Currently runs locally, consider adding auth for remote access</li>
+<li><strong>Authentication</strong>: Implemented as optional HTTP Basic auth (<code>MANGRULLO_WEB_USER</code>/<code>MANGRULLO_WEB_PASSWORD</code>), constant-time credential comparison, <code>/health</code> exempt</li>
 <li><strong>Authorization</strong>: Container operations require appropriate permissions</li>
 <li><strong>Input Validation</strong>: All user input should be validated</li>
 <li><strong>CSRF Protection</strong>: Use tokens for state-changing operations</li>
@@ -1661,16 +1735,25 @@ and managing Docker container updates through a browser interface.</p>
 </ol>
 <h2 id="file-structure">File Structure</h2>
 <pre><code class="language-text">src/
-├── web_baked.cr          # Web server entry point with baked assets
-├── web_server_baked.cr   # Main web server class with embedded static files
-├── web_views.cr          # View templates and rendering with auto-refresh
-├── static_assets.cr      # Embedded CSS, JavaScript, and images
+├── web.cr                # Web server entry point (Kemal.run)
+├── web_server.cr         # Routes, auth middleware, SSE endpoint, error handlers
+├── web_views.cr          # Dashboard rendering (ECR)
+├── templates/
+│   └── dashboard.ecr     # Dashboard template
+├── static_assets.cr      # Bakes public/ into the binary
+├── sse.cr                # Server-Sent Events registry and broadcast
+├── web_auth.cr           # Optional HTTP Basic authentication
+├── update_job_queue.cr   # Background update jobs with status retention
 ├── state_manager.cr      # Shared state management
 ├── container_state.cr    # Container state data structures
-└── public/              # Source static assets (baked into binary)
+└── public/               # Source static assets (baked into binary)
     ├── css/
+    │   ├── pico.min.css  # Pico v2, self-hosted
+    │   └── dashboard.css # Token-driven theme
     ├── js/
-    └── images/
+    │   └── dashboard.js  # Dashboard behavior
+    ├── favicon.svg
+    └── favicon.ico
 </code></pre>
 <p><strong>Note</strong>: Static assets are now baked directly into the binary using the <code>baked_file_system</code> and <code>baked_file_handler</code> libraries, eliminating the need for separate static file deployment.</p>
 <h2 id="success-metrics">Success Metrics</h2>
@@ -1683,13 +1766,12 @@ and managing Docker container updates through a browser interface.</p>
 </ol>
 <h2 id="future-enhancements">Future Enhancements</h2>
 <ol>
-<li><strong>User Authentication</strong>: Multi-user support with permissions</li>
 <li><strong>Scheduled Updates</strong>: Web-based scheduling configuration</li>
 <li><strong>Notifications</strong>: Email/webhook notifications</li>
 <li><strong>Container Metrics</strong>: Resource usage graphs</li>
 <li><strong>Image History</strong>: View image update history</li>
 <li><strong>Export/Import</strong>: Configuration backup and restore</li>
-<li><strong>Themes</strong>: Dark/light mode toggle</li>
+<li><strong>Log Viewing</strong>: Container log viewer</li>
 <li><strong>API Documentation</strong>: Swagger/OpenAPI documentation</li>
 </ol>
 <h2 id="conclusion">Conclusion</h2>

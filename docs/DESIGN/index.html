@@ -1103,9 +1103,9 @@ manage container updates.</p>
 <h3 id="dependencies">Dependencies</h3>
 <ul>
 <li><code>marghidanu/docr</code> - Docker API client for Crystal</li>
-<li><code>ralsina/docopt.cr</code> - Command line argument parsing</li>
+<li><code>ralsina/docopt.cr</code> + <code>ralsina/docopt-config</code> - Command line argument parsing</li>
 <li><code>kemalcr/kemal</code> - Web framework (for web interface)</li>
-<li><code>jeromegn/kilt</code> - Template engine (for web interface)</li>
+<li><code>ralsina/baked_file_system</code> + <code>ralsina/baked_file_handler</code> - Embedded static assets (for web interface)</li>
 <li>Standard Crystal library for HTTP, JSON, logging</li>
 </ul>
 <h3 id="core-modules">Core Modules</h3>
@@ -1189,13 +1189,11 @@ manage container updates.</p>
 <ul>
 <li><strong>Purpose</strong>: Web interface for monitoring and management</li>
 <li><strong>Responsibilities</strong>:</li>
-<li>HTTP server using Kemal</li>
-<li>Container status dashboard</li>
-<li>API endpoints for container operations</li>
-<li><strong>Key Methods</strong>:</li>
-<li><code>start_server</code></li>
-<li>Container management endpoints</li>
-<li>Status monitoring</li>
+<li>HTTP server using Kemal (started via <code>src/web.cr</code> → <code>Kemal.run</code>)</li>
+<li>Optional HTTP Basic authentication</li>
+<li>Container status dashboard and API endpoints</li>
+<li>SSE streaming of live update events</li>
+<li>Background update job queue</li>
 </ul>
 <h4 id="7-mangrulloerrorhandling">7. Mangrullo::ErrorHandling</h4>
 <ul>
@@ -1229,11 +1227,13 @@ manage container updates.</p>
 <li>
 <p><strong>Container Recreation Process</strong>:</p>
 </li>
-<li>Stop the running container</li>
-<li>Remove the old container to free up the name</li>
 <li>Capture container configuration using <code>docker inspect</code></li>
-<li>Create new container with same configuration but new image</li>
-<li>Start the new container</li>
+<li>Stop the running container</li>
+<li>Rename it to a temporary backup name (the container ID is stable)</li>
+<li>Create the replacement with the same configuration but new image</li>
+<li>Start the replacement</li>
+<li>On any failure: rename the backup back to the original name and restart it (rollback)</li>
+<li>On success: remove the backup container</li>
 <li>
 <p>Verify the recreation worked</p>
 </li>
@@ -1290,7 +1290,7 @@ manage container updates.</p>
 </ol>
 <h3 id="phase-7-testing">Phase 7: Testing ✓</h3>
 <ol>
-<li>Unit tests for all modules (56 examples)</li>
+<li>Unit tests for all modules (184 examples)</li>
 <li>Integration tests for critical functionality</li>
 <li>Test edge cases and error conditions</li>
 </ol>
@@ -1319,8 +1319,9 @@ manage container updates.</p>
 <pre><code class="language-text">Mangrullo - Docker container update automation tool
 
 Usage:
-  mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;] 
-           [--log-level=&lt;level&gt;] [--once] [--help] [--version]
+  mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;]
+           [--log-level=&lt;level&gt;] [--once] [--dry-run] [&lt;container-name&gt;...]
+           [--help] [--version]
 
 Options:
   --interval=&lt;seconds&gt;   Check interval in seconds [default: 300]
@@ -1328,6 +1329,7 @@ Options:
   --socket=&lt;path&gt;        Docker socket path [default: /var/run/docker.sock]
   --log-level=&lt;level&gt;    Log level (debug, info, warn, error) [default: info]
   --once                 Run once and exit
+  --dry-run              Show what would be updated without actually updating
   --help                 Show this help message
   --version              Show version information
 </code></pre>

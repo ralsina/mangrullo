@@ -412,6 +412,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#web-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#web-interface-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -510,6 +521,17 @@
     <span class="md-ellipsis">
       
         Image Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Execution
       
     </span>
   </a>
@@ -667,10 +689,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#v010" class="md-nav__link">
+  <a href="#v080" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.1.0
+        v0.8.0
       
     </span>
   </a>
@@ -678,10 +700,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#recent-updates" class="md-nav__link">
+  <a href="#v010" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recent Updates
+        v0.1.0
       
     </span>
   </a>
@@ -1019,6 +1041,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#web-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#web-interface-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1117,6 +1150,17 @@
     <span class="md-ellipsis">
       
         Image Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Execution
       
     </span>
   </a>
@@ -1274,10 +1318,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#v010" class="md-nav__link">
+  <a href="#v080" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.1.0
+        v0.8.0
       
     </span>
   </a>
@@ -1285,10 +1329,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#recent-updates" class="md-nav__link">
+  <a href="#v010" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recent Updates
+        v0.1.0
       
     </span>
   </a>
@@ -1406,10 +1450,11 @@ mangrullo --dry-run
 <h3 id="command-line-options">Command Line Options</h3>
 <pre><code class="language-text">Usage:
   mangrullo [--interval=&lt;seconds&gt;] [--allow-major] [--socket=&lt;path&gt;]
-           [--log-level=&lt;level&gt;] [--once] [--dry-run] [--help] [--version]
+           [--log-level=&lt;level&gt;] [--once] [--dry-run] [&lt;container-name&gt;...]
+           [--help] [--version]
 
 Options:
-  --interval=&lt;seconds&gt;   Check interval in seconds [default: 21600]
+  --interval=&lt;seconds&gt;   Check interval in seconds [default: 300]
   --allow-major          Allow major version upgrades
   --socket=&lt;path&gt;        Docker socket path [default: /var/run/docker.sock]
   --log-level=&lt;level&gt;    Log level (debug, info, warn, error) [default: info]
@@ -1421,7 +1466,9 @@ Options:
 Arguments:
   &lt;container-name&gt;       Specific container names to check (if not specified, checks all containers)
 </code></pre>
-<p><strong>Note</strong>: The default check interval is 21600 seconds (6 hours) to avoid Docker Hub registry rate limiting.</p>
+<p><strong>Note</strong>: The CLI default check interval is 300 seconds (5 minutes). The
+Docker entrypoint defaults to a gentler 3600 seconds (1 hour) via
+<code>MANGRULLO_INTERVAL</code> to stay friendly to registry rate limits.</p>
 <h3 id="examples">Examples</h3>
 <p><strong>Check for updates once:</strong></p>
 <pre><code class="language-bash">mangrullo --once
@@ -1451,24 +1498,59 @@ shards build mangrullo-web
 <p>The web interface starts on <code>http://localhost:3000</code> and provides:</p>
 <ul>
 <li><strong>Dashboard</strong>: Real-time overview of all containers and their update status</li>
-<li><strong>Auto-refresh</strong>: Automatic updates every 30 seconds</li>
+<li><strong>Auto-refresh</strong>: Automatic updates every 30 seconds, plus live SSE events</li>
 <li><strong>Container Management</strong>: Check for updates and update individual containers</li>
-<li><strong>Bulk Operations</strong>: Update multiple containers at once with dry-run support</li>
+<li><strong>Bulk Operations</strong>: Updates are queued through a job queue with dry-run support</li>
 <li><strong>Dry Run Modal</strong>: Comprehensive results display showing what would be updated</li>
-<li><strong>Modern UI</strong>: Clean, responsive design using Pico.css with Chivo fonts</li>
+<li><strong>Mission Control Theme</strong>: Token-driven dark (default) and light modes with a toggle</li>
 <li><strong>Brand Identity</strong>: Custom cell tower icon and favicon integration</li>
 </ul>
 <h3 id="key-features">Key Features</h3>
 <ul>
 <li><strong>Auto-refresh Dashboard</strong>: Container status automatically updates without manual refresh</li>
+<li><strong>Live Events</strong>: Server-Sent Events push update progress (pull/stop/create/start) to the dashboard</li>
+<li><strong>Dark/Light Theme</strong>: Toggle in the navbar, persisted in <code>localStorage</code></li>
 <li><strong>Embedded Static Assets</strong>: All CSS, JavaScript, and images are baked into the binary for easy deployment</li>
 <li><strong>Responsive Design</strong>: Works on desktop and mobile devices with proper scaling</li>
 <li><strong>Real-time Status</strong>: Live indicators for update checks and container operations</li>
 <li><strong>Dry Run Support</strong>: Comprehensive dry run results with detailed tables showing update status</li>
 <li><strong>Bulk Update Operations</strong>: Update all containers with major version control and dry run options</li>
-<li><strong>Custom Branding</strong>: Cell tower icon throughout interface with 50% larger text</li>
+<li><strong>Optional HTTP Basic Auth</strong>: Set <code>MANGRULLO_WEB_USER</code> and <code>MANGRULLO_WEB_PASSWORD</code> to protect the UI</li>
+<li><strong>Custom Branding</strong>: Cell tower icon throughout the interface</li>
 <li><strong>Favicon Support</strong>: Both SVG and ICO favicons with cell tower branding</li>
 </ul>
+<h3 id="web-environment-variables">Web Environment Variables</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MANGRULLO_WEB_PORT</code></td>
+<td>Web interface port</td>
+<td><code>3000</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_WEB_HOST</code></td>
+<td>Bind address</td>
+<td><code>0.0.0.0</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_WEB_USER</code></td>
+<td>Basic auth user (both auth vars required)</td>
+<td>unset</td>
+</tr>
+<tr>
+<td><code>MANGRULLO_WEB_PASSWORD</code></td>
+<td>Basic auth password</td>
+<td>unset</td>
+</tr>
+</tbody>
+</table>
 <h3 id="web-interface-architecture">Web Interface Architecture</h3>
 <p>The web interface uses:</p>
 <ul>
@@ -1476,7 +1558,9 @@ shards build mangrullo-web
 <li><strong>Baked File System</strong>: Static assets embedded in the binary for zero-dependency deployment</li>
 <li><strong>State Manager</strong>: Shared state between web requests and background operations</li>
 <li><strong>Auto-refresh</strong>: JavaScript-based periodic updates every 30 seconds</li>
-<li><strong>Google Fonts</strong>: Chivo and Chivo Mono fonts for enhanced typography</li>
+<li><strong>Server-Sent Events</strong>: Live update progress pushed from the update flow</li>
+<li><strong>Pico.css v2</strong> (self-hosted) reskinned by a token-driven stylesheet</li>
+<li><strong>Google Fonts</strong>: Chivo, Chivo Mono and Space Grotesk</li>
 <li><strong>Material Icons</strong>: Google Material Icons for consistent iconography</li>
 </ul>
 <h2 id="configuration">Configuration</h2>
@@ -1582,15 +1666,9 @@ shards build mangrullo-web
 </tbody>
 </table>
 <h3 id="configuration-file">Configuration File</h3>
-<p>You can also use a YAML configuration file (<code>config.yml</code>):</p>
-<pre><code class="language-yaml"># Mangrullo configuration
-interval: 600
-allow_major: false
-socket: &quot;/var/run/docker.sock&quot;
-log_level: &quot;info&quot;
-run_once: false
-dry_run: false
-</code></pre>
+<p>Configuration-file plumbing exists via <code>docopt-config</code>, but no CLI flag
+passes a config file path yet, so YAML configuration files are <strong>not
+currently available</strong> — use environment variables instead.</p>
 <h3 id="docker-socket">Docker Socket</h3>
 <p>By default, Mangrullo connects to the Docker daemon at <code>/var/run/docker.sock</code>. You can specify a different path using the <code>--socket</code> option or <code>MANGRULLO_SOCKET</code> environment variable.</p>
 <h3 id="version-handling">Version Handling</h3>
@@ -1604,15 +1682,27 @@ dry_run: false
 <p>Mangrullo works with:</p>
 <ul>
 <li>Standard image tags (nginx:1.2.3)</li>
+<li>Rolling single-number tags (postgres:16, redis:7 — compared by digest)</li>
 <li>Registry prefixes (docker.io/library/nginx:1.2.3)</li>
-<li>SHA256 digests (skipped for version comparison)</li>
-<li>Latest tags (always check for updates)</li>
+<li>Registry ports (localhost:5000/my-app)</li>
+<li>SHA256 digest pins (compared by digest)</li>
+<li>Latest tags (compared by digest)</li>
 <li>Multiple registries:</li>
 <li>Docker Hub (registry-1.docker.io)</li>
 <li>GitHub Container Registry (ghcr.io)</li>
 <li>LinuxServer.io (lscr.io - maps to ghcr.io/linuxserver/)</li>
 <li>Other standard Docker registry v2 implementations</li>
 </ul>
+<h3 id="update-execution">Update Execution</h3>
+<p>When an update is detected, Mangrullo:</p>
+<ol>
+<li>Pulls the <strong>target</strong> image (for versioned tags, the newer tag; for moving
+   tags like <code>latest</code> or <code>postgres:16</code>, the same reference with its new digest)</li>
+<li>Stops the container and renames it to a temporary backup name</li>
+<li>Creates the replacement with the original configuration under the original name</li>
+<li>Starts it — and if anything fails, renames the backup back and restarts it</li>
+<li>Removes the backup once the replacement is confirmed running</li>
+</ol>
 <h2 id="development">Development</h2>
 <h3 id="prerequisites">Prerequisites</h3>
 <ul>
@@ -1679,12 +1769,15 @@ crystal spec --verbose
 <li><strong>Docker Client</strong> (<code>src/docker_client.cr</code>): Docker API wrapper and container recreation</li>
 <li><strong>Image Checker</strong> (<code>src/image_checker.cr</code>): Version checking and update detection</li>
 <li><strong>Update Manager</strong> (<code>src/update_manager.cr</code>): Coordinates the update process with container filtering</li>
+<li><strong>Job Queue</strong> (<code>src/update_job_queue.cr</code>): Background update jobs with status polling</li>
 <li><strong>Configuration</strong> (<code>src/config.cr</code>): Command-line argument parsing</li>
 <li><strong>CLI</strong> (<code>src/cli.cr</code>): Main command-line interface</li>
-<li><strong>Web Server</strong> (<code>src/web_server_baked.cr</code>): Web interface with baked static assets (optional)</li>
-<li><strong>Web Views</strong> (<code>src/web_views.cr</code>): Web interface templates with auto-refresh</li>
-<li><strong>Static Assets</strong> (<code>src/static_assets.cr</code>): Embedded CSS, JavaScript, and images</li>
+<li><strong>Web Server</strong> (<code>src/web.cr</code> + <code>src/web_server.cr</code>): Kemal web interface (optional)</li>
+<li><strong>Web Views</strong> (<code>src/web_views.cr</code> + <code>src/templates/dashboard.ecr</code>): Dashboard template</li>
+<li><strong>Static Assets</strong> (<code>src/static_assets.cr</code>, <code>public/</code>): Embedded CSS, JavaScript, and images</li>
 <li><strong>State Manager</strong> (<code>src/state_manager.cr</code>): Shared state management for web interface</li>
+<li><strong>SSE</strong> (<code>src/sse.cr</code>): Server-Sent Events streaming for live updates</li>
+<li><strong>Web Auth</strong> (<code>src/web_auth.cr</code>): Optional HTTP Basic authentication</li>
 <li><strong>Error Handling</strong> (<code>src/error_handling.cr</code>): Centralized error management</li>
 </ul>
 <h2 id="contributing">Contributing</h2>
@@ -1713,6 +1806,15 @@ crystal spec --verbose
 <li>Uses <a href="https://github.com/ralsina/docopt.cr">docopt.cr</a> for command-line parsing</li>
 </ul>
 <h2 id="changelog">Changelog</h2>
+<h3 id="v080">v0.8.0</h3>
+<ul>
+<li>Grafito-style facelift: CRT terminal marketing site and a Mission Control dashboard theme (dark/light)</li>
+<li>Updates pull the correct newer target tag (previously re-pulled the stale tag), with rollback-safe container recreation</li>
+<li><code>pull_image</code> no longer silently pulls <code>:latest</code>; Docker socket connections reconnect after idle timeouts</li>
+<li>Real SSE streaming, async bulk updates through the job queue, honest job status (no more 404-as-success)</li>
+<li>Optional HTTP Basic auth, registry credentials from <code>~/.docker/config.json</code>, <code>MANGRULLO_WEB_PORT</code>/<code>MANGRULLO_WEB_HOST</code> support</li>
+<li>Single-number tags (<code>postgres:16</code>) and registry ports (<code>localhost:5000/app</code>) parsed correctly</li>
+</ul>
 <h3 id="v010">v0.1.0</h3>
 <ul>
 <li>Initial release</li>
@@ -1720,7 +1822,6 @@ crystal spec --verbose
 <li>Semantic version comparison</li>
 <li>Major version upgrade control</li>
 <li>Dry run mode</li>
-<li>Comprehensive unit tests</li>
 <li>Command-line interface</li>
 <li>Container-specific filtering (check only specified containers)</li>
 <li>Container recreation (properly updates containers with new images)</li>
@@ -1728,21 +1829,6 @@ crystal spec --verbose
 <li>Web interface framework (Kemal-based)</li>
 <li>Flexible container name matching (handles both "name" and "/name")</li>
 <li>Comprehensive error handling and logging</li>
-</ul>
-<h3 id="recent-updates">Recent Updates</h3>
-<ul>
-<li><strong>Comprehensive Web Interface</strong>: Full-featured dashboard with auto-refresh and bulk operations</li>
-<li><strong>Dry Run Modal</strong>: Detailed results display showing what would be updated with CLI-like output</li>
-<li><strong>Custom Branding</strong>: Cell tower icons throughout interface with favicon support</li>
-<li><strong>Typography Enhancement</strong>: Chivo and Chivo Mono Google Fonts integration</li>
-<li><strong>Bulk Update Operations</strong>: Update multiple containers with dry run and major version controls</li>
-<li><strong>Button State Management</strong>: Proper onclick handling to prevent double-clicks during operations</li>
-<li><strong>Critical JSON Fix</strong>: Fixed dry run checkbox being ignored due to form vs JSON parameter parsing</li>
-<li><strong>Embedded Static Assets</strong>: All web interface assets (CSS, JS, images) baked into binary</li>
-<li><strong>Auto-refresh Dashboard</strong>: Web interface automatically updates every 30 seconds</li>
-<li><strong>Rate Limiting Protection</strong>: Default 6-hour check interval to avoid Docker Hub rate limits</li>
-<li><strong>Multi-architecture Builds</strong>: Static binaries available for Linux AMD64 and ARM64</li>
-<li><strong>CI Workflow Improvements</strong>: Added Ameba as development dependency for proper linting</li>
 </ul>
 
 

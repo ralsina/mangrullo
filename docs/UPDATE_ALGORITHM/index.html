@@ -384,10 +384,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-latest-tag-handling" class="md-nav__link">
+  <a href="#2-moving-tag-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Latest Tag Handling
+        2. Moving Tag Handling
       
     </span>
   </a>
@@ -418,10 +418,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#32-target-version-discovery" class="md-nav__link">
+  <a href="#32-target-tag-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2 Target Version Discovery
+        3.2 Target Tag Discovery
       
     </span>
   </a>
@@ -446,6 +446,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-detection-to-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Detection to Update
+      
+    </span>
+  </a>
   
 </li>
       
@@ -563,10 +574,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#image_has_updateimage_name" class="md-nav__link">
+  <a href="#moving_tagcontainer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        image_has_update?(image_name)
+        moving_tag?(container)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target_image_for_updatecontainer-allow_major_upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        target_image_for_update(container, allow_major_upgrade)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find_target_update_tagimage_name-current_version-allow_major_upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_target_update_tag(image_name, current_version, allow_major_upgrade)
       
     </span>
   </a>
@@ -585,10 +618,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get_all_versionsimage_name" class="md-nav__link">
+  <a href="#registry_version_tagsimage_name" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_all_versions(image_name)
+        registry_version_tags(image_name)
       
     </span>
   </a>
@@ -729,10 +762,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exclusions" class="md-nav__link">
+  <a href="#digest-based-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exclusions
+        Digest-Based Handling
       
     </span>
   </a>
@@ -1078,10 +1111,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-latest-tag-handling" class="md-nav__link">
+  <a href="#2-moving-tag-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Latest Tag Handling
+        2. Moving Tag Handling
       
     </span>
   </a>
@@ -1112,10 +1145,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#32-target-version-discovery" class="md-nav__link">
+  <a href="#32-target-tag-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2 Target Version Discovery
+        3.2 Target Tag Discovery
       
     </span>
   </a>
@@ -1140,6 +1173,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-detection-to-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Detection to Update
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1257,10 +1301,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#image_has_updateimage_name" class="md-nav__link">
+  <a href="#moving_tagcontainer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        image_has_update?(image_name)
+        moving_tag?(container)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target_image_for_updatecontainer-allow_major_upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        target_image_for_update(container, allow_major_upgrade)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find_target_update_tagimage_name-current_version-allow_major_upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_target_update_tag(image_name, current_version, allow_major_upgrade)
       
     </span>
   </a>
@@ -1279,10 +1345,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get_all_versionsimage_name" class="md-nav__link">
+  <a href="#registry_version_tagsimage_name" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_all_versions(image_name)
+        registry_version_tags(image_name)
       
     </span>
   </a>
@@ -1423,10 +1489,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exclusions" class="md-nav__link">
+  <a href="#digest-based-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exclusions
+        Digest-Based Handling
       
     </span>
   </a>
@@ -1657,14 +1723,21 @@
 
 <h1 id="mangrullo-update-detection-algorithm">Mangrullo Update Detection Algorithm</h1>
 <h2 id="overview">Overview</h2>
-<p>Mangrullo uses a simplified, efficient approach to detect when Docker container images need updates. The algorithm clearly separates handling for "latest" tags versus versioned tags, optimizing for performance and maintainability.</p>
+<p>Mangrullo detects when Docker container images need updates and decides which
+image reference an update should move to. The algorithm separates <strong>moving
+tags</strong> (which are compared by digest) from <strong>versioned tags</strong> (which are
+compared by semantic version), and detection is paired with execution: the
+same logic that detects an update also computes the target image reference to
+pull and recreate the container with.</p>
 <h2 id="update-decision-flow">Update Decision Flow</h2>
 <h3 id="1-tag-type-detection">1. Tag Type Detection</h3>
-<p>The algorithm first determines the type of image tag:</p>
+<p>The algorithm first determines whether the tag is a <em>moving tag</em>:</p>
 <pre><code class="language-crystal">def needs_update?(container : ContainerInfo, allow_major_upgrade : Bool = false) : Bool
-  # If using 'latest' tag, use simple digest comparison
-  if container.image.includes?(&quot;latest&quot;)
-    return image_has_update?(container.image)
+  # Moving tags (latest, single-component like postgres:16, digest pins,
+  # or non-version tags) are compared by digest, not by version
+  if moving_tag?(container)
+    status = get_update_status(container)
+    return status[:needs_pull] || status[:needs_restart]
   end
 
   # For versioned tags, find available updates based on version
@@ -1674,21 +1747,34 @@
   target_version = find_target_update_version(container.image, current_version, allow_major_upgrade)
   target_version != nil
 end
+
+# A tag that tracks a moving ref rather than a fixed version
+private def moving_tag?(container : ContainerInfo) : Bool
+  return true if container.image.includes?(&quot;sha256:&quot;)
+
+  tag = ImageNameParser.get_tag(container.image)
+  !tag.includes?(&quot;.&quot;)
+end
 </code></pre>
+<p>Moving tags are: <code>latest</code>, single-component tags (<code>postgres:16</code>, <code>redis:7</code>),
+digest pins (<code>image@sha256:…</code>), and non-version tags (<code>stable</code>, <code>alpine</code>). All
+of them are compared by digest.</p>
 <h3 id="11-enhanced-update-status-detection">1.1 Enhanced Update Status Detection</h3>
-<p>For more granular update detection, the algorithm provides detailed status:</p>
-<pre><code class="language-crystal">def get_update_status(container : ContainerInfo) : NamedTuple(needs_pull: Bool, needs_restart: Bool)
+<p>For moving tags, the algorithm compares local and remote digests:</p>
+<pre><code class="language-crystal">def get_update_status(container : ContainerInfo) :
+    NamedTuple(needs_pull: Bool, needs_restart: Bool,
+               local_digest: String?, remote_digest: String?)
   local_digest = get_local_image_digest(container.image)
   remote_digest = get_remote_image_digest(container.image)
 
   {
-    needs_pull: local_digest != remote_digest,
+    needs_pull:    local_digest != remote_digest,
     needs_restart: local_digest == remote_digest &amp;&amp; container.image.includes?(&quot;latest&quot;)
   }
 end
 </code></pre>
-<h3 id="2-latest-tag-handling">2. Latest Tag Handling</h3>
-<p>For images using <code>:latest</code> tags, the algorithm uses simple digest comparison:</p>
+<h3 id="2-moving-tag-handling">2. Moving Tag Handling</h3>
+<p>For moving tags, the update is a re-pull of the same reference:</p>
 <pre><code class="language-crystal">def image_has_update?(image_name : String) : Bool
   local_digest = get_local_image_digest(image_name)
   return false unless local_digest
@@ -1704,6 +1790,8 @@ end
 <li>Single API call to get remote manifest digest</li>
 <li>No need to parse hundreds or thousands of tags</li>
 <li>Fast and efficient</li>
+<li>Rolling tags (<code>postgres:16</code>) keep following their major instead of being
+  "upgraded" to a different tag</li>
 </ul>
 <h3 id="3-versioned-tag-handling">3. Versioned Tag Handling</h3>
 <p>For images with semantic version tags (e.g., <code>nginx:1.2.3</code>):</p>
@@ -1719,37 +1807,65 @@ end
   Version.parse(tag)
 end
 </code></pre>
-<h4 id="32-target-version-discovery">3.2 Target Version Discovery</h4>
-<pre><code class="language-crystal">def find_target_update_version(image_name : String, current_version : Version, allow_major_upgrade : Bool) : Version?
-  # Get all available versions from the registry
-  all_versions = get_all_versions(image_name)
-  return nil if all_versions.empty?
-
-  # Filter versions that are newer than current version
-  newer_versions = all_versions.select { |v| v &gt; current_version }
-
-  # Filter by major upgrade preference
-  if allow_major_upgrade
-    # Allow any newer version
-    newer_versions.max?
-  else
-    # Only allow minor/patch updates within the same major version
-    same_major_versions = newer_versions.select { |v| v.major == current_version.major }
-    same_major_versions.max?
+<p>Single-component tags parse as major-only versions (<code>16</code> → <code>16.0.0</code>), but
+since they are moving tags they never reach the version path — they are
+handled by digest comparison instead.</p>
+<h4 id="32-target-tag-discovery">3.2 Target Tag Discovery</h4>
+<p><code>find_target_update_version</code> delegates to <code>find_target_update_tag</code>, which
+returns the <strong>actual registry tag string</strong> for the target (the tag must exist
+upstream to be pullable — version objects alone would lose spellings like a
+<code>v</code> prefix):</p>
+<pre><code class="language-crystal">def find_target_update_tag(image_name : String, current_version : Version,
+                           allow_major_upgrade : Bool) : String?
+  candidates = registry_version_tags(image_name).select do |pair|
+    pair[:version] &gt; current_version &amp;&amp;
+      (allow_major_upgrade || pair[:version].major == current_version.major)
   end
+
+  best = candidates.max_by? { |pair| pair[:version] }
+  best.try &amp;.[:tag]
 end
 </code></pre>
 <h4 id="33-version-collection">3.3 Version Collection</h4>
-<pre><code class="language-crystal">def get_all_versions(image_name : String) : Array(Version)
+<pre><code class="language-crystal">def registry_version_tags(image_name : String) : Array(NamedTuple(tag: String, version: Version))
   # Single API call to get all tags
-  response = registry_client.get(&quot;/v2/#{repository_path}/tags/list&quot;)
+  response = fetch_registry_tags(registry_host, repository_path)
 
-  # Parse and filter semantic versions
+  json = JSON.parse(response.body)
   tags = json[&quot;tags&quot;].as_a.map(&amp;.as_s)
-  versions = tags.compact_map { |tag| Version.parse(tag) }
-  versions.sort!
+  tags.compact_map { |tag|
+    version = Version.parse(tag)
+    version ? {tag: tag, version: version} : nil
+  }
 end
 </code></pre>
+<h2 id="from-detection-to-update">From Detection to Update</h2>
+<p>Detection alone is not enough — the update must know <em>which reference to
+pull</em>. <code>ImageChecker#target_image_for_update</code> mirrors the detection logic:</p>
+<pre><code class="language-crystal">def target_image_for_update(container : ContainerInfo,
+                            allow_major_upgrade : Bool = false) : String?
+  return container.image if moving_tag?(container)
+
+  current_version = extract_version_from_image(container.image)
+  return container.image unless current_version
+
+  target_tag = find_target_update_tag(container.image, current_version, allow_major_upgrade)
+  return container.image unless target_tag
+
+  repository = ImageNameParser.parse(container.image)[:repository]
+  ImageNameParser.format_with_tag(repository, target_tag)
+end
+</code></pre>
+<p><code>UpdateManager#update_container</code> then:</p>
+<ol>
+<li>Pulls <code>repository:target_tag</code> (name and tag passed <strong>separately</strong> to the
+   Docker API so the registry port cannot be mistaken for a tag)</li>
+<li>Recreates the container with the pulled image — digest-pinned
+   (<code>repo@sha256:…</code>) when the local digest matches the remote, otherwise the
+   target reference</li>
+<li>Rolls back safely if recreation fails: the old container is renamed to a
+   backup and restored if the replacement cannot be created or started</li>
+</ol>
 <h2 id="data-sources">Data Sources</h2>
 <h3 id="local-information">Local Information</h3>
 <ul>
@@ -1782,12 +1898,16 @@ end
 <h3 id="core-methods">Core Methods</h3>
 <h4 id="needs_updatecontainer-allow_major_upgrade"><code>needs_update?(container, allow_major_upgrade)</code></h4>
 <p>Main entry point - routes to appropriate detection strategy based on tag type</p>
-<h4 id="image_has_updateimage_name"><code>image_has_update?(image_name)</code></h4>
-<p>Handles latest tag updates via digest comparison</p>
+<h4 id="moving_tagcontainer"><code>moving_tag?(container)</code></h4>
+<p>Decides whether a tag tracks a moving ref (digest comparison) or a fixed version (semver comparison)</p>
+<h4 id="target_image_for_updatecontainer-allow_major_upgrade"><code>target_image_for_update(container, allow_major_upgrade)</code></h4>
+<p>Computes the image reference an update should pull and recreate with: the newer tag for versioned images, the same reference for moving tags</p>
+<h4 id="find_target_update_tagimage_name-current_version-allow_major_upgrade"><code>find_target_update_tag(image_name, current_version, allow_major_upgrade)</code></h4>
+<p>Returns the actual registry tag string of the best available update</p>
 <h4 id="find_target_update_versionimage_name-current_version-allow_major_upgrade"><code>find_target_update_version(image_name, current_version, allow_major_upgrade)</code></h4>
-<p>Finds the best available update version based on current version and upgrade preferences</p>
-<h4 id="get_all_versionsimage_name"><code>get_all_versions(image_name)</code></h4>
-<p>Performs single API call to get all available versions from registry</p>
+<p>Parses the target tag into a <code>Version</code> (a thin wrapper over <code>find_target_update_tag</code>)</p>
+<h4 id="registry_version_tagsimage_name"><code>registry_version_tags(image_name)</code></h4>
+<p>Performs a single API call to get all registry tags paired with their parsed versions</p>
 <h4 id="extract_version_from_imageimage_name"><code>extract_version_from_image(image_name)</code></h4>
 <p>Parses semantic version from image tag</p>
 <h3 id="authentication-methods">Authentication Methods</h3>
@@ -1803,13 +1923,22 @@ end
 <li><strong>Generic registries</strong> with standard API v2</li>
 </ul>
 <h3 id="registry-detection">Registry Detection</h3>
-<pre><code class="language-crystal"># Automatic registry host detection
-if base_name.includes?(&quot;/&quot;)
-  parts = base_name.split(&quot;/&quot;)
-  if parts[0].includes?(&quot;.&quot;) || parts[0].includes?(&quot;:&quot;)
-    registry_host = parts[0]
-    repository_path = parts[1..-1].join(&quot;/&quot;)
-  end
+<pre><code class="language-crystal"># Automatic registry host detection: a first path segment containing &quot;.&quot; or
+# &quot;:&quot; marks a custom registry host (e.g. ghcr.io/user/image, localhost:5000/app)
+first_slash = base_name.index('/')
+prefix = first_slash ? base_name[0...first_slash] : nil
+
+if prefix &amp;&amp; (prefix.includes?(&quot;.&quot;) || prefix.includes?(&quot;:&quot;))
+  registry_host = prefix
+  repository_path = base_name[(prefix.size + 1)..]
+elsif prefix
+  # Docker Hub namespace/image (e.g. user/nginx)
+  registry_host = &quot;registry-1.docker.io&quot;
+  repository_path = base_name
+else
+  # Simple image name, assume Docker Hub library
+  registry_host = &quot;registry-1.docker.io&quot;
+  repository_path = &quot;library/#{base_name}&quot;
 end
 </code></pre>
 <h3 id="special-mappings">Special Mappings</h3>
@@ -1832,15 +1961,18 @@ end
 <h3 id="supported-formats">Supported Formats</h3>
 <ul>
 <li>Standard semver: <code>1.2.3</code></li>
+<li>Two-component versions: <code>1.2</code> (patch defaults to 0)</li>
+<li>Single-component tags: <code>16</code> (parsed as <code>16.0.0</code>, but treated as a moving tag)</li>
 <li>Prereleases: <code>1.2.3-alpha</code>, <code>1.2.3-beta.1</code></li>
 <li>Build metadata: <code>1.2.3+build.123</code> (ignored in comparison)</li>
 <li>'v' prefix: <code>v1.2.3</code></li>
 </ul>
-<h3 id="exclusions">Exclusions</h3>
+<h3 id="digest-based-handling">Digest-Based Handling</h3>
 <ul>
-<li><code>latest</code> tags (handled separately)</li>
-<li>SHA256 digests (image IDs)</li>
-<li>Non-semantic version strings</li>
+<li><code>latest</code> tags (handled by digest comparison)</li>
+<li>SHA256 digest pins (handled by digest comparison)</li>
+<li>Non-semantic version tags like <code>stable</code> (handled by digest comparison)</li>
+<li>Rolling single-number tags like <code>postgres:16</code> (handled by digest comparison)</li>
 </ul>
 <h2 id="major-upgrade-control">Major Upgrade Control</h2>
 <p>The <code>allow_major_upgrade</code> parameter controls upgrade behavior:</p>
@@ -1886,6 +2018,10 @@ end
 <ul>
 <li>JWT tokens from official registry endpoints</li>
 <li>Token caching with proper expiration</li>
+<li>Credentials from the user's <code>~/.docker/config.json</code> are used when an entry
+  matches the registry (including the legacy <code>https://index.docker.io/v1/</code>
+  spelling), enabling private images and avoiding Docker Hub anonymous rate
+  limits; <code>credsStore</code>-delegated entries are skipped</li>
 <li>No hardcoded credentials</li>
 </ul>
 <h3 id="registry-communication">Registry Communication</h3>

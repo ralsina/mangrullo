@@ -324,10 +324,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#option-1-one-shot-mode-recommended" class="md-nav__link">
+  <a href="#option-1-one-shot-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 1: One-shot Mode (Recommended)
+        Option 1: One-shot Mode
       
     </span>
   </a>
@@ -817,10 +817,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#option-1-one-shot-mode-recommended" class="md-nav__link">
+  <a href="#option-1-one-shot-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 1: One-shot Mode (Recommended)
+        Option 1: One-shot Mode
       
     </span>
   </a>
@@ -1202,30 +1202,37 @@
 <h1 id="docker-deployment-guide">Docker Deployment Guide</h1>
 <p>This guide explains how to deploy Mangrullo using Docker containers.</p>
 <h2 id="quick-start">Quick Start</h2>
-<h3 id="option-1-one-shot-mode-recommended">Option 1: One-shot Mode (Recommended)</h3>
+<p>The official images are published on GitHub Container Registry:
+<code>ghcr.io/ralsina/mangrullo:latest</code> (multi-architecture: amd64 + arm64).</p>
+<p>The image ships an entrypoint that understands the commands <code>daemon</code> (default), <code>web</code>, <code>check</code>, <code>dry-run</code> and <code>help</code>.</p>
+<h3 id="option-1-one-shot-mode">Option 1: One-shot Mode</h3>
 <p>Run a single update check:</p>
 <pre><code class="language-bash">docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --once
+  ghcr.io/ralsina/mangrullo:latest check
 </code></pre>
 <h3 id="option-2-daemon-mode">Option 2: Daemon Mode</h3>
 <p>Run Mangrullo as a background daemon that periodically checks for updates:</p>
 <pre><code class="language-bash">docker run -d \
   --name mangrullo \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --interval=300
+  ghcr.io/ralsina/mangrullo:latest
 </code></pre>
+<p>The daemon checks every <code>MANGRULLO_INTERVAL</code> seconds (entrypoint default: 3600).</p>
 <h3 id="option-3-dry-run-mode">Option 3: Dry Run Mode</h3>
 <p>See what would be updated without making changes:</p>
 <pre><code class="language-bash">docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --dry-run
+  ghcr.io/ralsina/mangrullo:latest dry-run
 </code></pre>
 <h3 id="option-4-check-specific-containers">Option 4: Check Specific Containers</h3>
-<p>Check only specific containers:</p>
+<p>The entrypoint commands don't take container names; bypass the entrypoint to
+filter by name:</p>
 <pre><code class="language-bash">docker run --rm \
+  --entrypoint mangrullo \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  mangrullo --once flatnotes atuin
+  ghcr.io/ralsina/mangrullo:latest \
+  --once flatnotes atuin
 </code></pre>
 <h2 id="docker-compose">Docker Compose</h2>
 <p>Use the provided <code>docker-compose.yml</code> for easier deployment:</p>
@@ -1253,7 +1260,7 @@
 <tr>
 <td><code>MANGRULLO_INTERVAL</code></td>
 <td>Check interval in seconds</td>
-<td><code>3600</code></td>
+<td><code>3600</code> (entrypoint)</td>
 </tr>
 <tr>
 <td><code>MANGRULLO_ALLOW_MAJOR</code></td>
@@ -1282,23 +1289,47 @@
 </tr>
 </tbody>
 </table>
+<p>Web mode honors these additional variables (set them for the <code>web</code> service):</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MANGRULLO_WEB_PORT</code></td>
+<td>Web interface port</td>
+<td><code>3000</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_WEB_HOST</code></td>
+<td>Web interface bind address</td>
+<td><code>0.0.0.0</code></td>
+</tr>
+<tr>
+<td><code>MANGRULLO_WEB_USER</code></td>
+<td>HTTP Basic auth user (optional)</td>
+<td>unset</td>
+</tr>
+<tr>
+<td><code>MANGRULLO_WEB_PASSWORD</code></td>
+<td>HTTP Basic auth password (optional)</td>
+<td>unset</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> Setting both <code>MANGRULLO_WEB_USER</code> and <code>MANGRULLO_WEB_PASSWORD</code> enables
+HTTP Basic authentication on every route except <code>/health</code> (so Docker health
+checks keep working). With either unset the UI is open.</p>
 <p><strong>Note:</strong> The old environment variable <code>MANGRULLO_DOCKER_SOCKET</code> has been renamed to <code>MANGRULLO_SOCKET</code> for consistency.</p>
 <h3 id="configuration-file">Configuration File</h3>
-<p>You can also use a YAML configuration file by mounting it into the container:</p>
-<pre><code class="language-bash">docker run -d \
-  --name mangrullo \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /path/to/config.yml:/config.yml:ro \
-  mangrullo --config=/config.yml
-</code></pre>
-<p>Example <code>config.yml</code>:</p>
-<pre><code class="language-yaml">interval: 3600
-allow_major: false
-socket: &quot;/var/run/docker.sock&quot;
-log_level: &quot;info&quot;
-run_once: false
-dry_run: false
-</code></pre>
+<p>YAML configuration file support is <em>not currently enabled</em>: the plumbing
+exists (via <code>docopt-config</code>) but no CLI flag passes a config file path, and
+<code>--config=/config.yml</code> is not a valid option. Use environment variables
+instead.</p>
 <h3 id="example-with-custom-configuration">Example with Custom Configuration</h3>
 <pre><code class="language-bash">docker run -d \
   --name mangrullo \
@@ -1306,7 +1337,7 @@ dry_run: false
   -e MANGRULLO_LOG_LEVEL=debug \
   -e MANGRULLO_INTERVAL=1800 \
   -e MANGRULLO_ALLOW_MAJOR=true \
-  mangrullo daemon
+  ghcr.io/ralsina/mangrullo:latest daemon
 </code></pre>
 <h2 id="building-the-image">Building the Image</h2>
 <p>Build the Docker image from source:</p>
@@ -1336,8 +1367,15 @@ docker build -t mangrullo --platform linux/arm64 .
 docker logs -f mangrullo  # Follow logs
 </code></pre>
 <h3 id="health-checks">Health Checks</h3>
-<p>Basic container health can be checked with:</p>
+<p>The image defines a Docker <code>HEALTHCHECK</code> that curls the web endpoint
+(<code>http://localhost:${MANGRULLO_WEB_PORT:-3000}/</code>). That means:</p>
+<ul>
+<li><strong>Web mode</strong> (<code>command: web</code>): the container reports <code>healthy</code> while the UI answers.</li>
+<li><strong>Daemon mode</strong>: there is no HTTP server, so the built-in healthcheck reports
+  <code>unhealthy</code> even though the daemon works. Check the daemon with:</li>
+</ul>
 <pre><code class="language-bash">docker inspect mangrullo --format='{{.State.Status}}'
+docker logs -f mangrullo
 </code></pre>
 <h2 id="production-deployment">Production Deployment</h2>
 <h3 id="using-docker-swarm">Using Docker Swarm</h3>
