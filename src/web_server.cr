@@ -15,6 +15,7 @@ require "./container_name_utils"
 require "./container_state_helper"
 require "./version_utils"
 require "./sse"
+require "./web_auth"
 
 class WebServer
   @web_views : WebViews
@@ -57,10 +58,28 @@ class WebServer
   end
 
   private def setup_routes
+    setup_authentication
     setup_page_routes
     setup_container_routes
     setup_api_routes
     setup_error_handlers
+  end
+
+  # Optional HTTP Basic authentication. Enabled only when both
+  # MANGRULLO_WEB_USER and MANGRULLO_WEB_PASSWORD are set. /health stays
+  # open so Docker health checks keep working.
+  private def setup_authentication
+    before_all do |env|
+      user = ENV["MANGRULLO_WEB_USER"]?
+      password = ENV["MANGRULLO_WEB_PASSWORD"]?
+      next unless Mangrullo::WebAuth.enabled?(user, password)
+      next if env.request.path == "/health"
+
+      unless Mangrullo::WebAuth.authorized?(env.request.headers["Authorization"]?, user.not_nil!, password.not_nil!)
+        env.response.headers["WWW-Authenticate"] = "Basic realm=\"Mangrullo\", charset=\"UTF-8\""
+        halt env, status_code: 401, response: "Unauthorized"
+      end
+    end
   end
 
   private def setup_page_routes
