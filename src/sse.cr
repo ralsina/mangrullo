@@ -65,12 +65,10 @@ module Mangrullo
     def self.broadcast(event : Event)
       @@client_mutex.synchronize do
         @@clients.each do |client_id, io|
-          begin
-            send_event(io, event)
-          rescue ex : IO::Error
-            # Client disconnected, remove them
-            @@clients.delete(client_id)
-          end
+          send_event(io, event)
+        rescue IO::Error
+          # Client disconnected, remove them
+          @@clients.delete(client_id)
         end
       end
     end
@@ -81,7 +79,7 @@ module Mangrullo
         if io = @@clients[client_id]?
           begin
             send_event(io, event)
-          rescue ex : IO::Error
+          rescue IO::Error
             @@clients.delete(client_id)
           end
         end

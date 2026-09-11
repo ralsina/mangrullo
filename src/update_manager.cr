@@ -163,9 +163,9 @@ module Mangrullo
       unless container_names.empty?
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
         normalized_input_names = container_names.map { |name| ContainerFilter.normalize_container_name(name) }
-        containers = containers.select { |container|
+        containers = containers.select do |container|
           normalized_input_names.includes?(ContainerNameUtils.normalize_name_string(container.name))
-        }
+        end
       end
 
       containers.select { |container| @image_checker.needs_update?(container, allow_major_upgrade) }
@@ -187,9 +187,9 @@ module Mangrullo
       unless container_names.empty?
         # Normalize container names for comparison (handle both "flatnotes" and "/flatnotes")
         normalized_input_names = container_names.map { |name| ContainerFilter.normalize_container_name(name) }
-        containers = containers.select { |container|
+        containers = containers.select do |container|
           normalized_input_names.includes?(ContainerNameUtils.normalize_name_string(container.name))
-        }
+        end
       end
 
       needing_update = get_containers_needing_update(allow_major_upgrade, container_names)
@@ -252,8 +252,6 @@ module Mangrullo
             needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
             reason = if needs_update
                        generate_update_reason(container)
-                     else
-                       nil
                      end
 
             results << {
@@ -324,15 +322,11 @@ module Mangrullo
                    "New image version available (requires pull)"
                  elsif status[:needs_restart]
                    "Container restart required to use latest local image"
-                 else
-                   nil
                  end
       else
         needs_update = @image_checker.needs_update?(container, allow_major_upgrade)
         reason = if needs_update
                    generate_update_reason(container)
-                 else
-                   nil
                  end
       end
 

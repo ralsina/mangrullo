@@ -5,26 +5,26 @@ require "./constants"
 module Mangrullo
   class Config
     DOCOPT = <<-DOC
-    Mangrullo - Docker container update automation tool
+      Mangrullo - Docker container update automation tool
 
-    Usage:
-      mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
-               [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
-               [--help] [--version]
+      Usage:
+        mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
+                 [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
+                 [--help] [--version]
 
-    Options:
-      --interval=<seconds>   Check interval in seconds [default: #{Mangrullo::Constants::Config::DEFAULT_INTERVAL}]
-      --allow-major          Allow major version upgrades
-      --socket=<path>        Docker socket path [default: #{Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH}]
-      --log-level=<level>    Log level (debug, info, warn, error) [default: #{Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL}]
-      --once                 Run once and exit
-      --dry-run              Show what would be updated without actually updating
-      --help                 Show this help message
-      --version              Show version information
+      Options:
+        --interval=<seconds>   Check interval in seconds [default: #{Mangrullo::Constants::Config::DEFAULT_INTERVAL}]
+        --allow-major          Allow major version upgrades
+        --socket=<path>        Docker socket path [default: #{Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH}]
+        --log-level=<level>    Log level (debug, info, warn, error) [default: #{Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL}]
+        --once                 Run once and exit
+        --dry-run              Show what would be updated without actually updating
+        --help                 Show this help message
+        --version              Show version information
 
-    Arguments:
-      <container-name>       Specific container names to check (if not specified, checks all containers)
-    DOC
+      Arguments:
+        <container-name>       Specific container names to check (if not specified, checks all containers)
+      DOC
 
     property interval : Int32
     property? allow_major_upgrade : Bool
@@ -44,7 +44,7 @@ module Mangrullo
 
     def self.parse(args : Array(String), config_file_path : String? = nil) : Config
       version = begin
-        ::VERSION
+        Mangrullo::VERSION
       rescue
         "0.1.0"
       end
@@ -131,7 +131,7 @@ module Mangrullo
       parse(args)
     end
 
-    def setup_logging : Void
+    def setup_logging : Nil
       case log_level.downcase
       when "debug"
         Log.setup(:debug)
@@ -146,7 +146,7 @@ module Mangrullo
       end
     end
 
-    def validate! : Void
+    def validate! : Nil
       errors = [] of String
 
       if interval <= 0
@@ -172,15 +172,15 @@ module Mangrullo
       container_info = container_names.empty? ? "All containers" : "Specific containers: #{container_names.join(", ")}"
 
       <<-CONFIG
-      Mangrullo Configuration:
-        Interval: #{interval} seconds
-        Allow major upgrades: #{allow_major_upgrade?}
-        Docker socket: #{docker_socket_path}
-        Log level: #{log_level}
-        Run once: #{run_once?}
-        Dry run: #{dry_run?}
-        Target: #{container_info}
-      CONFIG
+        Mangrullo Configuration:
+          Interval: #{interval} seconds
+          Allow major upgrades: #{allow_major_upgrade?}
+          Docker socket: #{docker_socket_path}
+          Log level: #{log_level}
+          Run once: #{run_once?}
+          Dry run: #{dry_run?}
+          Target: #{container_info}
+        CONFIG
     end
   end
 end

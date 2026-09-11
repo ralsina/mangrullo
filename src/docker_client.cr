@@ -136,7 +136,7 @@ module Mangrullo
               containers = @api.containers.list(all: all)
               containers.map { |container| to_container_info(container) }
             end
-          rescue ex
+          rescue
             # Continue retrying
           end
         end
@@ -149,7 +149,7 @@ module Mangrullo
       handle_docker_errors_typed("getting container info", "container_id=#{container_id}") do
         with_retry_and_lock("get container info") do
           containers = @api.containers.list(all: true, filters: {"id" => [container_id]})
-          return nil if containers.empty?
+          return if containers.empty?
 
           to_container_info(containers.first)
         end
@@ -162,7 +162,7 @@ module Mangrullo
           Log.debug { "get_image_info: Looking for image #{image_name}" }
           images = @api.images.list(filters: {"reference" => [image_name]})
           Log.debug { "get_image_info: Found #{images.size} images for #{image_name}" }
-          return nil if images.empty?
+          return if images.empty?
 
           # Find the image that actually has the matching repo tag
           # The Docker API reference filter is not reliable, so we need to manually verify
@@ -176,7 +176,7 @@ module Mangrullo
             images.first(3).each_with_index do |img, i|
               Log.debug { "get_image_info: Image #{i + 1}: tags=#{img.repo_tags}" }
             end
-            return nil
+            return
           end
 
           Log.debug { "get_image_info: Found correct image ID=#{correct_image.id}, repo_tags=#{correct_image.repo_tags}" }
@@ -261,7 +261,7 @@ module Mangrullo
         host_config_json = config_data["HostConfig"]?.try(&.as_h)
         config_json = config_data["Config"]?.try(&.as_h)
 
-        return nil unless config_json
+        return unless config_json
 
         # Build the container config
         container_config = Docr::Types::CreateContainerConfig.from_json(config_json.to_json)
@@ -297,7 +297,7 @@ module Mangrullo
 
         unless inspect_data
           Log.error { "Failed to inspect container #{container_name} for configuration" }
-          return nil
+          return
         end
 
         # Parse the container inspection output
@@ -308,7 +308,7 @@ module Mangrullo
         host_config_json = config_data["HostConfig"]?.try(&.as_h)
         config_json = config_data["Config"]?.try(&.as_h)
 
-        return nil unless config_json
+        return unless config_json
 
         # Build the container config
         container_config = Docr::Types::CreateContainerConfig.from_json(config_json.to_json)
@@ -349,7 +349,7 @@ module Mangrullo
     def recreate_container_with_new_image(container_id : String, new_image : String) : String?
       # Get container info first
       container_info = get_container_info(container_id)
-      return nil unless container_info
+      return unless container_info
 
       # Get the container name (remove leading slash)
       container_name = container_info.name.lchop('/')
@@ -364,29 +364,29 @@ module Mangrullo
 
       unless config_output
         Log.error { "Failed to inspect container #{container_name} for configuration" }
-        return nil
+        return
       end
 
       # Stop the container
       unless stop_container(container_id)
         Log.error { "Failed to stop container #{container_name}" }
-        return nil
+        return
       end
 
       # Remove the old container FIRST to free up the name
       unless remove_container(container_id)
         Log.error { "Failed to remove old container #{container_name}" }
-        return nil
+        return
       end
 
       # Create new container with the captured configuration and new image
       new_container_id = create_container_from_inspect_data(new_image, container_name, config_output.to_s)
-      return nil unless new_container_id
+      return unless new_container_id
 
       # Start the new container
       unless start_container(new_container_id)
         Log.error { "Failed to start new container #{container_name}" }
-        return nil
+        return
       end
 
       Log.info { "Successfully recreated container #{container_name} with new image" }

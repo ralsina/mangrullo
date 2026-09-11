@@ -73,7 +73,7 @@ module Mangrullo
     end
 
     # Remove a container from state
-    def self.remove_container(container_id : String) : Void
+    def self.remove_container(container_id : String) : Nil
       ContainerState.instance.remove_container(container_id)
     end
 

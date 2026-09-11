@@ -110,10 +110,10 @@ describe "container name matching" do
       container_names = test_case[:input]
       normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
 
-      matched_containers = docker_containers.select { |container|
+      matched_containers = docker_containers.select do |container|
         normalized_input_names.includes?(container[:name]) ||
           normalized_input_names.includes?(container[:name].lchop('/'))
-      }
+      end
 
       matched_names = matched_containers.map { |container| container[:name] }
       matched_names.should eq(test_case[:expected_matches])
@@ -134,10 +134,10 @@ describe "container name matching" do
     # When container_names is empty, no filtering should occur
     unless container_names.empty?
       normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
-      docker_containers = docker_containers.select { |container|
+      docker_containers = docker_containers.select do |container|
         normalized_input_names.includes?(container[:name]) ||
           normalized_input_names.includes?(container[:name].lchop('/'))
-      }
+      end
     end
 
     # Should still have all containers
@@ -156,10 +156,10 @@ describe "container name matching" do
     container_names = ["nonexistent", "another-missing"]
     normalized_input_names = container_names.map { |name| name.starts_with?("/") ? name : "/#{name}" }
 
-    matched_containers = docker_containers.select { |container|
+    matched_containers = docker_containers.select do |container|
       normalized_input_names.includes?(container[:name]) ||
         normalized_input_names.includes?(container[:name].lchop('/'))
-    }
+    end
 
     matched_containers.should be_empty
   end
@@ -229,9 +229,6 @@ describe "registry mapping" do
   it "handles regular docker hub images" do
     image_name = "nginx:latest"
     base_name = image_name.split(":").first
-
-    registry_host = "registry-1.docker.io"
-    repository_path = base_name
 
     if base_name.includes?("/")
       parts = base_name.split("/")
@@ -305,21 +302,23 @@ describe "container recreation" do
     # Test the parsing logic from create_container_from_inspect_data
 
     # Simulate docker inspect output
-    inspect_data = %q([{
-      "Id": "abc123def456789",
-      "Name": "/flatnotes",
-      "Config": {
-        "Image": "dullage/flatnotes:latest",
-        "Env": ["TZ=UTC", "PUID=1000", "PGID=1000"],
-        "ExposedPorts": {"8080/tcp": {}},
-        "Labels": {"maintainer": "test"}
-      },
-      "HostConfig": {
-        "PortBindings": {"8080/tcp": [{"HostPort": "8081"}]},
-        "Binds": ["/host/path:/container/path"],
-        "RestartPolicy": {"Name": "unless-stopped"}
-      }
-    }])
+    inspect_data = <<-JSON
+      [{
+        "Id": "abc123def456789",
+        "Name": "/flatnotes",
+        "Config": {
+          "Image": "dullage/flatnotes:latest",
+          "Env": ["TZ=UTC", "PUID=1000", "PGID=1000"],
+          "ExposedPorts": {"8080/tcp": {}},
+          "Labels": {"maintainer": "test"}
+        },
+        "HostConfig": {
+          "PortBindings": {"8080/tcp": [{"HostPort": "8081"}]},
+          "Binds": ["/host/path:/container/path"],
+          "RestartPolicy": {"Name": "unless-stopped"}
+        }
+      }]
+      JSON
 
     # Parse the container inspection output
     container_info = JSON.parse(inspect_data).as_a.first?
