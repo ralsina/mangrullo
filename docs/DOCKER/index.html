@@ -1367,16 +1367,38 @@ docker build -t mangrullo --platform linux/arm64 .
 docker logs -f mangrullo  # Follow logs
 </code></pre>
 <h3 id="health-checks">Health Checks</h3>
-<p>The image defines a Docker <code>HEALTHCHECK</code> that curls the web endpoint
-(<code>http://localhost:${MANGRULLO_WEB_PORT:-3000}/</code>). That means:</p>
+<p>The image defines a Docker <code>HEALTHCHECK</code> (backed by <code>docker-healthcheck.sh</code>)
+that probes the endpoint matching the container's mode:</p>
 <ul>
-<li><strong>Web mode</strong> (<code>command: web</code>): the container reports <code>healthy</code> while the UI answers.</li>
-<li><strong>Daemon mode</strong>: there is no HTTP server, so the built-in healthcheck reports
-  <code>unhealthy</code> even though the daemon works. Check the daemon with:</li>
+<li><strong>Daemon mode</strong> (default): the daemon serves <code>GET /health</code> on port
+  <code>${MANGRULLO_HEALTH_PORT:-3001}</code> and the healthcheck reports <code>healthy</code> while
+  the endpoint answers.</li>
+<li><strong>Web mode</strong> (<code>command: web</code>): the healthcheck curls
+  <code>http://localhost:${MANGRULLO_WEB_PORT:-3000}/health</code>, which stays reachable
+  even when HTTP Basic authentication is enabled.</li>
 </ul>
-<pre><code class="language-bash">docker inspect mangrullo --format='{{.State.Status}}'
+<p>The daemon health endpoint returns <code>200</code> with a JSON body while the update
+loop is progressing:</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;ok&quot;,
+  &quot;uptime_seconds&quot;: 86300,
+  &quot;interval_seconds&quot;: 3600,
+  &quot;last_successful_check&quot;: &quot;2026-09-12T18:00:00Z&quot;,
+  &quot;seconds_since_successful_check&quot;: 123,
+  &quot;last_error&quot;: null
+}
+</code></pre>
+<p>It reports <code>503</code> with <code>"status": "degraded"</code> when no update cycle has
+succeeded within twice the check interval, so a stuck daemon or an
+unreachable Docker socket becomes visible to orchestrators.</p>
+<p>Check the reported status at any time with:</p>
+<pre><code class="language-bash">docker inspect mangrullo --format='{{.State.Health.Status}}'
+docker inspect mangrullo --format='{{json .State.Health}}'
 docker logs -f mangrullo
 </code></pre>
+<p>The daemon health endpoint is enabled inside containers by default
+(<code>MANGRULLO_HEALTH_PORT=3001</code>); set it to <code>0</code> to disable, or run the binary
+outside Docker with <code>--health-port=&lt;port&gt;</code> to opt in.</p>
 <h2 id="production-deployment">Production Deployment</h2>
 <h3 id="using-docker-swarm">Using Docker Swarm</h3>
 <pre><code class="language-yaml">version: '3.8'
@@ -1393,6 +1415,13 @@ services:
     environment:
       - MANGRULLO_LOG_LEVEL=info
       - MANGRULLO_INTERVAL=3600
+      - MANGRULLO_HEALTH_PORT=3001
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;curl&quot;, &quot;-fsS&quot;, &quot;http://127.0.0.1:3001/health&quot;]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - mangrullo-network
 
@@ -1423,6 +1452,23 @@ spec:
           value: &quot;info&quot;
         - name: MANGRULLO_INTERVAL
           value: &quot;3600&quot;
+        - name: MANGRULLO_HEALTH_PORT
+          value: &quot;3001&quot;
+        ports:
+        - containerPort: 3001
+          name: health
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 5
+          periodSeconds: 30
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run/docker.sock
