@@ -55,6 +55,7 @@ docker-compose*
 # Build scripts
 *.sh
 !entrypoint.sh
+!docker-healthcheck.sh
 
 # Test coverage
 coverage/
