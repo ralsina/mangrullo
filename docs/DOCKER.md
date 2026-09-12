@@ -174,17 +174,45 @@ docker logs -f mangrullo  # Follow logs
 
 ### Health Checks
 
-The image defines a Docker `HEALTHCHECK` that curls the web endpoint
-(`http://localhost:${MANGRULLO_WEB_PORT:-3000}/`). That means:
+The image defines a Docker `HEALTHCHECK` (backed by `docker-healthcheck.sh`)
+that probes the endpoint matching the container's mode:
 
-- **Web mode** (`command: web`): the container reports `healthy` while the UI answers.
-- **Daemon mode**: there is no HTTP server, so the built-in healthcheck reports
-  `unhealthy` even though the daemon works. Check the daemon with:
+- **Daemon mode** (default): the daemon serves `GET /health` on port
+  `${MANGRULLO_HEALTH_PORT:-3001}` and the healthcheck reports `healthy` while
+  the endpoint answers.
+- **Web mode** (`command: web`): the healthcheck curls
+  `http://localhost:${MANGRULLO_WEB_PORT:-3000}/health`, which stays reachable
+  even when HTTP Basic authentication is enabled.
+
+The daemon health endpoint returns `200` with a JSON body while the update
+loop is progressing:
+
+```json
+{
+  "status": "ok",
+  "uptime_seconds": 86300,
+  "interval_seconds": 3600,
+  "last_successful_check": "2026-09-12T18:00:00Z",
+  "seconds_since_successful_check": 123,
+  "last_error": null
+}
+```
+
+It reports `503` with `"status": "degraded"` when no update cycle has
+succeeded within twice the check interval, so a stuck daemon or an
+unreachable Docker socket becomes visible to orchestrators.
+
+Check the reported status at any time with:
 
 ```bash
-docker inspect mangrullo --format='{{.State.Status}}'
+docker inspect mangrullo --format='{{.State.Health.Status}}'
+docker inspect mangrullo --format='{{json .State.Health}}'
 docker logs -f mangrullo
 ```
+
+The daemon health endpoint is enabled inside containers by default
+(`MANGRULLO_HEALTH_PORT=3001`); set it to `0` to disable, or run the binary
+outside Docker with `--health-port=<port>` to opt in.
 
 ## Production Deployment
 
@@ -205,6 +233,13 @@ services:
     environment:
       - MANGRULLO_LOG_LEVEL=info
       - MANGRULLO_INTERVAL=3600
+      - MANGRULLO_HEALTH_PORT=3001
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - mangrullo-network
 
@@ -238,6 +273,23 @@ spec:
           value: "info"
         - name: MANGRULLO_INTERVAL
           value: "3600"
+        - name: MANGRULLO_HEALTH_PORT
+          value: "3001"
+        ports:
+        - containerPort: 3001
+          name: health
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: health
+          initialDelaySeconds: 5
+          periodSeconds: 30
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run/docker.sock

@@ -7,6 +7,7 @@ describe Mangrullo::Config do
         "MANGRULLO_INTERVAL"    => "120",
         "MANGRULLO_ALLOW_MAJOR" => "true",
         "MANGRULLO_SOCKET"      => "/custom/path",
+        "MANGRULLO_HEALTH_PORT" => "3001",
         "MANGRULLO_LOG_LEVEL"   => "warn",
         "MANGRULLO_RUN_ONCE"    => "true",
         "MANGRULLO_DRY_RUN"     => "true",
@@ -16,6 +17,7 @@ describe Mangrullo::Config do
         config.interval.should eq(120)
         config.allow_major_upgrade?.should be_true
         config.docker_socket_path.should eq("/custom/path")
+        config.health_port.should eq(3001)
         config.log_level.should eq("warn")
         config.run_once?.should be_true
         config.dry_run?.should be_true
@@ -26,7 +28,7 @@ describe Mangrullo::Config do
       # Clear relevant env vars
       old_env = ENV.to_h
       ["MANGRULLO_INTERVAL", "MANGRULLO_ALLOW_MAJOR",
-       "MANGRULLO_SOCKET", "MANGRULLO_LOG_LEVEL",
+       "MANGRULLO_SOCKET", "MANGRULLO_HEALTH_PORT", "MANGRULLO_LOG_LEVEL",
        "MANGRULLO_RUN_ONCE", "MANGRULLO_DRY_RUN"].each { |k| ENV.delete(k) }
 
       begin
@@ -35,6 +37,7 @@ describe Mangrullo::Config do
         config.interval.should eq(300)
         config.allow_major_upgrade?.should be_false
         config.docker_socket_path.should eq("/var/run/docker.sock")
+        config.health_port.should eq(0)
         config.log_level.should eq("info")
         config.run_once?.should be_false
         config.dry_run?.should be_false
@@ -53,6 +56,16 @@ describe Mangrullo::Config do
         config.interval.should eq(300) # Should fall back to default
       end
     end
+
+    it "disables the health endpoint for invalid health port values" do
+      with_env_vars({
+        "MANGRULLO_HEALTH_PORT" => "invalid",
+      }) do
+        config = Mangrullo::Config.from_env
+
+        config.health_port.should eq(0) # Should fall back to default
+      end
+    end
   end
 
   describe ".from_args_and_env" do
@@ -68,6 +81,26 @@ describe Mangrullo::Config do
         config.log_level.should eq("warn") # From CLI (overrides env)
         config.dry_run?.should be_true     # From CLI
       end
+    end
+
+    it "reads the health port from the command line" do
+      config = Mangrullo::Config.from_args_and_env(["--health-port=8080"])
+
+      config.health_port.should eq(8080)
+    end
+
+    it "lets the health port env var override the default" do
+      with_env_vars({"MANGRULLO_HEALTH_PORT" => "9090"}) do
+        config = Mangrullo::Config.from_args_and_env([] of String)
+
+        config.health_port.should eq(9090)
+      end
+    end
+
+    it "accepts health port 0 to disable the endpoint" do
+      config = Mangrullo::Config.from_args_and_env(["--health-port=0"])
+
+      config.health_port.should eq(0)
     end
   end
 
@@ -111,6 +144,17 @@ describe Mangrullo::Config do
 
       expect_raises_no_exception { config.validate! }
     end
+
+    it "passes validation with the health port enabled" do
+      config = Mangrullo::Config.new(
+        interval: 60,
+        docker_socket_path: "/var/run/docker.sock",
+        health_port: 65535,
+        log_level: "info"
+      )
+
+      expect_raises_no_exception { config.validate! }
+    end
   end
 
   describe "#to_s" do
@@ -140,6 +184,18 @@ describe Mangrullo::Config do
 
       result = config.to_s
       result.should contain("All containers")
+    end
+
+    it "shows the health endpoint as disabled when the port is 0" do
+      config = Mangrullo::Config.new(health_port: 0)
+
+      config.to_s.should contain("Health port: disabled")
+    end
+
+    it "shows the health endpoint port when enabled" do
+      config = Mangrullo::Config.new(health_port: 3001)
+
+      config.to_s.should contain("Health port: 3001")
     end
   end
 end

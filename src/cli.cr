@@ -6,6 +6,7 @@ require "./update_manager"
 require "./config"
 require "./result_processor"
 require "./display_formatter"
+require "./health_server"
 
 module Mangrullo
   class CLI
@@ -13,11 +14,13 @@ module Mangrullo
     property docker_client : DockerClient
     property update_manager : UpdateManager
     property? running : Bool = true
+    getter health_state : HealthState
 
     def initialize(@config : Config)
       config.setup_logging
       @docker_client = DockerClient.new(config.docker_socket_path)
       @update_manager = UpdateManager.new(@docker_client, config.log_level)
+      @health_state = HealthState.new
 
       setup_signal_handlers
     end
@@ -53,15 +56,19 @@ module Mangrullo
       Log.info { "Mangrullo starting (daemon mode)" }
       Log.info { config.to_s }
 
+      start_health_server
+
       while running?
         begin
           Log.info { "Starting update cycle" }
           perform_update_check
+          health_state.record_success
 
           # Wait for next cycle
           Log.info { "Next check in #{config.interval} seconds" }
           sleep config.interval.seconds
         rescue ex : Exception
+          health_state.record_error(ex.message || "update cycle failed")
           Log.error { "Error in update cycle: #{ex.message}" }
           Log.error { "Retrying in #{config.interval} seconds" }
           sleep config.interval.seconds
@@ -69,6 +76,13 @@ module Mangrullo
       end
 
       Log.info { "Mangrullo shutting down" }
+    end
+
+    # Exposes GET /health for Docker health checks when a port is configured.
+    private def start_health_server : Nil
+      return unless config.health_port > 0
+
+      HealthServer.new(health_state, config.interval, config.health_port).start
     end
 
     private def perform_update_check

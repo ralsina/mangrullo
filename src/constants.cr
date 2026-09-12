@@ -24,6 +24,9 @@ module Mangrullo
       UPDATE_CHECK_INTERVAL = 21600 # 6 hours in seconds
       DEFAULT_LOG_LEVEL     = "info"
       VALID_LOG_LEVELS      = ["debug", "info", "warn", "error"]
+      # Port for the daemon health endpoint; 0 disables the endpoint
+      DEFAULT_HEALTH_PORT =      0
+      MAX_PORT            = 65_535
     end
 
     # Application constants

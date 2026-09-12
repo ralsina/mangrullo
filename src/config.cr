@@ -9,13 +9,14 @@ module Mangrullo
 
       Usage:
         mangrullo [--interval=<seconds>] [--allow-major] [--socket=<path>]
-                 [--log-level=<level>] [--once] [--dry-run] [<container-name>...]
-                 [--help] [--version]
+                 [--health-port=<port>] [--log-level=<level>] [--once] [--dry-run]
+                 [<container-name>...] [--help] [--version]
 
       Options:
         --interval=<seconds>   Check interval in seconds [default: #{Mangrullo::Constants::Config::DEFAULT_INTERVAL}]
         --allow-major          Allow major version upgrades
         --socket=<path>        Docker socket path [default: #{Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH}]
+        --health-port=<port>   Port for the daemon health endpoint, 0 disables it [default: #{Mangrullo::Constants::Config::DEFAULT_HEALTH_PORT}]
         --log-level=<level>    Log level (debug, info, warn, error) [default: #{Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL}]
         --once                 Run once and exit
         --dry-run              Show what would be updated without actually updating
@@ -29,6 +30,7 @@ module Mangrullo
     property interval : Int32
     property? allow_major_upgrade : Bool
     property docker_socket_path : String
+    property health_port : Int32
     property log_level : String
     property? run_once : Bool
     property? dry_run : Bool
@@ -37,6 +39,7 @@ module Mangrullo
     def initialize(@interval : Int32 = Mangrullo::Constants::Config::DEFAULT_INTERVAL,
                    @allow_major_upgrade : Bool = false,
                    @docker_socket_path : String = Mangrullo::Constants::Docker::DEFAULT_SOCKET_PATH,
+                   @health_port : Int32 = Mangrullo::Constants::Config::DEFAULT_HEALTH_PORT,
                    @log_level : String = Mangrullo::Constants::Config::DEFAULT_LOG_LEVEL,
                    @run_once : Bool = false, @dry_run : Bool = false,
                    @container_names : Array(String) = [] of String)
@@ -98,6 +101,16 @@ module Mangrullo
       socket_value = docopt["--socket"]
       docker_socket_path = socket_value.as(String)
 
+      health_port_value = docopt["--health-port"]
+      health_port = case health_port_value
+                    when Int32
+                      health_port_value
+                    when String
+                      health_port_value.to_i? || Mangrullo::Constants::Config::DEFAULT_HEALTH_PORT
+                    else
+                      Mangrullo::Constants::Config::DEFAULT_HEALTH_PORT
+                    end
+
       log_level_value = docopt["--log-level"]
       log_level = log_level_value.as(String)
 
@@ -109,6 +122,7 @@ module Mangrullo
         interval: interval,
         allow_major_upgrade: allow_major_upgrade,
         docker_socket_path: docker_socket_path,
+        health_port: health_port,
         log_level: log_level,
         run_once: run_once,
         dry_run: dry_run,
@@ -157,6 +171,10 @@ module Mangrullo
         errors << "Docker socket path cannot be empty"
       end
 
+      if health_port.negative? || health_port > Mangrullo::Constants::Config::MAX_PORT
+        errors << "Health port must be between 0 and #{Mangrullo::Constants::Config::MAX_PORT} (0 disables the health endpoint)"
+      end
+
       unless Mangrullo::Constants::Config::VALID_LOG_LEVELS.includes?(log_level.downcase)
         errors << "Log level must be one of: #{Mangrullo::Constants::Config::VALID_LOG_LEVELS.join(", ")}"
       end
@@ -176,6 +194,7 @@ module Mangrullo
           Interval: #{interval} seconds
           Allow major upgrades: #{allow_major_upgrade?}
           Docker socket: #{docker_socket_path}
+          Health port: #{health_port > 0 ? health_port : "disabled"}
           Log level: #{log_level}
           Run once: #{run_once?}
           Dry run: #{dry_run?}

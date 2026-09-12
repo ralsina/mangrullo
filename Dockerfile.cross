@@ -50,31 +50,33 @@ COPY --from=builder /app/bin/mangrullo-web /usr/local/bin/
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker-healthcheck.sh /usr/local/bin/docker-healthcheck
 
 # Create directories for data and logs
 RUN mkdir -p /var/lib/mangrullo /var/log/mangrullo && \
-    chmod +x /usr/local/bin/entrypoint.sh
+    chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/docker-healthcheck
 
-# Expose port for web interface
-EXPOSE 3000
+# Expose ports for the web interface and the daemon health endpoint
+EXPOSE 3000 3001
 
 # Set default environment variables
 ENV MANGRULLO_SOCKET=/var/run/docker.sock \
     MANGRULLO_LOG_LEVEL=info \
     MANGRULLO_INTERVAL=3600 \
-    MANGRULLO_WEB_PORT=3000
+    MANGRULLO_WEB_PORT=3000 \
+    MANGRULLO_HEALTH_PORT=3001
 
 # Set entrypoint and default command
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["daemon"]
 
-# Health check for web mode
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${MANGRULLO_WEB_PORT:-3000}/ || exit 1
+# Health check for both daemon and web modes (see docker-healthcheck.sh)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD ["/usr/local/bin/docker-healthcheck"]
 
 # Labels
 LABEL org.opencontainers.image.title="Mangrullo" \
       org.opencontainers.image.description="Docker container update manager" \
-      org.opencontainers.image.version="0.3.0" \
+      org.opencontainers.image.version="0.9.0" \
       org.opencontainers.image.authors="Roberto Alsina <roberto.alsina@gmail.com>" \
       org.opencontainers.image.source="https://github.com/ralsina/mangrullo"

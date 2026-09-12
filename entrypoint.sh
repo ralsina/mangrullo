@@ -22,6 +22,7 @@ Environment Variables:
     MANGRULLO_INTERVAL          Check interval in seconds (default: 3600)
     MANGRULLO_WEB_PORT          Web interface port (default: 3000)
     MANGRULLO_WEB_HOST          Web interface host (default: 0.0.0.0)
+    MANGRULLO_HEALTH_PORT       Daemon health endpoint port (default: 3001, 0 disables)
     MANGRULLO_ALLOW_MAJOR       Allow major version upgrades (default: false)
     MANGRULLO_RUN_ONCE          Run once and exit (default: false)
     MANGRULLO_DRY_RUN           Show what would be updated (default: false)
@@ -57,6 +58,7 @@ case "${1:-daemon}" in
         exec mangrullo --log-level="${MANGRULLO_LOG_LEVEL:-info}" \
              --interval="${MANGRULLO_INTERVAL:-3600}" \
              --socket="${MANGRULLO_SOCKET:-/var/run/docker.sock}" \
+             --health-port="${MANGRULLO_HEALTH_PORT:-3001}" \
              ${MANGRULLO_ALLOW_MAJOR:+--allow-major}
         ;;
     "web")
